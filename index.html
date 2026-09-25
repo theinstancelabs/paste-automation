@@ -7,20 +7,17 @@
     @import url('https://fonts.googleapis.com/css2?family=Figtree:ital,wght@0,300..900;1,300..900&display=swap');
   </style>
   <link href="https://fonts.googleapis.com/css2?family=Figtree:ital,wght@0,300..900;1,300..900&display=swap" rel="stylesheet">
-  <link rel="icon" type="image/svg+xml" href="/vite.svg" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <link rel="icon" type="image/png" sizes="16x16" href="public/lumen-icon.png">
-  <link rel="shortcut icon" type="image/x-icon" href="public/lumen-icon.png">
   
-  <script src="opencv.js"></script>
+
   <script type="module" src="main.js"></script>
   
-  <title>LumenPnP Pasting Utility</title>
+  <title>Paste Automation</title>
 </head>
 
 <body>
   <div id="header-pill">
-    <h1>LumenPnP Pasting Utility</h1>
+    <h1>Paste Automation</h1>
   </div>
   <div id="top-controls">
     <a href="help.html"><button id="helpButton" style="background-color:gray;height:40px;padding:10px;">Docs</button></a>
@@ -105,10 +102,25 @@
           </div>
         </div>
 
+        <section class="settings-section" id="automationPanel">
+          <h2>Automation</h2>
+          <label>Machine profile JSON <input id="machineProfile" type="file" accept=".json"></label>
+          <p id="profileStatus">Load a measured machine profile. The example is uncalibrated.</p>
+          <label>Position coordinates <select id="coordinateFrame"><option value="">Choose explicitly</option><option value="board">Registered board / camera coordinates</option><option value="machine">Captured machine / tip coordinates</option></select></label>
+          <label><input id="dryRun" type="checkbox" checked> Air run: safe height, no dispensing</label>
+          <p><label><input id="commissioned" type="checkbox"> This session: machine homed, board registration and both nozzle clearances checked; OpenPnP disconnected.</label></p>
+          <button id="previewPlan">Preview plan</button><button id="downloadPlan">Download G-code</button>
+          <button id="pausePlan">Pause after point</button><button id="resumePlan">Resume</button><button id="cancelPlan">Cancel after point</button>
+          <button id="downloadRun">Download run record</button>
+          <p>Pause and cancel finish the current point and retract to safe height. They are not emergency stops.</p>
+          <pre id="automationStatus" aria-live="polite">No plan reviewed.</pre>
+          <details><summary>Planned commands</summary><pre id="planPreview"></pre></details>
+        </section>
+
         <div class="settings-section">
           <div class="button-row">
             <button id="exportJob" class="goldenrod-button">Export Job</button>
-            <button id="runJob" class="goldenrod-button">Run Job</button>
+            <button id="runJob" class="goldenrod-button">Run reviewed plan</button>
           </div>
         </div>
       </div>
@@ -117,6 +129,7 @@
     </div>
 
     <div id="rightColumn">
+<p>Commission and measure registration in your established machine controller. Legacy jogging and automatic calibration are disabled until their motion assumptions are replaced. Disconnect that controller before connecting here.</p>
       <div class="video-feed">
         <canvas id="opencv-canvas"></canvas>
       </div>
@@ -199,11 +212,9 @@
     </div>
   </div>
 
-  <div id="footer"><img src="public/opulo-gold-alpha-tiny.png"></div>
 
   <div id="modal">
     <div class="flex">
-      <img src="public/lumen-icon.png">
       <button id="modal-close" class="btn-close">⨉</button>
     </div>
 

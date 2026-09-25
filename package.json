@@ -1,20 +1,20 @@
 {
-  "name": "lumen-paste",
+  "name": "paste-automation",
   "private": true,
   "version": "0.0.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "test": "node --test test/*.test.js",
+    "plan": "node automation/cli.js"
   },
   "devDependencies": {
-    "vite": "^5.0.0",
-    "vite-plugin-node-polyfills": "^0.23.0"
+    "vite": "^8.3.1"
   },
   "dependencies": {
     "@tracespace/parser": "^5.0.0-alpha.0",
-    "puppeteer": "^24.12.1",
     "transformation-matrix": "^3.0.0"
   }
 }

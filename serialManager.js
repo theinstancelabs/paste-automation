@@ -1,8 +1,11 @@
 export class serialManager {
-    constructor(modal) {
+    constructor(modal, { ackTimeoutMs = 5000, maxCommandMs = 120000 } = {}) {
+        if (![ackTimeoutMs, maxCommandMs].every(value => Number.isFinite(value) && value > 0)) {
+            throw new Error("Serial deadlines must be finite positive milliseconds.");
+        }
         this.encoder = new TextEncoder();
         this.decoder = new TextDecoder();
-        this.consoleDiv = document.getElementById("console");
+        this.consoleDiv = globalThis.document?.getElementById("console");
         this.port;
         this.shouldListen = true;
 
@@ -17,25 +20,26 @@ export class serialManager {
         this.okRespTimeout = false;
         this.timeoutID = undefined;
 
-        this.bootCommands = [
-            "G90",
-            "M260 A112 B1 S1",
-            "M260 A109",
-            "M260 B48",
-            "M260 B27",
-            "M260 S1",
-            "M260 A112 B2 S1",
-            "M260 A109",
-            "M260 B48",
-            "M260 B27",
-            "M260 S1",
-            "G0 F35000"
-        ];
+        this.ackTimeoutMs = ackTimeoutMs;
+        this.maxCommandMs = maxCommandMs;
+        this.sending = false;
+        this.fault = null;
+        this.pending = null;
+        this.reader = null;
+        this.listenTask = null;
+        this.disconnectHandler = () => {
+            if (!this.port?.readable || !this.port?.writable) {
+                this.fail(new Error("Serial device disconnected. Reconnect before sending."));
+            }
+        };
+
+        this.bootCommands = ["M115", "M114"];
 
     }
 
 
     async appendToConsole(message, direction){
+        if (!this.consoleDiv) return;
         let newConsoleEntry = document.createElement('p')
         let timestamp = new Date().toISOString();
         let dir = "";
@@ -47,7 +51,7 @@ export class serialManager {
         dir = "[RECE]"
         }
         
-        newConsoleEntry.innerHTML = dir + " - " + timestamp + " - " + message + '\n';
+        newConsoleEntry.textContent = dir + " - " + timestamp + " - " + message + '\n';
         this.consoleDiv.appendChild(newConsoleEntry)
         
         this.consoleDiv.scrollTop = this.consoleDiv.scrollHeight;
@@ -81,6 +85,9 @@ export class serialManager {
             return false
         }
 
+        if (this.sending) throw new Error("Cannot connect during a serial command batch.");
+        if (this.port) await this.disconnect();
+
         const usbVendorId = 0x0483;
         this.port = await navigator.serial.requestPort({ filters: [{ usbVendorId }] })    
         console.log("Port Selected.")
@@ -97,146 +104,155 @@ export class serialManager {
         console.log("Port Opened.")
         // const { clearToSend, dataCarrierDetect, dataSetReady, ringIndicator} = await this.port.getSignals()
         // console.log({ clearToSend, dataCarrierDetect, dataSetReady, ringIndicator})
-        this.listen()
-
-
-        document.querySelector("#connect").style.background = 'green';
-        document.querySelector("#connect").style.color = 'white';
-        document.querySelector("#connect").innerHTML = 'Connected'; 
-
-        //send boot commands
-        this.send(this.bootCommands)
-
-        this.send(["M150 P255 R255 U255 B255"]);
-
-        return true
+        this.shouldListen = true;
+        this.fault = null;
+        this.decoder = new TextDecoder();
+        this.clearBuffer();
+        this.clearInspectBuffer();
+        navigator.serial.addEventListener?.("disconnect", this.disconnectHandler);
+        this.listenTask = this.listen();
+        // Initialization must be serialized and acknowledged before reporting ready.
+        await this.send(this.bootCommands);
+        const button = document.querySelector("#connect");
+        if (button) {
+            button.style.background = 'green';
+            button.style.color = 'white';
+            button.textContent = 'Connected';
+        }
+        return true;
     }
 
-    // this needs to listen to marlin constantly
-    // it comes in randomly, so we have to filter by newlines an add
-    // to buffer based on the newlines
+    fail(error) {
+        this.fault ??= error;
+        this.pending?.reject(this.fault);
+    }
+
+    receiveLine(rawLine) {
+        const line = rawLine.trim();
+        if (!line) return;
+        this.receiveBuffer.push(line);
+        this.inspectBuffer.push(line);
+        // Keep long-running sessions bounded while preserving diagnostic replies.
+        if (this.receiveBuffer.length > 10000) this.receiveBuffer.shift();
+        if (this.inspectBuffer.length > 10000) this.inspectBuffer.shift();
+        this.appendToConsole(line, false);
+        if (/^start$/i.test(line)) {
+            this.fail(new Error("Firmware restarted; machine state is unknown. Reconnect before sending."));
+        } else if (/^(?:error\s*:|!!|resend\s*:|rs\s)|^echo:.*(?:unknown command|halted|kill\(\))/i.test(line)) {
+            this.fail(new Error(`Firmware rejected command: ${line}. Reconnect before sending.`));
+        } else if (/^ok(?:\s|$)/i.test(line)) {
+            this.pending?.resolve();
+        } else if (/^(?:echo:)?busy:\s*processing$/i.test(line)) {
+            this.pending?.refresh();
+        }
+    }
+
     async listen() {
-        while (this.port?.readable && this.shouldListen) {
-            console.log("Port is readable: Starting to listen.")
-            let metabuffer = ""
-            let consoleDiv = document.getElementById("console");
-            const reader = this.port.readable.getReader()
-            try {
-                while (this.shouldListen) {
-                    const { value, done } = await reader.read()
-                    if (done) {
-                        console.log("Closing reader.");
-                        break;
-                    }
-                    
-                    const decoded = this.decoder.decode(value)
-                    metabuffer = metabuffer.concat(decoded);
-
-                    while(metabuffer.indexOf("\n") != -1){
-                        let splitted = metabuffer.split('\n');
-
-                        this.receiveBuffer.push(splitted[0]);
-                        this.appendToConsole(splitted[0], false);
-
-                        this.inspectBuffer.push(splitted[0]);
-
-                        metabuffer = metabuffer.split('\n').slice(1).join('\n');
-
-                        
-                    }
+        let partial = "";
+        const reader = this.port.readable.getReader();
+        this.reader = reader;
+        try {
+            while (this.shouldListen) {
+                const { value, done } = await reader.read();
+                if (done) throw new Error("Serial device disconnected. Reconnect before sending.");
+                partial += this.decoder.decode(value, { stream: true });
+                let newline;
+                while ((newline = partial.indexOf("\n")) !== -1) {
+                    this.receiveLine(partial.slice(0, newline));
+                    partial = partial.slice(newline + 1);
                 }
-            } catch (error) {
-                console.error('Reading error.', error)
-            } finally {
-                reader.releaseLock()
+                if (partial.length > 65536) throw new Error("Serial response exceeds line limit.");
             }
+        } catch (error) {
+            this.fail(error);
+        } finally {
+            reader.releaseLock();
+            if (this.reader === reader) this.reader = null;
         }
     }
 
-    sleep(milliseconds) {
-        var start = new Date().getTime();
-        for (var i = 0; i < 1e7; i++) {
-            if ((new Date().getTime() - start) > milliseconds){
-            break;
-            }
-        }
-    }
-
-    async setOkRespTimeout(){
-        new Promise(resolve => {
-            this.timeoutID = setTimeout(() => {
-                console.log("timeout triggered");
-                this.okRespTimeout = true;
-                resolve();
-            }, 5000);
-        });
+    async disconnect() {
+        this.shouldListen = false;
+        this.fail(new Error("Serial device disconnected. Reconnect before sending."));
+        navigator.serial?.removeEventListener?.("disconnect", this.disconnectHandler);
+        await this.reader?.cancel();
+        await this.listenTask;
+        // A pending write may keep the stream locked; never pretend it closed.
+        await this.port?.close();
+        this.port = undefined;
     }
 
     async send(commandArray) {
-        console.log("sending: ", commandArray);
-
-        if (this.port?.writable) {
-        const writer = await this.port.writable.getWriter()
+        if (!Array.isArray(commandArray) || commandArray.some(command =>
+            typeof command !== "string" || !command.trim() || /[\r\n\0]/.test(command))) {
+            throw new Error("Commands must be an array of nonempty single-line strings.");
+        }
+        if (this.fault) throw this.fault;
+        if (this.sending) throw new Error("A serial command batch is already running.");
+        if (!this.port?.writable) throw new Error("Cannot write: connect the serial port first.");
+        this.sending = true;
+        let writer;
         try {
-            for (const element of commandArray) {
-                await writer.write(this.encoder.encode(element + "\n"))
-
-                this.setOkRespTimeout();
-
-                this.appendToConsole(element, true);
-
-                // check that we got an ok back
-                this.clearBuffer()
-
-                while(true){
-                    if(this.okRespTimeout) break;
-
-                    let firstElement = this.receiveBuffer.shift();
-
-                    if(firstElement == 'ok'){
-                        clearTimeout(this.timeoutID);
-                        break;
-                    }
-
-                    if(firstElement = "echo:busy: processing"){
-                        //do something to extend timeout
-                        clearTimeout(this.timeoutID)
-                        this.setOkRespTimeout();
-                    }
-
-                    await new Promise(resolve => setTimeout(resolve, 50)); // Small delay to avoid busy-waiting
-
+            writer = this.port.writable.getWriter();
+            for (const command of commandArray) {
+                if (this.fault) throw this.fault;
+                // Arm the acknowledgement before write: firmware can answer immediately.
+                this.clearBuffer();
+                let idleTimer, totalTimer;
+                let settled = false;
+                let rejectFailure;
+                const failure = new Promise((_, reject) => { rejectFailure = reject; });
+                const response = new Promise((resolve, reject) => {
+                    const timeout = () => {
+                        this.okRespTimeout = true;
+                        this.fail(new Error(`Timed out waiting for acknowledgement: ${command}. Reconnect before sending.`));
+                    };
+                    const finish = callback => value => {
+                        if (settled) return;
+                        settled = true;
+                        clearTimeout(idleTimer);
+                        // Keep the hard deadline active until writer.write also completes.
+                        callback(value);
+                    };
+                    const refresh = () => {
+                        if (!settled) {
+                            clearTimeout(idleTimer);
+                            idleTimer = setTimeout(timeout, this.ackTimeoutMs);
+                        }
+                    };
+                    this.pending = {
+                        resolve: finish(resolve),
+                        reject: error => { finish(reject)(error); rejectFailure(error); },
+                        refresh
+                    };
+                    refresh();
+                });
+                const deadline = new Promise((_, reject) => {
+                    totalTimer = setTimeout(() => {
+                        const error = new Error(`Command deadline exceeded: ${command}. Reconnect before sending.`);
+                        this.fail(error);
+                        reject(error);
+                    }, this.maxCommandMs);
+                });
+                try {
+                    this.okRespTimeout = false;
+                    this.appendToConsole(command, true);
+                    await Promise.race([
+                        Promise.all([writer.write(this.encoder.encode(command + "\n")), response]),
+                        deadline, failure
+                    ]);
+                    if (this.fault) throw this.fault;
+                } finally {
+                    clearTimeout(idleTimer);
+                    clearTimeout(totalTimer);
+                    this.pending = null;
                 }
-
-                this.okRespTimeout = false;
-
-
-                // while(true){
-                //     console.log(this.okRespTimeout);
-                //     let resp = this.receiveBuffer;
-                //     for(const element of resp){
-                //         console.log(element)
-                //     }
-                //     console.log("printing response:");
-                //     console.log(resp);
-                //     console.log(resp[0])
-
-                //     if(this.okRespTimeout == true){
-                //         console.log("we're breaking because of timeout");
-                //         break;
-                //     }
-
-                // }
-
-                
-
             }
+        } catch (error) {
+            this.fail(error);
+            throw error;
         } finally {
-            writer.releaseLock()
-        }
-        }
-        else{
-            this.modal.show("Cannot Write", "Cannot write to port. Have you connected?");
+            try { writer?.releaseLock(); } finally { this.sending = false; }
         }
     }
 
@@ -249,7 +265,7 @@ export class serialManager {
         //making sure we reset the index back to 0
         this.sentCommandBufferIndex = 0;
         
-        this.send(command);
+        return this.send(command);
 
     }
 

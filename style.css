@@ -1221,3 +1221,7 @@ select:focus {
   color: #000000;
   background-color: #ffffff;
 }
+#automationPanel { padding: 16px; border: 2px solid #b48a37; }
+#automationPanel label { display: block; margin: 12px 0; }
+#automationPanel pre { white-space: pre-wrap; overflow-wrap: anywhere; max-height: 260px; overflow: auto; }
+#automationPanel button { margin: 4px; }

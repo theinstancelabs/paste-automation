@@ -1,0 +1,17 @@
+{
+  "description": "PLACEHOLDERS ONLY: measure bounds, clearances, feeds and second-nozzle offsets on your machine before marking calibrated true. Not a usable machine profile.",
+  "calibrated": false,
+  "xMin": 0,
+  "xMax": 1,
+  "yMin": 0,
+  "yMax": 1,
+  "zMin": 0,
+  "zMax": 1,
+  "safeZ": 0,
+  "clearanceDirection": "decreasing",
+  "travelFeed": 1,
+  "zFeed": 1,
+  "dispenseFeed": 1,
+  "tipXoffset": 0,
+  "tipYoffset": 0
+}

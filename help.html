@@ -7,33 +7,31 @@
     @import url('https://fonts.googleapis.com/css2?family=Figtree:ital,wght@0,300..900;1,300..900&display=swap');
   </style>
   <link href="https://fonts.googleapis.com/css2?family=Figtree:ital,wght@0,300..900;1,300..900&display=swap" rel="stylesheet">
-  <link rel="icon" type="image/svg+xml" href="/vite.svg" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <link rel="icon" type="image/png" sizes="16x16" href="public/lumen-icon.png">
-  <link rel="shortcut icon" type="image/x-icon" href="public/lumen-icon.png">
   
-  <script src="opencv.js"></script>
-  <script type="module" src="main.js"></script>
+
+
   
-  <title>LumenPnP Pasting Utility</title>
+  <title>Paste Automation</title>
 </head>
 
 <body>
+<p><strong>Legacy workflow reference.</strong> Use the automation profile, preview and commissioning procedure in the repository README before running a job. Calibration helpers retain upstream assumptions.</p>
   <div id="header-pill">
-    <h1>LumenPnP Pasting Utility - Instructions</h1>
+    <h1>Paste Automation - Instructions</h1>
   </div>
 
   <div id="main-app">
     <div id="leftColumn">
 
     <h2>Introduction</h2>
-    <p>This utility is designed to support automatic paste dispensing jobs on the LumenPnP with the Paste Extruder Toolhead. It supports running jobs based on a Gerber export from your ECAD software, or by manually capturing positions with the toolhead for other applications. Gerber-based jobs can even facilitate machine vision based fiducial calibration. Jobs can be saved and re-imported later, with all calibration data included. To use this utility, you will need:</p>
+    <p>This utility is designed to support automatic paste dispensing jobs on the machine with the Paste Extruder Toolhead. It supports running jobs based on a Gerber export from your ECAD software, or by manually capturing positions with the toolhead for other applications. Gerber-based jobs can even facilitate machine vision based fiducial calibration. Jobs can be saved and re-imported later, with all calibration data included. To use this utility, you will need:</p>
     <ul>
-      <li><a href="https://www.opulo.io/products/lumenpnp">A LumenPnP</a></li>
+      <li><a href="https://www.opulo.io/products/lumenpnp">A machine</a></li>
       <li><a href="https://www.opulo.io/products/paste-extruder">A Paste Extruder Toolhead</a></li>
       <li>The paste you'd like to dispense (we strongly recommend <a href="https://www.opulo.io/products/gc50-solder-paste">GC50</a> for solder paste applications)</li>
       <li>An appropriately sized luer lock tip (we recommend <a href="https://www.mcmaster.com/75165A125/">a 22 gauge tip</a> for most PCB applications)</li>
-      <li>The PCB (or other substrate) you'd like to apply paste to, attached to the LumenPnP's staging plates</li>
+      <li>The PCB (or other substrate) you'd like to apply paste to, attached to the machine's staging plates</li>
       <li>If loading a PCB job:
         <ul>
           <li>The Paste and Mask layer gerber files for the side of the PCB you'd like to paste. This has been tested with KiCAD exports only thus far.</li>
@@ -42,12 +40,12 @@
       </li>
     </ul>
 
-    <h2>Connecting to the LumenPnP</h2>
+    <h2>Connecting to the machine</h2>
     <ol>
-      <li>Make sure your LumenPnP is connected to your computer via the top camera cable, and the USB data cable from the motherboard.</li>
-      <li>Go to paste.opulo.io</li>
+      <li>Make sure your machine is connected to your computer via the top camera cable, and the USB data cable from the motherboard.</li>
+      <li>Start this local application</li>
       <li>From the drop-down in the top right, select the Top Camera and click "Connect". If you don't see the top camera, reconnect the camera and then reload the page.</li>
-      <li>Select the LumenPnP serial port in the pop up window and click "Connect".</li>
+      <li>Select the machine serial port in the pop up window and click "Connect".</li>
       <li>You should now see the camera feed in the UI. </li>
       <li>With the Z gantries level, click the Home X, Home Y, and Home Z buttons.</li>
       <li>Try jogging the machine around using the jog buttons and distance slider.</li>
@@ -113,11 +111,9 @@
     </div>
   </div>
 
-  <div id="footer"><img src="public/opulo-gold-alpha-tiny.png"></div>
 
   <div id="modal">
     <div class="flex">
-      <img src="public/lumen-icon.png">
       <button id="modal-close" class="btn-close">⨉</button>
     </div>
 

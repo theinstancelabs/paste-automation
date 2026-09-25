@@ -1,5 +1,21 @@
+import { planJob } from './automation/planner.js';
 import {parse} from '@tracespace/parser'
-import {fromTriangles, applyToPoint, applyToPoints} from 'transformation-matrix';
+import {fromTriangles, applyToPoint} from 'transformation-matrix';
+
+const MATCH_TOLERANCE_MM = 0.001;
+
+function validateTriangle(points, label) {
+    if (!Array.isArray(points) || points.length !== 3 || points.some(p =>
+        !Array.isArray(p) || p.length !== 2 || !p.every(Number.isFinite))) {
+        throw new Error(`${label} requires three finite XY fiducials`);
+    }
+    const [a, b, c] = points;
+    const cross = (b[0] - a[0]) * (c[1] - a[1]) - (b[1] - a[1]) * (c[0] - a[0]);
+    const scale = Math.max(...points.flatMap(p => points.map(q => Math.hypot(p[0] - q[0], p[1] - q[1]))));
+    if (!Number.isFinite(cross) || Math.abs(cross) <= Math.max(1e-9, scale * scale * 1e-9)) {
+        throw new Error(`${label} requires distinct, noncollinear fiducials`);
+    }
+}
 
 class Point {
     constructor(x, y, z) {
@@ -43,6 +59,7 @@ class Fiducial extends Point {
 export class Job {
     constructor(lumen, toast) {
 
+        this.coordinateFrame = null;
         this.placements = [];
         this.fiducials = [];
 
@@ -92,8 +109,12 @@ export class Job {
             maxY = Math.max(maxY, point.y);
         }
 
+        if (!Number.isFinite(minX)) {
+            ctx.clearRect(0, 0, this.jobCanvas.width, this.jobCanvas.height);
+            return;
+        }
         // Add a small margin to the bounds
-        const margin = Math.max(maxX - minX, maxY - minY) * 0.1; // 10% margin
+        const margin = Math.max(maxX - minX, maxY - minY, 1) * 0.1; // 10% margin
         minX -= margin;
         minY -= margin;
         maxX += margin;
@@ -170,227 +191,100 @@ export class Job {
 
     }
 
-    async parseGerber(fileInputId){
-        const fileInput = document.getElementById(fileInputId);
-        if (!fileInput || !fileInput.files[0]) {
-            console.error('No file selected');
-            return [];
+    async parseGerber(fileInputId) {
+        const file = document.getElementById(fileInputId)?.files?.[0];
+        if (!file) throw new Error(`Select a Gerber file for ${fileInputId}`);
+        const tree = parse(await file.text());
+        if (tree.filetype !== 'gerber') throw new Error('Expected a Gerber file');
+        let format, units, suppression;
+        let x, y;
+        const positions = [];
+        const coordinate = raw => {
+            if (!format || !units) throw new Error('Gerber must declare absolute coordinate format and units');
+            const text = String(raw);
+            if (!/^[+-]?(?:\d+(?:\.\d*)?|\.\d+)$/.test(text)) throw new Error('Invalid Gerber coordinate');
+            const sign = text.startsWith('-') ? -1 : 1;
+            let digits = text.replace(/^[+-]/, '');
+            let value;
+            if (digits.includes('.')) value = Number(text);
+            else {
+                if (suppression === 'trailing') digits = digits.padEnd(format[0] + format[1], '0');
+                value = sign * Number(digits) / 10 ** format[1];
+            }
+            value *= units;
+            if (!Number.isFinite(value)) throw new Error('Nonfinite Gerber coordinate');
+            return value;
+        };
+        for (const child of tree.children) {
+            if (child.type === 'units') {
+                if (!['mm', 'in'].includes(child.units)) throw new Error('Unsupported Gerber units');
+                units = child.units === 'in' ? 25.4 : 1;
+            } else if (child.type === 'coordinateFormat') {
+                if (child.mode !== 'absolute' || !Array.isArray(child.format) ||
+                    child.format.length !== 2 || !child.format.every(n => Number.isInteger(n) && n >= 0)) {
+                    throw new Error('Gerber requires an explicit absolute coordinate format');
+                }
+                format = child.format;
+                suppression = child.zeroSuppression;
+            } else if (child.type === 'graphic') {
+                // D02 moves (and mask outlines) also establish modal X/Y references.
+                if (child.coordinates.x !== undefined) x = coordinate(child.coordinates.x);
+                if (child.coordinates.y !== undefined) y = coordinate(child.coordinates.y);
+                if (child.graphic === 'shape') {
+                    if (![x, y].every(Number.isFinite)) throw new Error('Gerber flash lacks a reference X or Y');
+                    positions.push({ x, y });
+                } else if (child.graphic !== 'move' && fileInputId === 'pasteGerberFile') {
+                    throw new Error('Paste Gerber paths/regions are unsupported; export flashed pad apertures');
+                }
+            }
         }
-
-        const gerberData = await fileInput.files[0].text();
-
-        const syntaxTree = parse(gerberData)
-
-        console.log(syntaxTree)
-
-        let positions = [];
-        let minX, minY, maxX, maxY;
-
-        // Divides by this factor to convert integer back to float digits
-        // 1000000 is the default (6 dec places)
-        let decimal_scalefactor = 1000000;
-        // Multiplies by this factor to convert units
-        // Defaults to 1 (mm)
-        let unit_scalefactor = 1;
-
-        let last_x = NaN;
-        let last_y = NaN;
-        // iterate through the syntax tree children looking for relevant items
-        // save the x and y values for elements of type 'graphic'
-        // set the unit conversion for elements of type 'units'
-        // set the decimal format for elements of type 'coordinateFormat'
-        for (const child of syntaxTree.children) {
-          if (child.type == 'units'){
-            if (child.units){
-              if (child.units === "mm"){
-                unit_scalefactor = 1; // Redundant
-              }else if (child.units === "in"){
-                console.log("Converting from inches");
-                // Inches to mm
-                unit_scalefactor = 25.4;
-              }else{
-                console.error("Unknown unit format: ", child.units);
-              }
-            }
-          }else if (child.type === 'coordinateFormat'){
-            if (child.format){
-              let dec_count = child.format[1];
-              console.log("Got coordinate format command, decimal places: ", dec_count);
-              decimal_scalefactor = Math.pow(10, dec_count);
-            }else{
-              console.log("Invalid coordinate");
-            }
-            if (child.mode != "absolute"){
-              alert("Invalid Gerber coordinate format: " + child.mode + "\nTry re-exporting with absolute coordinates");
-            }
-          }else if (child.type === 'graphic' && child.graphic === 'shape') {
-            let shape_x = child.coordinates.x;
-            let shape_y = child.coordinates.y;
-
-            // Validate the X and Y coordinates and use the last valid reference coordinate
-            // if one isn't available.
-            if (Number.isNaN(shape_x) || shape_x === undefined){
-              if (!Number.isNaN(last_x)){
-                shape_x = last_x;
-              }else{
-                console.error("No reference X for this point: ", child);
-              }
-            }
-
-            if (Number.isNaN(shape_y) || shape_y === undefined){
-              if (!Number.isNaN(last_y)){
-                shape_y = last_y;
-              }else{
-                console.error("No reference Y for this point: ", child);
-              }
-            }
-
-            positions.push({
-                x: shape_x/decimal_scalefactor*unit_scalefactor,
-                y: shape_y/decimal_scalefactor*unit_scalefactor
-            });
-
-            if (minX === undefined || child.coordinates.x/decimal_scalefactor*unit_scalefactor < minX) {
-              minX = child.coordinates.x/decimal_scalefactor*unit_scalefactor;
-            }
-            if (minY === undefined || child.coordinates.y/decimal_scalefactor*unit_scalefactor < minY) {
-              minY = child.coordinates.y/decimal_scalefactor*unit_scalefactor;
-            }
-            if (maxX === undefined || child.coordinates.x/decimal_scalefactor*unit_scalefactor > maxX) {
-              maxX = child.coordinates.x/decimal_scalefactor*unit_scalefactor;
-            }
-            if (maxY === undefined || child.coordinates.y/decimal_scalefactor*unit_scalefactor > maxY) {
-              maxY = child.coordinates.y/decimal_scalefactor*unit_scalefactor;
-            }
-
-            // Save the last valid X or Y coordinate (for Gerbers that rely on the last provided location)
-            if ( !(Number.isNaN(child.coordinates.x) || child.coordinates.x === undefined)){
-              last_x = child.coordinates.x;
-            }
-
-            if ( !(Number.isNaN(child.coordinates.y) || child.coordinates.y === undefined)){
-              last_y = child.coordinates.y;
-            }
-          }
-        }
-
-        console.log(positions);
-
+        if (!positions.length) throw new Error('Gerber contains no flashed pads');
         return positions;
     }
 
-
-    // ok this bad boi does a lot of stuff.
-
-    // then we figure out which are paste, and which are mask only (three of which are fids)
-    // then we have them click on fid1 on the canvas, and then have them jog to it
-    // then repeat with the other two
-    // then we have them move the tip to the z surface of the board, then we save that as z position for every placement.
-
-    async loadJobFromGerbers(){
-        // first we pull in the gerber points, scaled the hell down to actual mm.
-        const pastePoints = await this.parseGerber('pasteGerberFile');
-        let maskPoints = await this.parseGerber('maskGerberFile');
-
-        console.log("pastePoints: ", pastePoints)
-        console.log("maskPoints: ", maskPoints)
-
-        // filter out potential fid placements from mask
-        maskPoints = maskPoints.filter(element => !pastePoints.includes(element));
-
-        let onlyInMask = [];
-
-        for(const mask of maskPoints){
-            if(!pastePoints.includes(mask)){
-                onlyInMask.push(mask);
+    async loadJobFromGerbers() {
+        if (this.loadingGerbers) throw new Error('Gerber import is already in progress');
+        this.loadingGerbers = true;
+        let clickHandler;
+        try {
+            const pastePoints = await this.parseGerber('pasteGerberFile');
+            const maskPoints = await this.parseGerber('maskGerberFile');
+            const onlyInMask = maskPoints.filter(mask => !pastePoints.some(paste =>
+                Math.hypot(mask.x - paste.x, mask.y - paste.y) <= MATCH_TOLERANCE_MM));
+            this.coordinateFrame = null;
+            this.clickedFidBuffer = [];
+            this.placements = pastePoints.map(p => new Point(p.x, p.y, 31.5));
+            this.fiducials = onlyInMask.map(p => new Point(p.x, p.y, 31.5));
+            this.loadJobIntoPositionList();
+            if (this.fiducials.length < 3) throw new Error('Need at least three mask-only fiducials');
+            this.drawJobToCanvas();
+            clickHandler = event => {
+                const rect = this.jobCanvas.getBoundingClientRect();
+                const x = (event.clientX - rect.left) * this.jobCanvas.width / rect.width;
+                const y = this.jobCanvas.height - (event.clientY - rect.top) * this.jobCanvas.height / rect.height;
+                const closest = this.returnClosestFidFromClickCoordinates(x, y);
+                if (closest) this.toast.receivedInput = closest;
+            };
+            this.jobCanvas.addEventListener('click', clickHandler);
+            const selected = [];
+            for (let i = 0; i < 3; i++) {
+                this.toast.receivedInput = undefined;
+                const fid = await this.toast.show(`Please click on FID${i + 1} in the display.`);
+                if (!fid) throw new Error('Fiducial selection cancelled');
+                if (!this.fiducials.includes(fid) || selected.includes(fid)) {
+                    throw new Error('Select three distinct fiducials');
+                }
+                selected.push(fid);
             }
+            validateTriangle(selected.map(f => [f.x, f.y]), 'Board registration');
+            this.fiducials = selected;
+            this.loadJobIntoPositionList();
+            this.drawJobToCanvas();
+        } finally {
+            if (clickHandler) this.jobCanvas.removeEventListener('click', clickHandler);
+            this.toast.receivedInput = undefined;
+            this.loadingGerbers = false;
         }
-
-        console.log("onlyInMask: ", onlyInMask)
-
-
-        // Store points in this.placements
-        for(const pointData of pastePoints){
-            const newPoint = new Point(pointData.x, pointData.y, 31.5);
-            this.placements.push(newPoint);
-        }
-
-        // store all POTENTIAL fids in this.fiducials
-        for(const maskData of onlyInMask){
-            const newPoint = new Point(maskData.x, maskData.y, 31.5);
-            this.fiducials.push(newPoint);
-        }
-
-
-        this.drawJobToCanvas();
-
-        // set up event listener for first fid selection
-        // which just puts the closest point object directly into this.toast.receivedInput
-
-        // we need a named function for removing the event listener later
-
-        function sendClickToToast(event){
-
-
-            const rect = this.jobCanvas.getBoundingClientRect();
-
-            const x = event.clientX - rect.left;
-            const y = this.jobCanvas.height - (event.clientY - rect.top); // Flip Y coordinate
-
-            // console.log("event.clientX: ", event.clientX)
-            // console.log("event.clientY: ", event.clientY)
-
-            // console.log("rect.left: ", rect.left)
-            // console.log("rect.top: ", rect.top)
-
-            // console.log("clicked coordinates: ", x, y)
-
-            let closestClick = this.returnClosestFidFromClickCoordinates(x, y);
-
-            if (closestClick !== null){
-                this.toast.receivedInput = closestClick
-                console.log("her'es the point: ", this.toast.receivedInput)
-
-                const ctx = this.jobCanvas.getContext("2d");
-                ctx.fillStyle = "green";
-                ctx.fillRect(closestClick.canvasX - 4, this.jobCanvas.height - closestClick.canvasY - 4, 8, 8);
-
-            }
-            else {
-                console.log("no matching click")
-            }
-        }
-
-        console.log("setting event listener");
-
-        this.jobCanvas.addEventListener("click", sendClickToToast.bind(this));
-
-        // show the first toast asking them to click
-        const fid1_object = await this.toast.show("Please click on FID1 in the display.");
-
-        // show the second toast asking them to click
-        const fid2_object = await this.toast.show("Please click on FID2 in the display.");
-
-        // show the third toast asking them to click
-        const fid3_object = await this.toast.show("Please click on FID3 in the display.");
-
-        // cancel event listener for fid selection
-        this.jobCanvas.removeEventListener('click', sendClickToToast)
-
-        // delete all fids from this.fiducials other than the ones we just got
-        this.fiducials = [fid1_object, fid2_object, fid3_object];
-
-        console.log("fiducials: ", this.fiducials)
-        console.log("placements: ", this.placements)
-
-        //populate the position list
-        this.loadJobIntoPositionList();
-        // make some buttons red so that the user knows it's NOT ready to run a job yet
-
-        this.drawJobToCanvas();
-
-
-
     }
 
     async findBoardRoughPosition(){
@@ -636,33 +530,57 @@ export class Job {
 
             const data = JSON.parse(jsonString);
 
-            this.placements = (data.placements || []).map(p => {
+            if (!data || typeof data !== 'object' || Array.isArray(data)) throw new Error('Job must be an object');
+            for (const name of ['placements', 'fiducials']) {
+                if (!Array.isArray(data[name] ?? [])) throw new Error(`${name} must be an array`);
+                for (const point of data[name] ?? []) {
+                    if (!point || ![point.x, point.y, point.z].every(Number.isFinite)) {
+                        throw new Error(`${name} require finite XYZ coordinates`);
+                    }
+                    for (const key of ['calX', 'calY', 'searchX', 'searchY']) {
+                        if (point[key] != null && !Number.isFinite(point[key])) throw new Error(`${key} must be finite`);
+                    }
+                    if ((point.calX == null) !== (point.calY == null)) throw new Error('Calibrated XY must be a pair');
+                }
+            }
+            for (const name of ['dispenseDegrees', 'retractionDegrees', 'dwellMilliseconds']) {
+                if (data[name] != null && (!Number.isFinite(data[name]) || data[name] < 0)) {
+                    throw new Error(`${name} must be finite and nonnegative`);
+                }
+            }
+            for (const name of ['tipXoffset', 'tipYoffset']) {
+                if (data[name] !== undefined && !Number.isFinite(data[name])) throw new Error(`${name} must be finite`);
+            }
+            for (const name of ['preGcode', 'postGcode']) {
+                if (data[name] != null && typeof data[name] !== 'string') throw new Error(`${name} must be text`);
+            }
+            if (data.invertDispense != null && typeof data.invertDispense !== 'boolean') throw new Error('invertDispense must be boolean');
+            if (data.coordinateFrame != null && !['machine', 'board'].includes(data.coordinateFrame)) throw new Error('Invalid coordinate frame');
+
+            this.placements = (data.placements ?? []).map(p => {
                 const point = new Point(p.x, p.y, p.z);
-                point.calX = p.calX;
-                point.calY = p.calY;
-                point.canvasX = p.canvasX;
-                point.canvasY = p.canvasY;
+                point.calX = p.calX ?? null;
+                point.calY = p.calY ?? null;
                 return point;
             });
-            this.fiducials = (data.fiducials || []).map(f => {
+            this.fiducials = (data.fiducials ?? []).map(f => {
                 const fid = new Fiducial(f.x, f.y, f.z, f.searchX, f.searchY);
-                fid.calX = f.calX;
-                fid.calY = f.calY;
-                fid.canvasX = f.canvasX;
-                fid.canvasY = f.canvasY;
+                fid.calX = f.calX ?? null;
+                fid.calY = f.calY ?? null;
                 return fid;
             });
-
-            this.dispenseDegrees = data.dispenseDegrees || 30;
-            this.retractionDegrees = data.retractionDegrees || 1;
-            this.dwellMilliseconds = data.dwellMilliseconds || 100;
-            this.preGcode = data.preGcode || "";
-            this.postGcode = data.postGcode || "";
-            this.invertDispense = data.invertDispense || false;
-
-            // Set tip offsets if present
-            if (typeof data.tipXoffset !== 'undefined') this.lumen.tipXoffset = data.tipXoffset;
-            if (typeof data.tipYoffset !== 'undefined') this.lumen.tipYoffset = data.tipYoffset;
+            // Saved registration is historical; the automation UI must explicitly
+            // establish the current session's machine frame before planning motion.
+            this.coordinateFrame = null;
+            this.clickedFidBuffer = [];
+            this.dispenseDegrees = data.dispenseDegrees ?? 30;
+            this.retractionDegrees = data.retractionDegrees ?? 1;
+            this.dwellMilliseconds = data.dwellMilliseconds ?? 100;
+            this.preGcode = data.preGcode ?? '';
+            this.postGcode = data.postGcode ?? '';
+            this.invertDispense = data.invertDispense ?? false;
+            if (data.tipXoffset !== undefined) this.lumen.tipXoffset = data.tipXoffset;
+            if (data.tipYoffset !== undefined) this.lumen.tipYoffset = data.tipYoffset;
 
             // ui update
             const jobDispenseDeg = document.getElementById('jobDispenseDeg');
@@ -810,109 +728,18 @@ export class Job {
 
     // generates array of commands to send
     // in format serial.send(commands)
-    slice(){
-        const commands = [];
-
-        // add pre-gcode commands
-        if (this.preGcode && this.preGcode.trim()) {
-            const preCommands = this.preGcode.split('\n')
-                .map(line => line.trim())
-                .filter(line => line.length > 0);
-            commands.push(...preCommands);
-        }
-
-        commands.push(
-            "G90",          // set to absolute mode
-            "G92 B0",        // reset b axis to 0
-            "G0 Z31.5"      // make sure we're clear of the board
-        );
-
-        let currentB = 0;
-
-        console.log(this.positions);
-
-        //cast to floats
-        const dispenseDeg = parseFloat(this.dispenseDegrees);
-        const retractionDeg = parseFloat(this.retractionDegrees);
-        const dwellMs = parseFloat(this.dwellMilliseconds);
-
-        for(const point of this.placements) {
-
-            let dispenseAbsPos = currentB - dispenseDeg;
-            let retractionAbsPos = dispenseAbsPos + retractionDeg;
-
-            // Invert B-axis direction if invertDispense is enabled
-            if (this.invertDispense) {
-                dispenseAbsPos = currentB + dispenseDeg;
-                retractionAbsPos = dispenseAbsPos - retractionDeg;
-            }
-
-            let x = point.x;
-            let y = point.y;
-
-            if(point.calX != null){
-                x = point.calX;
-            }
-
-            if(point.calY != null){
-                y = point.calY;
-            }
-
-
-            commands.push(
-            `G0 X${x + this.lumen.tipXoffset} Y${y + this.lumen.tipYoffset}`,                 // Move over
-            `G0 Z${point.z}`,                       // Move z down
-            `G0 B${dispenseAbsPos}`,          // Extrude paste
-            `G0 B${retractionAbsPos}`,        // Retract a small amount
-            `G4 P${dwellMs}`,                 // Dwell and wait for paste to actually extrude
-            "G0 Z31.5",                       // Move safe z
-            );
-
-            currentB = retractionAbsPos;
-        }
-
-        commands.push("G0 X5 Y5");
-
-        // add post-gcode commands
-        if (this.postGcode && this.postGcode.trim()) {
-            const postCommands = this.postGcode.split('\n')
-                .map(line => line.trim())
-                .filter(line => line.length > 0);
-            commands.push(...postCommands);
-        }
-
-        return commands;
-
+    slice(profile, options = {}) {
+        return planJob(JSON.parse(this.export()), profile, options).commands;
     }
 
-    // slices and executes a job
-    async run(){
-
-        let commands = this.slice()
-
-        this.toast.show("Running job. Close this to cancel.");
-
-        for(const command of commands){
-
-            console.log(this.toast.receivedInput)
-
-            if(this.toast.toastObject.style.display == "none"){
-                await this.lumen.serial.send(["G0 Z31.5"]);
-                await this.lumen.serial.send(["G0 X5 Y5"]);
-                return;
-            }
-
-            await this.lumen.serial.send([command]);
-
-        }
-
-        this.toast.receivedInput = false;
-
+    async run() {
+        throw new Error('Use the reviewed automation plan and runner');
     }
 
 
     export() {
         const data = {
+            coordinateFrame: this.coordinateFrame,
             placements: this.placements.map(p => ({
                 x: p.x,
                 y: p.y,
@@ -948,24 +775,18 @@ export class Job {
     // performs a linear transformation on all placement points based on three fiducial points
     // realFids should be an array of three [x,y] coordinates representing where the fiducials actually are
     transformPlacements(realFids) {
-        // Get the original fiducial positions from our job
-        const origFids = [
-            [this.fiducials[0].x, this.fiducials[0].y],
-            [this.fiducials[1].x, this.fiducials[1].y],
-            [this.fiducials[2].x, this.fiducials[2].y]
-        ]
-
-        const matrix = fromTriangles(origFids, realFids);
-
-        for (let point of this.placements) {
-
-            let transformedPoint = applyToPoint(matrix, [point.x, point.y])
-
-            point.calX = transformedPoint[0];
-            point.calY = transformedPoint[1];
-
+        const origFids = this.fiducials.map(f => [f.x, f.y]);
+        validateTriangle(origFids, 'Source registration');
+        validateTriangle(realFids, 'Machine registration');
+        if (this.placements.some(p => ![p.x, p.y].every(Number.isFinite))) {
+            throw new Error('Placements require finite XY coordinates');
         }
-
+        const matrix = fromTriangles(origFids, realFids);
+        const transformed = this.placements.map(point => applyToPoint(matrix, [point.x, point.y]));
+        if (transformed.some(point => !point.every(Number.isFinite))) throw new Error('Invalid registration transform');
+        this.placements.forEach((point, i) => {
+            [point.calX, point.calY] = transformed[i];
+        });
     }
 
 }
