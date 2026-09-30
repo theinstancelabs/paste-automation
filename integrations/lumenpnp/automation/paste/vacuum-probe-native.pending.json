@@ -1,0 +1,124 @@
+{
+  "description": "Unusable staged N1 VAC1 probe request. DISABLED adapter only. No valid request, route, activation or physical authorization is provided.",
+  "schema": 1,
+  "scope": "native-N1-vacuum-surface-probe",
+  "id": null,
+  "createdMs": null,
+  "jvmStartMs": null,
+  "operator": null,
+  "liveConfigurationSha256": null,
+  "targetSurfaceIdentity": null,
+  "expectedLeftTipId": null,
+  "reviewRecord": null,
+  "speedFraction": 0.05,
+  "speedOverPrecision": true,
+  "operatorVerifiedEmptyFreeAirBaseline": false,
+  "operatorVerifiedProbeTarget": false,
+  "operatorVerifiedJointEnvelope": false,
+  "bothHeadsClearAlongEnvelope": false,
+  "motionAreaClear": false,
+  "noHeldPartsObserved": false,
+  "n2Quarantined": false,
+  "expectedRaw": {
+    "X": null,
+    "Y": null,
+    "Z": null,
+    "A": null,
+    "B": null
+  },
+  "expectedDriver": {
+    "X": null,
+    "Y": null,
+    "Z": null,
+    "A": null,
+    "B": null
+  },
+  "expectedNativePoses": {
+    "N1": {
+      "x": null,
+      "y": null,
+      "z": null,
+      "rotation": null
+    },
+    "N2": {
+      "x": null,
+      "y": null,
+      "z": null,
+      "rotation": null
+    },
+    "top": {
+      "x": null,
+      "y": null,
+      "z": null,
+      "rotation": null
+    },
+    "bottom": {
+      "x": null,
+      "y": null,
+      "z": null,
+      "rotation": null
+    }
+  },
+  "stationaryEvidence": {
+    "path": null,
+    "sha256": null,
+    "capturedMs": null
+  },
+  "targetEvidence": {
+    "path": null,
+    "sha256": null,
+    "capturedMs": null
+  },
+  "jointEnvelopeEvidence": {
+    "path": null,
+    "sha256": null,
+    "capturedMs": null
+  },
+  "baselineContractEvidence": {
+    "path": "/home/lumen/lumenpnp/automation/evidence/paste-vacuum-baseline-b1398ea4-e5c6-401c-8b4c-4ba7d923c823/report.json",
+    "sha256": "64a90301c841b9831d591411268c408ef2f0f0a3e41c4ea178274c65032961ff",
+    "reviewedMs": 1790763110000
+  },
+  "barrierEvidence": {
+    "path": null,
+    "sha256": null
+  },
+  "jointInterval": {
+    "minRawZ": null,
+    "maxRawZ": null,
+    "reviewedForCurrentPose": false,
+    "reviewRecord": null
+  },
+  "nativeZConfiguration": {
+    "softLowEnabled": null,
+    "softLowMm": null,
+    "softHighEnabled": null,
+    "softHighMm": null,
+    "safeLowEnabled": null,
+    "safeLowMm": null,
+    "safeHighEnabled": null,
+    "safeHighMm": null
+  },
+  "contract": {
+    "responseDirection": null,
+    "startZmm": null,
+    "floorZmm": null,
+    "maxDescentMm": null,
+    "stepMm": 0.05,
+    "baselineSamples": 8,
+    "baselineTolerance": 1,
+    "noiseFloor": 1,
+    "candidateMinDelta": 4,
+    "samplesToConfirm": 2,
+    "baselineIntervalMinMs": 100,
+    "baselineIntervalMaxMs": 1000,
+    "sampleIntervalMinMs": 100,
+    "sampleIntervalMaxMs": 1000,
+    "maxDurationMs": null,
+    "offBaselineSamples": 3,
+    "offBaselineTolerance": 1,
+    "expectedEmptyMean": 232.25,
+    "expectedEmptyTolerance": 1.5,
+    "minimumPumpResponseDelta": 10
+  }
+}
