@@ -46,8 +46,8 @@
       "sourceRoot": "/home/lumen/lumenpnp",
       "sourcePath": "automation/paste/README.md",
       "destination": "integrations/lumenpnp/automation/paste/README.md",
-      "sha256": "f86f35a101a5da177699fb1777259942b42f9312028c3d0f00b33d424930bdc4",
-      "bytes": 13156
+      "sha256": "3ff2b4badb137a6e2e2908eb43ffaa952e1088c61a6c3ea0ad210b4c2bdd6135",
+      "bytes": 13169
     },
     {
       "sourceRoot": "/home/lumen/lumenpnp",
@@ -443,6 +443,13 @@
     },
     {
       "sourceRoot": "/home/lumen/lumenpnp",
+      "sourcePath": "automation/paste/vacuum-probe-adapter-architecture.md",
+      "destination": "integrations/lumenpnp/automation/paste/vacuum-probe-adapter-architecture.md",
+      "sha256": "632a66796f84c8bd538b45268e39d01a8b55136f38e1d701b8ba1e7bf5f35568",
+      "bytes": 3329
+    },
+    {
+      "sourceRoot": "/home/lumen/lumenpnp",
       "sourcePath": "automation/paste/vacuum-probe-policy.cjs",
       "destination": "integrations/lumenpnp/automation/paste/vacuum-probe-policy.cjs",
       "sha256": "19f95a62621ed19dd6edc7df8738acf9eddc5f5db97e7d51f11d8eea22c872d3",
@@ -473,29 +480,29 @@
       "sourceRoot": "/home/lumen/lumenpnp",
       "sourcePath": "automation/paste/z-observation.cjs",
       "destination": "integrations/lumenpnp/automation/paste/z-observation.cjs",
-      "sha256": "20681bc27c9b5cad1937e489572b4cd6d582f792020d4f4aae114c11d16736f6",
-      "bytes": 6866
+      "sha256": "ecb7c3e5c7d112b6a8a020ef6e631567529439598aec249d6625e0b1ee7fcb92",
+      "bytes": 7722
     },
     {
       "sourceRoot": "/home/lumen/lumenpnp",
       "sourcePath": "automation/paste/z-observation.md",
       "destination": "integrations/lumenpnp/automation/paste/z-observation.md",
-      "sha256": "4ac2b06b86d276a8be17c58701c184f824a3329d9ccf335c5fd1cff0918c8ad0",
-      "bytes": 4345
+      "sha256": "96c70d39bafcdefd2daa1382892865a26e08c629046b883a6ec1772e8cd8b098",
+      "bytes": 4590
     },
     {
       "sourceRoot": "/home/lumen/lumenpnp",
       "sourcePath": "automation/paste/z-observation.pending.json",
       "destination": "integrations/lumenpnp/automation/paste/z-observation.pending.json",
-      "sha256": "30aeb21bc41873393ddf8716748e7b31bfda789dec43fd23ac280ad3eeec03cb",
-      "bytes": 1464
+      "sha256": "27bacc2c05b2f0f65eed6a494522d16fd44db9e51e30b68cee0ecd33b1275e96",
+      "bytes": 1758
     },
     {
       "sourceRoot": "/home/lumen/lumenpnp",
       "sourcePath": "automation/paste/z-observation.test.cjs",
       "destination": "integrations/lumenpnp/automation/paste/z-observation.test.cjs",
-      "sha256": "8ed275f4f06061893cfb9e40ca89233872f161cc729a727bf701a5782f6fa414",
-      "bytes": 5327
+      "sha256": "2b80992c8566a6d30eb83e61bd5f0c6646abfacaf39f4d93cc3f7e86202d4fa2",
+      "bytes": 7097
     },
     {
       "sourceRoot": "/home/lumen/lumenpnp",
@@ -550,8 +557,8 @@
       "sourceRoot": "/home/lumen/lumenpnp",
       "sourcePath": "automation/scripts/Observe_Paste_Z.js",
       "destination": "integrations/lumenpnp/automation/scripts/Observe_Paste_Z.js",
-      "sha256": "b5086902e937584240e14dd9e062cdaa6cf774ebb7386108cac9364271add571",
-      "bytes": 20960
+      "sha256": "ac999ea3629520d1e1b8aa2358dcee23475558ffe2223015502c1fc264f1a473",
+      "bytes": 21611
     },
     {
       "sourceRoot": "/home/lumen/lumenpnp",

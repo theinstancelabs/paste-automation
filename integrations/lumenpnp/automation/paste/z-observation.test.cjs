@@ -4,15 +4,15 @@ const fs=require('node:fs');
 const z=require('./z-observation.cjs');
 const raw=()=>({X:100,Y:200,Z:26.5,A:200,B:720});
 function poses(){return {N1:{x:1,y:2,z:26.5,rotation:200},N2:{x:3,y:4,z:36.5,rotation:720},top:{x:5,y:6,z:0,rotation:0},bottom:{x:7,y:8,z:25.2,rotation:0}};}
-function request(){const q=JSON.parse(fs.readFileSync(__dirname+'/z-observation.pending.json'));Object.assign(q,{id:'12345678-1234-1234-1234-123456789abc',createdMs:1000,jvmStartMs:1,operator:'synthetic',liveConfigurationSha256:'a'.repeat(64),deltaMm:1,barrierEvidence:{path:'/synthetic-barrier.json',sha256:'c'.repeat(64)},operatorVerifiedJointZStep:true,bothHeadsClearAlongStep:true,motionAreaClear:true,noHeldPartsObserved:true,expectedRaw:raw(),expectedDriver:raw(),expectedNativePoses:poses(),corridorEvidence:{path:'/synthetic-only.png',sha256:'b'.repeat(64),capturedMs:900},jointInterval:{minRawZ:26.5,maxRawZ:36.5,reviewedForCurrentPose:true,reviewRecord:'synthetic-only'}});return q;}
-test('pending cannot authorize and only exact positive1mm Z observation is admitted',()=>{
+function request(){const q=JSON.parse(fs.readFileSync(__dirname+'/z-observation.pending.json'));Object.assign(q,{id:'12345678-1234-1234-1234-123456789abc',createdMs:1000,jvmStartMs:1,operator:'synthetic',liveConfigurationSha256:'a'.repeat(64),deltaMm:1,nativeZConfiguration:{softLowEnabled:false,softLowMm:0,softHighEnabled:false,softHighMm:0,safeLowEnabled:true,safeLowMm:26.5,safeHighEnabled:true,safeHighMm:36.5},barrierEvidence:{path:'/synthetic-barrier.json',sha256:'c'.repeat(64)},operatorVerifiedJointZStep:true,bothHeadsClearAlongStep:true,motionAreaClear:true,noHeldPartsObserved:true,expectedRaw:raw(),expectedDriver:raw(),expectedNativePoses:poses(),corridorEvidence:{path:'/synthetic-only.png',sha256:'b'.repeat(64),capturedMs:900},jointInterval:{minRawZ:26.5,maxRawZ:27.5,reviewedForCurrentPose:true,reviewRecord:'synthetic-only'}});return q;}
+test('pending cannot authorize and only discrete signed1/5mm Z observations are admitted',()=>{
  assert.throws(()=>z.validate(JSON.parse(fs.readFileSync(__dirname+'/z-observation.pending.json')),1001,1));z.validate(request(),1001,1);
- for(const delta of [-1,0,1e-8,.025,.5,1.001,NaN,Infinity,'1']){const q=request();q.deltaMm=delta;assert.throws(()=>z.step(q));}
+ for(const delta of [-6,-2,-.5,0,1e-8,.025,.5,1.001,2,6,NaN,Infinity,'1']){const q=request();q.deltaMm=delta;assert.throws(()=>z.step(q));}
  for(const edit of [{axis:'X'},{axis:'B'},{axes:['Z']},{target:{Z:27.5}},{deltaZ:1}])assert.throws(()=>z.step({...request(),...edit}));
 });
 test('whole proposed step remains within explicit reviewed interval and speed cannot be silently clamped',()=>{
  for(const change of [q=>q.expectedRaw.Z=26.49,q=>q.expectedRaw.Z=35.51,q=>q.jointInterval.reviewedForCurrentPose=false,q=>q.jointInterval.maxRawZ=40,q=>q.speedFraction=.01,q=>q.speedFraction=.1,q=>q.speedOverPrecision=false]){const q=request();change(q);assert.throws(()=>z.validate(q,1001,1));}
- const q=request();q.expectedRaw.Z=35.5;z.validate(q,1001,1);
+ const q=request();q.expectedRaw.Z=35.5;q.jointInterval.minRawZ=35.5;q.jointInterval.maxRawZ=36.5;z.validate(q,1001,1);
 });
 test('fresh identity, all evidence, no-held-parts and complete exact start are required',()=>{
  for(const change of [q=>q.jvmStartMs=2,q=>q.createdMs=1002,q=>q.createdMs=-300000,q=>q.corridorEvidence.capturedMs=-300000,q=>q.corridorEvidence.capturedMs=1001,q=>q.operatorVerifiedJointZStep=false,q=>q.bothHeadsClearAlongStep=false,q=>q.noHeldPartsObserved=false,q=>delete q.expectedRaw.B,q=>q.expectedDriver.Z=NaN,q=>delete q.expectedNativePoses.N2]){const q=request();change(q);assert.throws(()=>z.validate(q,1001,1));}
@@ -42,4 +42,25 @@ test('activation binds fresh successful stationary barrier to exact same state',
  const rawWrong=JSON.parse(JSON.stringify(r));rawWrong.afterQuerySnapshot.raw.B=0;assert.throws(()=>z.barrier(rawWrong,q,1001));
 });
 
-test('physical review interval may be narrower than application envelope',()=>{const q=request();q.jointInterval.minRawZ=26.5;q.jointInterval.maxRawZ=27.5;z.validate(q,1001,1);q.jointInterval.maxRawZ=27.49;assert.throws(()=>z.validate(q,1001,1));q.jointInterval.maxRawZ=27.5;q.jointInterval.minRawZ=26.51;assert.throws(()=>z.validate(q,1001,1));});
+test('physical review interval must equal only this explicit segment',()=>{const q=request();q.jointInterval.minRawZ=26.5;q.jointInterval.maxRawZ=27.5;z.validate(q,1001,1);q.jointInterval.maxRawZ=27.49;assert.throws(()=>z.validate(q,1001,1));q.jointInterval.maxRawZ=27.5;q.jointInterval.minRawZ=26.51;assert.throws(()=>z.validate(q,1001,1));});
+
+test('all signed steps preserve XYAB and prove opposing native Z polarity',()=>{
+ for(const delta of [-5,-1,1,5]){
+  const q=request();q.deltaMm=delta;q.jointInterval.minRawZ=Math.min(26.5,26.5+delta);q.jointInterval.maxRawZ=Math.max(26.5,26.5+delta);z.validate(q,1001,1);
+  const after=z.target(raw(),q);assert.deepEqual(after,{...raw(),Z:26.5+delta});z.compareFirmwareStep(raw(),after,q);
+  const p=poses();p.N1.z+=delta;p.N2.z-=delta;z.compareNativeStep(poses(),p,q,.0001);
+  p.N2.z+=delta*2;assert.throws(()=>z.compareNativeStep(poses(),p,q,.0001));
+ }
+});
+test('safe zones and disabled soft limits are recorded but are not fabricated travel bounds',()=>{
+ const q=request();q.deltaMm=-5;q.jointInterval.minRawZ=21.5;q.jointInterval.maxRawZ=26.5;z.validate(q,1001,1);
+ q.nativeZConfiguration.softLowEnabled=true;q.nativeZConfiguration.softLowMm=21.51;assert.throws(()=>z.validate(q,1001,1));
+ q.nativeZConfiguration.softLowMm=21.5;z.validate(q,1001,1);
+ q.nativeZConfiguration.softHighEnabled=true;q.nativeZConfiguration.softHighMm=26.49;assert.throws(()=>z.validate(q,1001,1));
+ q.nativeZConfiguration.softHighMm=26.5;z.validate(q,1001,1);
+ for(const k of Object.keys(q.nativeZConfiguration)){
+  const changed={...q.nativeZConfiguration,[k]:typeof q.nativeZConfiguration[k]==='boolean'?!q.nativeZConfiguration[k]:q.nativeZConfiguration[k]+.01};
+  assert.throws(()=>z.nativeConfiguration(changed,q));
+ }
+ const malformed=request();malformed.nativeZConfiguration.safeLowEnabled=1;assert.throws(()=>z.validate(malformed,1001,1));
+});

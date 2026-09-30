@@ -1,4 +1,4 @@
-// REVIEWED NARROW positive raw Z observation, exactly +1 mm; no automatic return.
+// REVIEWED NARROW signed raw Z observation, exactly +/-1 or +/-5 mm; no automatic return.
 var PASTE_Z_OBSERVATION_ENABLED = true;
 // No serial ownership changes, safe-Z helper, rotation, pickup, vacuum or current.
 // Uses the existing single-worker native executor with audited busy bookkeeping;
@@ -40,7 +40,9 @@ var PASTE_Z_OBSERVATION_ENABLED = true;
  function projectedPoses(raw){var result={};Object.keys(items).forEach(function(k){var n=items[k],location=n.getMappedAxes(m);Object.keys(axes).forEach(function(a){location=location.put(new AL(axes[a],raw[a]));});var p=n.toHeadMountableLocation(n.toTransformed(location)).convertToUnits(MM);result[k]={x:Number(p.getX()),y:Number(p.getY()),z:Number(p.getZ()),rotation:Number(p.getRotation())};});return result;}
  function snapshot(){var s={raw:{},driver:{},nativePoses:poses()};Object.keys(axes).forEach(function(k){s.raw[k]=Number(axes[k].getCoordinate());s.driver[k]=Number(axes[k].getDriverCoordinate());});return s;}
  var originalReader=privateValue('org.openpnp.machine.reference.driver.GcodeDriver','readerThread',d),originalCommands=d.commands;
+ function nativeZConfiguration(){return {softLowEnabled:!!axes.Z.isSoftLimitLowEnabled(),softLowMm:Number(axes.Z.getSoftLimitLow().convertToUnits(MM).getValue()),softHighEnabled:!!axes.Z.isSoftLimitHighEnabled(),softHighMm:Number(axes.Z.getSoftLimitHigh().convertToUnits(MM).getValue()),safeLowEnabled:!!axes.Z.isSafeZoneLowEnabled(),safeLowMm:Number(axes.Z.getSafeZoneLow().convertToUnits(MM).getValue()),safeHighEnabled:!!axes.Z.isSafeZoneHighEnabled(),safeHighMm:Number(axes.Z.getSafeZoneHigh().convertToUnits(MM).getValue())};}
  function stateGate(){
+  PasteZObservation.nativeConfiguration(nativeZConfiguration(),q);
   if(d.commands!==originalCommands||originalReader==null||!originalReader.isAlive()||privateValue('org.openpnp.machine.reference.driver.GcodeDriver','readerThread',d)!==originalReader||privateValue('org.openpnp.machine.reference.driver.GcodeDriver','errorResponse',d)!=null)throw Error('Reader/commands changed or prior native error');
   if((m.isBusy()&&!m.isTask(java.lang.Thread.currentThread()))||!m.isEnabled()||!m.isHomed()||String(state.get(panel))!=='Stopped')throw Error('Need idle enabled homed machine, stopped job');
   if(String(privateValue('org.openpnp.machine.reference.driver.GcodeDriver','connected',d))!=='true'||d.isMotionPending())throw Error('Driver disconnected or prior motion pending');
@@ -74,7 +76,7 @@ var PASTE_Z_OBSERVATION_ENABLED = true;
  function settle(){var delay=Math.max(200,Number(top.getSettleTimeMs()),Number(bottom.getSettleTimeMs()));if(!isFinite(delay)||delay>3000)throw Error('Unreviewed camera settle interval');java.lang.Thread.sleep(Math.ceil(delay));}
  var initial=snapshot();PasteZObservation.compareExact(initial.raw,q.expectedRaw,'expected raw');PasteZObservation.compareExact(initial.driver,q.expectedDriver,'expected driver');comparePoses(initial.nativePoses,q.expectedNativePoses);
  var out=new F(root+'automation/evidence/paste-z-observation-'+q.id);if(!out.mkdir())throw Error('Survey UUID already claimed; no retry');
- var r={schema:1,id:q.id,status:'claimed',startedAt:new Date().toISOString(),request:q,beforeQuerySnapshot:initial,transitions:[],motionSubmitted:false,positionQueryAckTimeoutMs:nativePositionAckTimeout,nativeMinimumSpeed:0.05,physicalAcceptanceEstablished:false,calibrationEstablished:false,noReplay:true};
+ var r={schema:1,id:q.id,status:'claimed',startedAt:new Date().toISOString(),request:q,beforeQuerySnapshot:initial,transitions:[],motionSubmitted:false,positionQueryAckTimeoutMs:nativePositionAckTimeout,nativeMinimumSpeed:0.05,nativeZConfiguration:nativeZConfiguration(),physicalAcceptanceEstablished:false,calibrationEstablished:false,noReplay:true};
  function save(status){r.status=status;r.transitions.push({status:status,time:new Date().toISOString()});Fs.write(new F(out,'report.json').toPath(),bytes(JSON.stringify(r,null,2)+'\n'));}
  save('preflight-before-any-controller-query');
  var lastReported=null;

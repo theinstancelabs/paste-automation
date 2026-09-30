@@ -1,7 +1,7 @@
 {
-  "description": "Unusable disabled positive raw Z observation request. Application interval is not physical calibration. No return, approach, actuation or dispensing.",
-  "schema": 1,
-  "scope": "single-positive-raw-Z-observation",
+  "description": "Unusable one-step signed raw Z observation request. Only +/-1 or +/-5 mm; exact current start-to-target reviewed interval, fresh barrier and image required. No global travel-clearance inference or return.",
+  "schema": 2,
+  "scope": "bounded-signed-raw-Z-observation",
   "id": null,
   "createdMs": null,
   "jvmStartMs": null,
@@ -69,5 +69,15 @@
   "barrierEvidence": {
     "path": null,
     "sha256": null
+  },
+  "nativeZConfiguration": {
+    "softLowEnabled": null,
+    "softLowMm": null,
+    "softHighEnabled": null,
+    "softHighMm": null,
+    "safeLowEnabled": null,
+    "safeLowMm": null,
+    "safeHighEnabled": null,
+    "safeHighMm": null
   }
 }
