@@ -1,0 +1,64 @@
+{
+  "description": "Unusable pending request. Stationary VAC1 off/on/off sampling only; no motion, contact, threshold calibration or extrusion.",
+  "schema": 1,
+  "scope": "stationary-N1-VAC1-free-air-baseline",
+  "id": null,
+  "createdMs": null,
+  "jvmStartMs": null,
+  "operator": null,
+  "liveConfigurationSha256": null,
+  "motionAreaClear": false,
+  "expectedRaw": {
+    "X": null,
+    "Y": null,
+    "Z": null,
+    "A": null,
+    "B": null
+  },
+  "expectedDriver": {
+    "X": null,
+    "Y": null,
+    "Z": null,
+    "A": null,
+    "B": null
+  },
+  "expectedNativePoses": {
+    "N1": {
+      "x": null,
+      "y": null,
+      "z": null,
+      "rotation": null
+    },
+    "N2": {
+      "x": null,
+      "y": null,
+      "z": null,
+      "rotation": null
+    },
+    "top": {
+      "x": null,
+      "y": null,
+      "z": null,
+      "rotation": null
+    },
+    "bottom": {
+      "x": null,
+      "y": null,
+      "z": null,
+      "rotation": null
+    }
+  },
+  "expectedLeftTipId": null,
+  "operatorVerifiedFreeAir": false,
+  "emptyNozzlesObserved": false,
+  "bothHeadsClear": false,
+  "stationaryEvidence": {
+    "path": null,
+    "sha256": null,
+    "capturedMs": null
+  },
+  "sampleCountPerPhase": 8,
+  "settleMs": 500,
+  "sampleIntervalMs": 100,
+  "maxDurationMs": 30000
+}
