@@ -15,6 +15,7 @@
  eval(read(root+'automation/paste/survey-request.cjs'));
  eval(read(root+'automation/paste/connection-policy.cjs'));
  eval(read(root+'automation/paste/vacuum-baseline.cjs'));
+ eval(read(root+'automation/paste/native-air.cjs'));
  var q=JSON.parse(read(root+'automation/plans/paste-vacuum-baseline-request.json')),jvm=Number(Java.type('java.lang.management.ManagementFactory').getRuntimeMXBean().getStartTime());
  PasteVacuumBaseline.validate(q,Number(java.lang.System.currentTimeMillis()),jvm);
  var corridor=new F(q.stationaryEvidence.path);if(!corridor.isFile()||hash(Fs.readAllBytes(corridor.toPath()))!==q.stationaryEvidence.sha256)throw Error('Reviewed stationary image missing/changed');
@@ -36,7 +37,14 @@
  for each(var a in new AL(m).drivenBy(d).getControllerAxes()){var letter=String(a.getLetter());if(!ids[letter]||String(a.getId())!==ids[letter]||axes[letter])throw Error('Unexpected raw axis');axes[letter]=a;}
  if(Object.keys(axes).sort().join(',')!=='A,B,X,Y,Z')throw Error('Missing raw axis');
  function snapshot(){var s={raw:{},driver:{},nativePoses:poses()};Object.keys(axes).forEach(function(k){s.raw[k]=Number(axes[k].getCoordinate());s.driver[k]=Number(axes[k].getDriverCoordinate());});return s;}
+ var originalReader=privateValue('org.openpnp.machine.reference.driver.GcodeDriver','readerThread',d),originalCommands=d.commands;
+ var positionRegex='^.*X:(?<X>-?\\d+\\.\\d+)\\s*Y:(?<Y>-?\\d+\\.\\d+)\\s*Z:(?<Z>-?\\d+\\.\\d+)\\s*A:(?<A>-?\\d+\\.\\d+)\\s*B:(?<B>-?\\d+\\.\\d+).*',positionPattern=java.util.regex.Pattern.compile(positionRegex);
  function stateGate(){
+  PasteVacuumBaseline.validate(q,Number(java.lang.System.currentTimeMillis()),jvm);
+  if(executor!=null&&(privateValue('org.openpnp.spi.base.AbstractMachine','executor',m)!==executor||executor.isShutdown()||executor.isTerminated()||!executor.getQueue().isEmpty()))throw Error('Native executor identity/state changed');
+  if(originalReader==null||!originalReader.isAlive()||privateValue('org.openpnp.machine.reference.driver.GcodeDriver','readerThread',d)!==originalReader||d.commands!==originalCommands||privateValue('org.openpnp.machine.reference.driver.GcodeDriver','errorResponse',d)!=null)throw Error('Native reader/commands changed or controller error');
+  if(String(d.getCommand(null,CT.COMMAND_ERROR_REGEX))!==NativePasteAir.nativeErrorRegex||String(d.getCommand(null,CT.POSITION_REPORT_REGEX))!==positionRegex)throw Error('Native error/position response contract changed');
+  var subordinate=privateValue('org.openpnp.machine.reference.driver.AbstractMotionPlanner','subordinateMotion',planner),subQueue=privateValue('org.openpnp.machine.reference.driver.AbstractMotionPlanner$SubordinateMotion','queue',subordinate);if(subQueue!=null&&!subQueue.isEmpty())throw Error('Queued subordinate motion');
   if((m.isBusy()&&!m.isTask(java.lang.Thread.currentThread()))||!m.isEnabled()||!m.isHomed()||String(state.get(panel))!=='Stopped')throw Error('Need idle enabled homed machine, stopped job');
   if(String(privateValue('org.openpnp.machine.reference.driver.GcodeDriver','connected',d))!=='true'||d.isMotionPending())throw Error('Driver disconnected or prior motion pending');
   if(privateValue('org.openpnp.machine.reference.driver.AbstractMotionPlanner','motionCommands',planner).size()!==0)throw Error('Prior native motion queued');
@@ -50,7 +58,7 @@
   if(left.getNozzleTip()==null||String(left.getNozzleTip().getId())!==q.expectedLeftTipId)throw Error('N1 installed tip changed');
   PasteVacuumBaseline.commandContract(d.getCommand(vac,CT.ACTUATE_BOOLEAN_COMMAND),d.getCommand(vac,CT.ACTUATOR_READ_COMMAND),d.getCommand(vac,CT.ACTUATOR_READ_REGEX),d.getCommand(null,CT.COMMAND_CONFIRM_REGEX));
   if(['M114','M114 ; get position'].indexOf(String(d.getCommand(null,CT.GET_POSITION_COMMAND)).trim())<0)throw Error('Position query command changed');
-  if(String(d.getCommand(null,CT.MOVE_TO_COMPLETE_COMMAND)).split(';')[0].trim()!=='M400')throw Error('Motion completion command changed');
+  if(JSON.stringify(PasteConnectionPolicy.tokens(d.getCommand(top,CT.MOVE_TO_COMPLETE_COMMAND)))!==JSON.stringify(['M400']))throw Error('Motion completion command changed');
  }
  stateGate();if(configHash()!==q.liveConfigurationSha256)throw Error('Live configuration changed');
  var executor=privateValue('org.openpnp.spi.base.AbstractMachine','executor',m);
@@ -64,13 +72,18 @@
  function save(status){r.status=status;r.transitions.push({status:status,time:new Date().toISOString()});Fs.write(new F(out,'report.json').toPath(),bytes(JSON.stringify(r,null,2)+'\n'));}
  save('preflight-before-any-controller-query');
  function query(saved,label){
-  // saved is immutable primitive numeric data captured BEFORE M114. The native
-  // parser may change axis.driverCoordinate; never read that for pre-query truth.
+  // Preserve pre-query numbers: native M114 parsing may update driver coordinates.
+  stateGate();if(configHash()!==q.liveConfigurationSha256)throw Error('Configuration changed before position query');if(!executor.getQueue().isEmpty())throw Error('Competing native work before query');
+  var current=snapshot();PasteSurveyRequest.compareExact(current.raw,saved.raw,'immutable query raw');PasteSurveyRequest.compareExact(current.driver,saved.driver,'immutable query driver');comparePoses(current.nativePoses,saved.nativePoses);
+  r[label]={saved:saved,responses:[]};var entry=r[label];append(d.receiveResponses(),entry.responses);checkedLines(entry.responses);PasteVacuumBaseline.pressure(entry.responses,false);
+  if(entry.responses.some(function(x){return positionPattern.matcher(x).matches();}))throw Error('Unclaimed stale position report');
   r.transportUncertain=true;r.controllerQuerySubmitted=true;save(label+'-query-started');
-  var observed=d.getReportedLocation(3000),reported={};for each(var a in observed.getControllerAxes())reported[String(a.getLetter())]=Number(observed.getCoordinate(a));
-  r[label]={saved:saved,reported:reported,responses:[]};
-  collect('^ok.*',r[label]);append(d.receiveResponses(),r[label].responses);checkedLines(r[label].responses);PasteVacuumBaseline.pressure(r[label].responses,false);
-  save(label+'-reported');PasteSurveyRequest.compareReported(reported,saved.raw,saved.driver);r.transportUncertain=false;
+  var observed=d.getReportedLocation(3000),reported={};for each(var a in observed.getControllerAxes())reported[String(a.getLetter())]=Number(observed.getCoordinate(a));entry.reported=reported;
+  collect(positionRegex,entry);var delimiter=-1;entry.responses.forEach(function(x,i){if(positionPattern.matcher(x).matches())delimiter=i;});if(delimiter<0)throw Error('Fresh position delimiter absent');
+  if(!entry.responses.slice(delimiter+1).some(function(x){return /^ok/.test(x);}))collect('^ok.*',entry);
+  append(d.receiveResponses(),entry.responses);checkedLines(entry.responses);PasteVacuumBaseline.pressure(entry.responses,false);
+  PasteSurveyRequest.compareReported(reported,saved.raw,saved.driver);entry.afterQuerySnapshot=snapshot();PasteSurveyRequest.compareExact(entry.afterQuerySnapshot.raw,saved.raw,'query unchanged raw');comparePoses(entry.afterQuerySnapshot.nativePoses,saved.nativePoses);
+  r.transportUncertain=false;save(label+'-reported-and-verified');
  }
  function capture(camera,name){
   if(String(camera.getClass().getName())!=='org.openpnp.machine.reference.camera.OpenPnpCaptureCamera')throw Error('Unknown camera capture implementation');
@@ -85,7 +98,7 @@
  function collect(regex,record){var list=d.receiveResponses(regex,3000,new (Java.type('org.openpnp.machine.reference.driver.GcodeDriver$TimeoutAction'))({apply:function(lines){append(lines,record.responses);checkedLines(record.responses);save('response-timeout');throw new java.lang.Exception('Baseline response timeout; no retry');}}));append(list,record.responses);checkedLines(record.responses);}
  function line(command,needsPressure){
   if(!PasteVacuumBaseline.allowedLine(command))throw Error('Command outside fixed VAC1 allowlist');
-  deadline();stateGate();var stationary=snapshot();PasteSurveyRequest.compareExact(stationary.raw,initial.raw,'pre-command raw');comparePoses(stationary.nativePoses,initial.nativePoses);if(!executor.getQueue().isEmpty())throw Error('Competing native work queued');
+  deadline();stateGate();if(configHash()!==q.liveConfigurationSha256)throw Error('Configuration changed before VAC1 command');var stationary=snapshot();PasteSurveyRequest.compareExact(stationary.raw,initial.raw,'pre-command raw');comparePoses(stationary.nativePoses,initial.nativePoses);if(!executor.getQueue().isEmpty())throw Error('Competing native work queued');
   var stale=[];append(d.receiveResponses(),stale);checkedLines(stale);if(stale.length)throw Error('Unexpected unsolicited response before baseline command');
   var entry={command:command,startedMs:now(),responses:[],acknowledged:false};r.commands.push(entry);r.transportUncertain=true;save('sending-fixed-VAC1-command');
   d.sendCommand(command,3000);
@@ -117,12 +130,13 @@
   operationStart=now();r.baseline=PasteVacuumBaseline.sequence(q,{now:now,sleep:function(ms){java.lang.Thread.sleep(ms);},actuate:actuate,read:readPressure,record:function(phase,sample){r.samples[phase].push(sample);save('sample-'+phase);}});
   r.normalOffAcknowledged=r.lastAcknowledgedVacuumOn===false&&!r.actuationPending;
   var after=snapshot();r.afterQuerySnapshot=after;PasteSurveyRequest.compareExact(after.raw,initial.raw,'stationary raw');comparePoses(after.nativePoses,initial.nativePoses);
-  query(after,'after');PasteSurveyRequest.compareReported(r.after.reported,initial.raw,after.driver);PasteSurveyRequest.comparePostModel(r.after.reported,r.before.reported);
+  query(after,'after');r.afterQuerySnapshot=r.after.afterQuerySnapshot;PasteSurveyRequest.compareReported(r.after.reported,initial.raw,after.driver);PasteSurveyRequest.comparePostModel(r.after.reported,r.before.reported);
   r.controllerPositionVerified=true;save('stationary-controller-position-verified');settle();var afterTop=capture(top,'top-after-raw'),afterBottom=capture(bottom,'bottom-after-raw');r.afterImages={top:{path:afterTop.path,width:afterTop.width,height:afterTop.height},bottom:{path:afterBottom.path,width:afterBottom.width,height:afterBottom.height}};
+  stateGate();if(configHash()!==q.liveConfigurationSha256)throw Error('Configuration changed during final images');
   r.uncertainCompletion=false;r.finishedAt=new Date().toISOString();save('completed-free-air-baseline-awaiting-review');
  }catch(e){
   r.error=String(e);r.uncertainCompletion=!!r.transportUncertain||r.actuationPending;r.vacuumMayRemainOn=r.lastAcknowledgedVacuumOn!==false||r.actuationPending;r.auditIncomplete=true;r.finishedAt=new Date().toISOString();
-  if(r.actuationSubmitted||r.transportUncertain){
+  if(r.actuationSubmitted||r.controllerQuerySubmitted||r.transportUncertain){
    keepBusy=true;r.queuedTasksCancelled=0;var pending;
    while((pending=executor.getQueue().poll())!=null){if(pending instanceof Java.type('java.util.concurrent.Future'))pending.cancel(false);r.queuedTasksCancelled++;}
    executor.shutdown();r.executorQuarantined=true;

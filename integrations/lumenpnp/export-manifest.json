@@ -515,8 +515,8 @@
       "sourceRoot": "/home/lumen/lumenpnp",
       "sourcePath": "automation/paste/vacuum-baseline.md",
       "destination": "integrations/lumenpnp/automation/paste/vacuum-baseline.md",
-      "sha256": "e5c698635e47eea404a413ba345a702e6dc4fe24f32c679a60b4ec6dc5e3d72e",
-      "bytes": 3773
+      "sha256": "f23be91d78e1b5b90f1dc8d347539f0b522440233706bc3608244f16c3adc757",
+      "bytes": 4167
     },
     {
       "sourceRoot": "/home/lumen/lumenpnp",
@@ -718,8 +718,8 @@
       "sourceRoot": "/home/lumen/lumenpnp",
       "sourcePath": "automation/scripts/Record_Paste_Vacuum_Baseline.js",
       "destination": "integrations/lumenpnp/automation/scripts/Record_Paste_Vacuum_Baseline.js",
-      "sha256": "4ebda8a87404e13b1b3875fb449f8ebda25a730b9631fcf06c5aa498f253ced8",
-      "bytes": 17681
+      "sha256": "f040ce4924f0f7aea4ab4d7cec65eb392e2ddb897cda308586b48ffa5771bfb7",
+      "bytes": 20749
     },
     {
       "sourceRoot": "/home/lumen/lumenpnp",
@@ -921,8 +921,8 @@
       "sourceRoot": "/home/lumen/lumenpnp",
       "sourcePath": "automation/tests/test_vacuum_probe_native_compile.py",
       "destination": "integrations/lumenpnp/automation/tests/test_vacuum_probe_native_compile.py",
-      "sha256": "8e24fbb08570359feb0faf339c6a0c1c7afa6292f07d9f53039ac4e6e4433d33",
-      "bytes": 1149
+      "sha256": "7148b6160167e76e8d2573f22b4d97a6805092b78f65f431ecbfef414f8c616f",
+      "bytes": 1192
     },
     {
       "sourceRoot": "/home/lumen/lumenpnp",

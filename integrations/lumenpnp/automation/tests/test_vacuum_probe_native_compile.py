@@ -12,7 +12,7 @@ class VacuumProbeNativeCompileTests(unittest.TestCase):
     def test_adapter_and_contract_compile_without_evaluation(self):
         with tempfile.TemporaryDirectory(prefix='vacuum-probe-compile-') as temporary:
             subprocess.run(['javac', '-d', temporary, str(ROOT / 'tests/java/CheckNativeAir.java')], check=True, timeout=20)
-            for source in ['scripts/Probe_Paste_Surface_By_Vacuum.js', 'paste/vacuum-probe-native.cjs', 'paste/vacuum-probe-policy.cjs']:
+            for source in ['scripts/Record_Paste_Vacuum_Baseline.js', 'scripts/Probe_Paste_Surface_By_Vacuum.js', 'paste/vacuum-probe-native.cjs', 'paste/vacuum-probe-policy.cjs']:
                 output = subprocess.check_output(
                     ['java', '-cp', temporary + ':/opt/openpnp/lib/*', 'CheckNativeAir',
                      str(ROOT / 'paste/native-air.cjs'), str(ROOT / source)],
