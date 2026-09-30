@@ -26,8 +26,9 @@ def main():
     parser.add_argument('previous_report', type=pathlib.Path)
     parser.add_argument('reviewed_image', type=pathlib.Path)
     parser.add_argument('--result', required=True,
-                        choices=['no-visible-paste', 'emerging-not-consistent'])
+                        choices=['no-visible-paste', 'emerging-not-consistent','user-watching-no-automated-judgment'])
     parser.add_argument('--degrees',type=int,choices=[100,300],default=100)
+    parser.add_argument('--supervised',type=pathlib.Path)
     parser.add_argument('--execute', action='store_true')
     args = parser.parse_args()
     report = read(args.previous_report)
@@ -54,7 +55,7 @@ def main():
     if not 0 <= now - args.reviewed_image.stat().st_mtime_ns // 1_000_000 < 300_000:
         raise ValueError('Fresh reviewed outlet/receiver image required')
     charged = ledger['reservedDegrees']
-    if charged < 340 or (charged - 340) % 100 or charged + args.degrees > (6000 if args.degrees == 300 else 2000):
+    if charged < 340 or (charged - 340) % 100 or charged + args.degrees > (20000 if args.supervised else (6000 if args.degrees == 300 else 2000)):
         raise ValueError('Next increment outside reviewed cumulative bound')
     if not args.execute:
         print(json.dumps({'dispatch': False, 'degrees': args.degrees,
@@ -75,7 +76,7 @@ def main():
         'additionalDegrees': args.degrees, 'previousLedgerSha256': ledger_evidence['sha256'],
         'previousReportEvidence': bound(args.previous_report),
         'userAuthorizedSingleIncrement': True,
-        'authorizationRecord': 'User directed: keep turning until paste extrudes; each increment requires a fresh manual image review.',
+        'authorizationRecord': 'User watching continuous priming until stop' if args.supervised else 'User directed: keep turning until paste extrudes; each increment requires a fresh manual image review.',
         'operator': 'codex-parent', 'reviewedMs': now,
     }
     amendment_path = out / 'budget-amendment.json'
@@ -85,7 +86,7 @@ def main():
         str(args.previous_report.resolve()), str(args.reviewed_image.resolve()),
         '--result', args.result, '--degrees', str(args.degrees),
         '--budget-amendment', str(amendment_path), '--execute',
-    ], cwd=ROOT, capture_output=True, text=True)
+    ] + (['--supervised',str(args.supervised.resolve())] if args.supervised else []), cwd=ROOT, capture_output=True, text=True)
     (out / 'continuation.stdout').write_text(result.stdout)
     (out / 'continuation.stderr').write_text(result.stderr)
     if result.returncode:
@@ -96,7 +97,7 @@ def main():
     # Viewer is a separate existing reader. Never open the USB camera or serial port.
     # The requested300-degree trial dwells12seconds after verified native completion.
     # No motion is queued here; then capture the existing viewer frame.
-    time.sleep(12 if args.degrees == 300 else 1.2)
+    time.sleep(1.2 if args.supervised else (12 if args.degrees == 300 else 1.2))
     token = (ROOT / '.local-viewer/token').read_text().strip()
     request_image = urllib.request.Request('http://127.0.0.1:8765/frame/webcam',
                                            headers={'Authorization': 'Bearer ' + token})
@@ -107,7 +108,7 @@ def main():
     after_image = out / 'after-webcam.jpg'
     after_image.write_bytes(frame)
     print(json.dumps({'report': terminal['report'], 'afterImage': str(after_image),
-                      'freshManualReviewRequired': True}))
+                      'freshManualReviewRequired': not bool(args.supervised)}))
 
 
 if __name__ == '__main__':
