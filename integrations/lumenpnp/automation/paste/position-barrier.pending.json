@@ -1,0 +1,54 @@
+{
+  "schema": 1,
+  "id": null,
+  "createdMs": null,
+  "jvmStartMs": null,
+  "operator": null,
+  "liveConfigurationSha256": null,
+  "expectedRaw": {
+    "X": null,
+    "Y": null,
+    "Z": null,
+    "A": null,
+    "B": null
+  },
+  "expectedDriver": {
+    "X": null,
+    "Y": null,
+    "Z": null,
+    "A": null,
+    "B": null
+  },
+  "expectedNativePoses": {
+    "N1": {
+      "x": null,
+      "y": null,
+      "z": null,
+      "rotation": null
+    },
+    "N2": {
+      "x": null,
+      "y": null,
+      "z": null,
+      "rotation": null
+    },
+    "top": {
+      "x": null,
+      "y": null,
+      "z": null,
+      "rotation": null
+    },
+    "bottom": {
+      "x": null,
+      "y": null,
+      "z": null,
+      "rotation": null
+    }
+  },
+  "scope": "read-only-native-position-barrier",
+  "reviewedReadOnlyQuery": false,
+  "installerEvidence": {
+    "path": null,
+    "sha256": null
+  }
+}

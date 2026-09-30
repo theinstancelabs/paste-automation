@@ -46,8 +46,8 @@
       "sourceRoot": "/home/lumen/lumenpnp",
       "sourcePath": "automation/paste/README.md",
       "destination": "integrations/lumenpnp/automation/paste/README.md",
-      "sha256": "7982d21874bd911b7220e1f00de85875c9d3862a4883469bc44d3480ff432791",
-      "bytes": 12836
+      "sha256": "557ec0edf14d3de760459b5e58de2d9c574763892075c98bfcb207b034e61858",
+      "bytes": 12998
     },
     {
       "sourceRoot": "/home/lumen/lumenpnp",
@@ -310,6 +310,41 @@
     },
     {
       "sourceRoot": "/home/lumen/lumenpnp",
+      "sourcePath": "automation/paste/pads/nominal-dose-model.md",
+      "destination": "integrations/lumenpnp/automation/paste/pads/nominal-dose-model.md",
+      "sha256": "b057ed166d9bbd034187774dc5a62ceda89faf88fd0689194851b0b9a8591ded",
+      "bytes": 2806
+    },
+    {
+      "sourceRoot": "/home/lumen/lumenpnp",
+      "sourcePath": "automation/paste/position-barrier.cjs",
+      "destination": "integrations/lumenpnp/automation/paste/position-barrier.cjs",
+      "sha256": "1c1877f0ca2791f889b3cf7b40c229ac3941f0e4135f6365594ca74957365e28",
+      "bytes": 2495
+    },
+    {
+      "sourceRoot": "/home/lumen/lumenpnp",
+      "sourcePath": "automation/paste/position-barrier.md",
+      "destination": "integrations/lumenpnp/automation/paste/position-barrier.md",
+      "sha256": "c4cfc5f62b0cc975879e6ca5dd08cf26e3dea920a66b2fe5afa425e7c682b5bf",
+      "bytes": 2259
+    },
+    {
+      "sourceRoot": "/home/lumen/lumenpnp",
+      "sourcePath": "automation/paste/position-barrier.pending.json",
+      "destination": "integrations/lumenpnp/automation/paste/position-barrier.pending.json",
+      "sha256": "3edcecbc92b3e0ba59f2c7c4411671b9a71b1e92533ebeffd2b8111e33f14ae8",
+      "bytes": 886
+    },
+    {
+      "sourceRoot": "/home/lumen/lumenpnp",
+      "sourcePath": "automation/paste/position-barrier.test.cjs",
+      "destination": "integrations/lumenpnp/automation/paste/position-barrier.test.cjs",
+      "sha256": "eea7ad2b115b8d7b6ff8602e697c465625ba4ac88700f7831fbef693a6911786",
+      "bytes": 2057
+    },
+    {
+      "sourceRoot": "/home/lumen/lumenpnp",
       "sourcePath": "automation/paste/prepare-air-plan.mjs",
       "destination": "integrations/lumenpnp/automation/paste/prepare-air-plan.mjs",
       "sha256": "6d1028bb757ba8e08867b8c353da3b11f0e5f5318227d609e18b332f7e19f24a",
@@ -480,8 +515,8 @@
       "sourceRoot": "/home/lumen/lumenpnp",
       "sourcePath": "automation/scripts/Automation_Reviewed_Command.js",
       "destination": "integrations/lumenpnp/automation/scripts/Automation_Reviewed_Command.js",
-      "sha256": "cebee32f79993fad09a5013c78387248390d3544e93c8772ffb06bb7eb6cc49d",
-      "bytes": 2741
+      "sha256": "da7a084c8a5f19c4191ad187680583486dbc2f503cf754a14eb67537265c9012",
+      "bytes": 2824
     },
     {
       "sourceRoot": "/home/lumen/lumenpnp",
@@ -517,6 +552,13 @@
       "destination": "integrations/lumenpnp/automation/scripts/Observe_Paste_Z.js",
       "sha256": "96fcf55f851a6316b02771ff27438f9aa075a9d9c2c2fe0d69cecc7e68422370",
       "bytes": 19878
+    },
+    {
+      "sourceRoot": "/home/lumen/lumenpnp",
+      "sourcePath": "automation/scripts/Read_Paste_Position_Barrier.js",
+      "destination": "integrations/lumenpnp/automation/scripts/Read_Paste_Position_Barrier.js",
+      "sha256": "b0cf5418010a033afc35ad7e2f08d53a3dd56c594a1e637da07637a322aa9132",
+      "bytes": 15998
     },
     {
       "sourceRoot": "/home/lumen/lumenpnp",
@@ -599,8 +641,8 @@
       "sourceRoot": "/home/lumen/lumenpnp",
       "sourcePath": "automation/scripts/run_reviewed_action.py",
       "destination": "integrations/lumenpnp/automation/scripts/run_reviewed_action.py",
-      "sha256": "5cab938c33c57aa92c12ea965b827e3f3fef477c1b52c6f18fd2469f1bf677f9",
-      "bytes": 17361
+      "sha256": "b1fe9eccb8f28cc98584cc5a9a0506c6480af4fd3f7772e4b2d0bce35c61c833",
+      "bytes": 17413
     },
     {
       "sourceRoot": "/home/lumen/lumenpnp",
@@ -704,8 +746,8 @@
       "sourceRoot": "/home/lumen/lumenpnp",
       "sourcePath": "automation/tests/test_z_observation_nashorn.py",
       "destination": "integrations/lumenpnp/automation/tests/test_z_observation_nashorn.py",
-      "sha256": "4fac44c5a62ad8d0cb2533d22b51ebcaa019173c493eb7eb0374cc4970dc8186",
-      "bytes": 1030
+      "sha256": "b3c9e07413d347cdd34948ad4cdd36abab032a79d2b6dd4ae055e89e261381cc",
+      "bytes": 1100
     }
   ],
   "manifestSelfHash": "Excluded to avoid a recursive digest; this manifest enumerates every other exported/generated file."

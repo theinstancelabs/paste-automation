@@ -17,7 +17,7 @@ import sys
 import time
 from pathlib import Path
 
-ACTION_ALLOWLIST = ['paste-error-latch', 'paste-vacuum-baseline', 'paste-survey-release', 'paste-survey-audit', 'paste-survey', 'paste-measure', 'paste-connect-inspect', 'paste-quarantine', 'paste-air', 'paste-state', 'vacuum', 'adopt', 'discover', 'home','load','register', 'probe', 'reconcile', 'state', 'registration', 'index', 'opening',
+ACTION_ALLOWLIST = ['paste-position-barrier', 'paste-error-latch', 'paste-vacuum-baseline', 'paste-survey-release', 'paste-survey-audit', 'paste-survey', 'paste-measure', 'paste-connect-inspect', 'paste-quarantine', 'paste-air', 'paste-state', 'vacuum', 'adopt', 'discover', 'home','load','register', 'probe', 'reconcile', 'state', 'registration', 'index', 'opening',
                     'center', 'pick', 'place', 'record', 'review', 'empty', 'seal', 'recover']
 PROCESS_MARKER = b'install4j.org.openpnp.Main'
 EVIDENCE_WAIT_ACTIONS = {'index', 'pick', 'place', 'record', 'center', 'recover'}
@@ -262,7 +262,7 @@ def selected_reference(root):
     return reference if isinstance(reference, str) and re.fullmatch(r'R\d+', reference) else None
 
 
-PASTE_INSTALLATION_ACTIONS = {'paste-error-latch', 'paste-vacuum-baseline', 'paste-survey-release', 'paste-survey-audit', 'paste-survey', 'paste-measure', 'paste-connect-inspect', 'paste-state', 'paste-quarantine', 'paste-air'}
+PASTE_INSTALLATION_ACTIONS = {'paste-position-barrier', 'paste-error-latch', 'paste-vacuum-baseline', 'paste-survey-release', 'paste-survey-audit', 'paste-survey', 'paste-measure', 'paste-connect-inspect', 'paste-state', 'paste-quarantine', 'paste-air'}
 
 
 def check_paste_installation_lock(root, action):
