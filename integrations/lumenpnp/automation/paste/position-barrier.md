@@ -1,6 +1,6 @@
 # Read-only native position barrier
 
-`paste-position-barrier` dispatches `Read_Paste_Position_Barrier.js` through the established OpenPnP owner. A fresh request binds the exact successful error-latch installer report by path/hash, its JVM and new live configuration hash, and immutable five-axis raw/driver plus both head/camera poses. The pending template is unusable. This action creates no motion authorization.
+`paste-position-barrier` dispatches `Read_Paste_Position_Barrier.js` through the established OpenPnP owner. A fresh request binds the exact successful error-latch installer or narrowly reviewed B-configuration report by path/hash, its JVM and new live configuration hash, and immutable five-axis raw/driver plus both head/camera poses. The pending template is unusable. This action creates no motion authorization.
 
 The existing single-worker executor owns one custom callable with explicit busy bookkeeping. No public task wrapper, UiUtils, planner completion, motion, serial open, actuation or settings change is used. Native queues must be empty, reader alive and unchanged, error cache clear, N2 quarantined and job stopped. M114 is the sole controller command, issued through the existing driver's exact audited position-query API. It retains full responses through the fresh position-line delimiter and its subsequent ACK, checks faults, compares immutable pre-query coordinates and verifies raw/native poses remained unchanged. Driver coordinates may reflect the firmware's reporting precision.
 

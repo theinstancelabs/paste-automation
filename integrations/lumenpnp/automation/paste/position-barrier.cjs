@@ -14,6 +14,10 @@ function validate(q,now,jvm){
  if(Object.keys(q).some(function(k){return /command|regex|delta|target|axis|speed/i.test(k);}))throw Error('Position request cannot specify commands or motion');
  return q;
 }
-function installer(record,q){if(!record||record.status!=='installed-in-memory-awaiting-read-only-barrier-and-review'||record.diskUnchanged!==true||record.coordinatesUnchanged!==true||record.noControllerCommands!==true||record.configurationSaved!==false||record.previousCommand!==null||!record.request||record.request.jvmStartMs!==q.jvmStartMs||record.liveConfigurationAfterSha256!==q.liveConfigurationSha256)throw Error('Successful same-JVM configuration installer required');}
+function installer(record,q){
+ var errorInstall=record&&record.status==='installed-in-memory-awaiting-read-only-barrier-and-review'&&record.previousCommand===null;
+ var bConfig=record&&record.status==='configured-B-prerequisites-in-memory-awaiting-fresh-barrier'&&record.exactTwoFieldChangeVerified===true&&record.previousLimitRotation===true&&record.requestedLimitRotation===false&&record.previousFeedratePerSecond===50000&&record.requestedFeedratePerSecond===100&&record.extrusionAuthorized===false;
+ if(!record||(!errorInstall&&!bConfig)||record.diskUnchanged!==true||record.coordinatesUnchanged!==true||record.noControllerCommands!==true||record.configurationSaved!==false||!record.request||record.request.jvmStartMs!==q.jvmStartMs||record.liveConfigurationAfterSha256!==q.liveConfigurationSha256)throw Error('Successful same-JVM configuration installer required');
+}
 var api={validate:validate,installer:installer};if(typeof module!=='undefined')module.exports=api;else root.PastePositionBarrier=api;
 })(this);
