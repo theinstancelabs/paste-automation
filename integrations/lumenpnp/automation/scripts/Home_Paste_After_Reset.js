@@ -1,5 +1,5 @@
 // STAGED native driver home only after fully reviewed joint/XY clearance.
-// Begins disabled/unhomed; enables only after verified home and guarded callbacks.
+// Reset mode starts disabled/unhomed; explicit deliberate mode preserves enabled/homed flags.
 var PASTE_Z_OBSERVATION_ENABLED = true;
 // No serial ownership changes, safe-Z helper, rotation, pickup, vacuum or current.
 // Uses the existing single-worker native executor with audited busy bookkeeping;
@@ -19,6 +19,7 @@ var PASTE_Z_OBSERVATION_ENABLED = true;
  eval(read(root+'automation/paste/native-air.cjs'));
  eval(read(root+'automation/paste/connection-policy.cjs'));
  var q=JSON.parse(read(root+'automation/plans/paste-reset-home-request.json')),input=q,jvm=Number(Java.type('java.lang.management.ManagementFactory').getRuntimeMXBean().getStartTime());
+ var deliberateRehome=PasteResetHome.deliberate(input);
  PasteResetHome.validate(input,Number(java.lang.System.currentTimeMillis()),jvm,PasteZObservation);
  var corridor=new F(q.corridorEvidence.path);if(!corridor.isFile()||hash(Fs.readAllBytes(corridor.toPath()))!==q.corridorEvidence.sha256)throw Error('Reviewed corridor image missing/changed');
  var barrierFile=new F(q.sourceEvidence.path);if(!barrierFile.isFile())throw Error('Position barrier evidence missing');var barrierBytes=Fs.readAllBytes(barrierFile.toPath());if(hash(barrierBytes)!==q.sourceEvidence.sha256)throw Error('Position barrier evidence changed');var barrierRecord=JSON.parse(String(new java.lang.String(barrierBytes,UTF)));PasteResetHome.source(barrierRecord,input,Number(java.lang.System.currentTimeMillis()),PasteZObservation);
@@ -45,8 +46,8 @@ var PASTE_Z_OBSERVATION_ENABLED = true;
  function stateGate(){
   function inert(a){if(String(a.getClass().getName())!=='org.openpnp.machine.reference.ReferenceActuator'||String(a.getHomedActuation())!=='LeaveAsIs'||['LeaveAsIs','AssumeUnknown'].indexOf(String(a.getEnabledActuation()))<0||String(a.getDisabledActuation())!=='LeaveAsIs')throw Error('Machine-state callback may actuate');}for each(var a in m.getActuators())inert(a);for each(var h in m.getHeads()){if(h.getPumpActuator()!=null)throw Error('Configured head pump callback');for each(var a in h.getActuators())inert(a);}
   if(d.commands!==originalCommands||originalReader==null||!originalReader.isAlive()||privateValue('org.openpnp.machine.reference.driver.GcodeDriver','readerThread',d)!==originalReader||privateValue('org.openpnp.machine.reference.driver.GcodeDriver','errorResponse',d)!=null)throw Error('Reader/commands changed or prior native error');
-  if((m.isBusy()&&!m.isTask(java.lang.Thread.currentThread()))||m.isEnabled()||m.isHomed()||String(state.get(panel))!=='Stopped')throw Error('Recovery requires idle UI-disabled unhomed machine and stopped job');
-  if(!d.isSyncInitialLocation()||planner.isHomed())throw Error('Expected unhomed state');
+  if((m.isBusy()&&!m.isTask(java.lang.Thread.currentThread()))||!!m.isEnabled()!==deliberateRehome||!!m.isHomed()!==deliberateRehome||String(state.get(panel))!=='Stopped')throw Error('Recovery requires idle UI-disabled unhomed machine and stopped job');
+  if(!d.isSyncInitialLocation()||!!planner.isHomed()!==deliberateRehome)throw Error('Expected unhomed state');
   if(JSON.stringify(PasteConnectionPolicy.tokens(d.getCommand(null,CT.HOME_COMMAND)))!==JSON.stringify(['{Acceleration:M204 S%.2f','G28']))throw Error('Native HOME template changed');
   var homeRegex=d.getCommand(null,CT.HOME_COMPLETE_REGEX);if(homeRegex!=null&&String(homeRegex).trim())throw Error('Hidden home response consumer');
   if(d.getCommand(null,CT.ENABLE_COMMAND)!=null&&String(d.getCommand(null,CT.ENABLE_COMMAND)).trim())throw Error('Enable command must be absent');
@@ -138,9 +139,11 @@ var PASTE_Z_OBSERVATION_ENABLED = true;
   var reportedLocation=new AL();Object.keys(axes).forEach(function(k){reportedLocation=reportedLocation.put(new AL(axes[k],r.after.reported[k]));});reportedLocation.setToDriverCoordinates(d);reportedLocation.setToCoordinates();
   var after=snapshot();PasteZObservation.compareExact(after.raw,r.after.reported,'home model sync');PasteZObservation.compareExact(after.driver,r.after.reported,'home driver sync');r.afterQuerySnapshot=after;r.controllerPositionVerified=true;r.rotationUnchangedVerified=true;stateGate();
   // Mark only after firmware/rotation checks. No machine/head/nozzle home helper.
+  if(!deliberateRehome){
   var homedField=Java.type('org.openpnp.machine.reference.driver.AbstractMotionPlanner').class.getDeclaredField('homed');homedField.setAccessible(true);homedField.setBoolean(planner,true);m.setHomed(true);
   var oldSync=d.isSyncInitialLocation(),oldHomeAfterEnabled=m.getHomeAfterEnabled();
   try{d.setSyncInitialLocation(false);m.setHomeAfterEnabled(false);m.setEnabled(true);}finally{d.setSyncInitialLocation(oldSync);m.setHomeAfterEnabled(oldHomeAfterEnabled);}
+  }
   if(!m.isEnabled()||!m.isHomed()||!planner.isHomed()||configHash()!==q.liveConfigurationSha256||hash(Fs.readAllBytes(disk.toPath()))!==diskHash||!executor.getQueue().isEmpty())throw Error('Home/enable final state or restored configuration differs');
   var finalPose=snapshot();PasteZObservation.compareExact(finalPose.raw,after.raw,'enable unchanged raw');PasteZObservation.compareExact(finalPose.driver,after.driver,'enable unchanged driver');comparePoses(finalPose.nativePoses,after.nativePoses);
   r.temporaryEnableFlagsRestored=true;r.diskUnchanged=true;r.controllerPositionVerified=true;save('home-position-verified-and-enabled');settle();var afterTop=capture(top,'top-after-raw'),afterBottom=capture(bottom,'bottom-after-raw');r.afterImages={top:{path:afterTop.path,width:afterTop.width,height:afterTop.height},bottom:{path:afterBottom.path,width:afterBottom.width,height:afterBottom.height}};

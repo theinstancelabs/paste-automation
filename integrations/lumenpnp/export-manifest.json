@@ -522,15 +522,15 @@
       "sourceRoot": "/home/lumen/lumenpnp",
       "sourcePath": "automation/paste/reset-home.cjs",
       "destination": "integrations/lumenpnp/automation/paste/reset-home.cjs",
-      "sha256": "d1e9115e11af8393a89a3eb0e8738083faecf1348c390ab0dbad74234daad459",
-      "bytes": 5366
+      "sha256": "0a0120179d4b2b96bad7dbac423155edcf84058e50268abafb7efc66b647f843",
+      "bytes": 6138
     },
     {
       "sourceRoot": "/home/lumen/lumenpnp",
       "sourcePath": "automation/paste/reset-home.test.cjs",
       "destination": "integrations/lumenpnp/automation/paste/reset-home.test.cjs",
-      "sha256": "9de3bd775f096462b72f3ceacb318dc10b0190687b23d9aa378c5424eb42fefa",
-      "bytes": 4518
+      "sha256": "4e05f478b9f8d30ecaab91b3cc609910763ffb09e7f3ab5059f06eadddd714fd",
+      "bytes": 5690
     },
     {
       "sourceRoot": "/home/lumen/lumenpnp",
@@ -851,8 +851,8 @@
       "sourceRoot": "/home/lumen/lumenpnp",
       "sourcePath": "automation/scripts/Home_Paste_After_Reset.js",
       "destination": "integrations/lumenpnp/automation/scripts/Home_Paste_After_Reset.js",
-      "sha256": "353542f00ee41cab515cc87e940e9c98014e756ef4f40741295b92d014a13b34",
-      "bytes": 24610
+      "sha256": "c7cf43d0dc6dde9b435dfa99de772948b7ccd0f2a745d5a2462bd337692f033e",
+      "bytes": 24769
     },
     {
       "sourceRoot": "/home/lumen/lumenpnp",
