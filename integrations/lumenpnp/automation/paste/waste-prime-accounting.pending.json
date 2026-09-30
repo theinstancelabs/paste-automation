@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "scope": "reviewed-waste-prime-displacement-origin",
+  "sessionId": null,
+  "syringeId": null,
+  "initialB": null,
+  "priorChargedDegrees": null,
+  "noUnaccountedDispense": false,
+  "noPriorDispenseSinceSyringeInstalled": false,
+  "priorDirectionLedgerEvidence": null
+}

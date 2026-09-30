@@ -1,0 +1,90 @@
+{
+  "description": "Unusable disabled waste-only single B minus20 request. Requires measured noncontact receiver, exact native formatter trace, bound accounting and fresh reviewed outlet image between increments.",
+  "schema": 1,
+  "scope": "single-negative-raw-B-waste-prime",
+  "id": null,
+  "createdMs": null,
+  "jvmStartMs": null,
+  "operator": null,
+  "liveConfigurationSha256": null,
+  "speedFraction": 0.05,
+  "speedOverPrecision": true,
+  "motionAreaClear": false,
+  "noHeldPartsObserved": false,
+  "corridorEvidence": {
+    "path": null,
+    "sha256": null,
+    "capturedMs": null
+  },
+  "expectedRaw": {
+    "X": null,
+    "Y": null,
+    "Z": null,
+    "A": null,
+    "B": null
+  },
+  "expectedDriver": {
+    "X": null,
+    "Y": null,
+    "Z": null,
+    "A": null,
+    "B": null
+  },
+  "expectedNativePoses": {
+    "N1": {
+      "x": null,
+      "y": null,
+      "z": null,
+      "rotation": null
+    },
+    "N2": {
+      "x": null,
+      "y": null,
+      "z": null,
+      "rotation": null
+    },
+    "top": {
+      "x": null,
+      "y": null,
+      "z": null,
+      "rotation": null
+    },
+    "bottom": {
+      "x": null,
+      "y": null,
+      "z": null,
+      "rotation": null
+    }
+  },
+  "axis": "B",
+  "barrierEvidence": {
+    "path": null,
+    "sha256": null
+  },
+  "deltaDegrees": -20,
+  "sessionId": null,
+  "previousLedgerSha256": null,
+  "operatorVerifiedReceiver": false,
+  "bothHeadsClear": false,
+  "profileEvidence": {
+    "path": null,
+    "sha256": null
+  },
+  "configurationEvidence": {
+    "path": null,
+    "sha256": null
+  },
+  "homeEvidence": {
+    "path": null,
+    "sha256": null
+  },
+  "initialAccountingEvidence": {
+    "path": null,
+    "sha256": null
+  },
+  "observationEvidence": null,
+  "installedNeedleId": null,
+  "noHomeOrReceiverOrNeedleChangeSinceMeasurement": false,
+  "expectedExpandedCommands": [],
+  "reviewedNegativeBWastePrime": false
+}

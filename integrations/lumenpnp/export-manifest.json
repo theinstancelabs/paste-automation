@@ -702,6 +702,76 @@
     },
     {
       "sourceRoot": "/home/lumen/lumenpnp",
+      "sourcePath": "automation/paste/waste-prime-accounting.pending.json",
+      "destination": "integrations/lumenpnp/automation/paste/waste-prime-accounting.pending.json",
+      "sha256": "30dd48b25022e61b9fda527f10595d138b5951d972d4ebbd718c9926853c523c",
+      "bytes": 289
+    },
+    {
+      "sourceRoot": "/home/lumen/lumenpnp",
+      "sourcePath": "automation/paste/waste-prime-design.md",
+      "destination": "integrations/lumenpnp/automation/paste/waste-prime-design.md",
+      "sha256": "070d989727e2f79c9da542bbbcc2b72a4a60a54910cac4b31b3a4f8e1f3ba3ff",
+      "bytes": 6264
+    },
+    {
+      "sourceRoot": "/home/lumen/lumenpnp",
+      "sourcePath": "automation/paste/waste-prime-native-preview.js",
+      "destination": "integrations/lumenpnp/automation/paste/waste-prime-native-preview.js",
+      "sha256": "ccc90d9d35916f7ee07c7f7875ea8de01bdad10c776d38434941653e31790876",
+      "bytes": 4387
+    },
+    {
+      "sourceRoot": "/home/lumen/lumenpnp",
+      "sourcePath": "automation/paste/waste-prime-native-preview.test.js",
+      "destination": "integrations/lumenpnp/automation/paste/waste-prime-native-preview.test.js",
+      "sha256": "961844dba7efe090bc5cdec0debfecc5ef56e909d071b9e0efc147e06a44c0b5",
+      "bytes": 3076
+    },
+    {
+      "sourceRoot": "/home/lumen/lumenpnp",
+      "sourcePath": "automation/paste/waste-prime-observation.pending.json",
+      "destination": "integrations/lumenpnp/automation/paste/waste-prime-observation.pending.json",
+      "sha256": "4be5a24a23880d3e1409886a61a8374612645e4d1c4489afb6eb8fa673dc2d17",
+      "bytes": 391
+    },
+    {
+      "sourceRoot": "/home/lumen/lumenpnp",
+      "sourcePath": "automation/paste/waste-prime-profile.pending.json",
+      "destination": "integrations/lumenpnp/automation/paste/waste-prime-profile.pending.json",
+      "sha256": "d3518b636035dfead184a817b4c471118c92fdc39aed1107428c851a682f826d",
+      "bytes": 1173
+    },
+    {
+      "sourceRoot": "/home/lumen/lumenpnp",
+      "sourcePath": "automation/paste/waste-prime.cjs",
+      "destination": "integrations/lumenpnp/automation/paste/waste-prime.cjs",
+      "sha256": "ee7b206b45daacfeeb901d55f316a0d1d98fb863584277a3fda0cf1426249d71",
+      "bytes": 16567
+    },
+    {
+      "sourceRoot": "/home/lumen/lumenpnp",
+      "sourcePath": "automation/paste/waste-prime.md",
+      "destination": "integrations/lumenpnp/automation/paste/waste-prime.md",
+      "sha256": "69e566f433ec5e2dcf99c0990275a81a593d8e51358ce47c15fc8407e6afa844",
+      "bytes": 3741
+    },
+    {
+      "sourceRoot": "/home/lumen/lumenpnp",
+      "sourcePath": "automation/paste/waste-prime.pending.json",
+      "destination": "integrations/lumenpnp/automation/paste/waste-prime.pending.json",
+      "sha256": "5753e7191588cb0653fe3ee0d99fec5729147fcd77091532f85006ca929a38d2",
+      "bytes": 1889
+    },
+    {
+      "sourceRoot": "/home/lumen/lumenpnp",
+      "sourcePath": "automation/paste/waste-prime.test.cjs",
+      "destination": "integrations/lumenpnp/automation/paste/waste-prime.test.cjs",
+      "sha256": "254e173f14004c5616d8bc268fe2f73a4c552c500fa08a8861bb10bf482ccfd2",
+      "bytes": 8648
+    },
+    {
+      "sourceRoot": "/home/lumen/lumenpnp",
       "sourcePath": "automation/paste/z-observation.cjs",
       "destination": "integrations/lumenpnp/automation/paste/z-observation.cjs",
       "sha256": "1848915c170fb2db6cf4ffb259041df6cfb4afe8d8f9f3864ea57b09211fc444",
@@ -821,6 +891,13 @@
     },
     {
       "sourceRoot": "/home/lumen/lumenpnp",
+      "sourcePath": "automation/scripts/Prime_Paste_Into_Waste.js",
+      "destination": "integrations/lumenpnp/automation/scripts/Prime_Paste_Into_Waste.js",
+      "sha256": "276ba4858cb4f7d40818d4ee78c3c2e9e28d8210ec470073bcebf9e76429bd3f",
+      "bytes": 29043
+    },
+    {
+      "sourceRoot": "/home/lumen/lumenpnp",
       "sourcePath": "automation/scripts/Probe_Paste_Surface_By_Vacuum.js",
       "destination": "integrations/lumenpnp/automation/scripts/Probe_Paste_Surface_By_Vacuum.js",
       "sha256": "241dccbdaad51925c44e6329b50c7b25a97066306fdc911bd737e919169aba73",
@@ -895,6 +972,13 @@
       "destination": "integrations/lumenpnp/automation/scripts/chat_mirror.py",
       "sha256": "2a484fca2ffa6d74b718dfde887c4d6946a1c7304c0d4b4720f537ecec4e0f15",
       "bytes": 3926
+    },
+    {
+      "sourceRoot": "/home/lumen/lumenpnp",
+      "sourcePath": "automation/scripts/java/CheckWastePrimePreview.java",
+      "destination": "integrations/lumenpnp/automation/scripts/java/CheckWastePrimePreview.java",
+      "sha256": "7ee4ca4c76834b74928d6554f50087332be43cc6eeec429f75e0b5e7a9ff4241",
+      "bytes": 779
     },
     {
       "sourceRoot": "/home/lumen/lumenpnp",

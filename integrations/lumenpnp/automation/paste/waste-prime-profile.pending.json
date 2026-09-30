@@ -1,0 +1,42 @@
+{
+  "schema": 1,
+  "scope": "measured-receiving-surface-for-waste-prime",
+  "measured": false,
+  "sessionId": null,
+  "jvmStartMs": null,
+  "liveConfigurationSha256": null,
+  "surfaceIdentityVerified": false,
+  "bothHeadsClear": false,
+  "installedNeedleVerified": false,
+  "receiverRestrained": false,
+  "measurementRecord": null,
+  "measurementEvidence": {
+    "path": null,
+    "sha256": null
+  },
+  "receiverId": null,
+  "rawPose": {
+    "X": null,
+    "Y": null,
+    "Z": null,
+    "A": null
+  },
+  "measuredTipGapMm": null,
+  "gapUncertaintyMm": null,
+  "reviewedMinimumGapMm": null,
+  "reviewedMaximumGapMm": null,
+  "maximumCumulativeDegrees": null,
+  "initialB": null,
+  "flowCalibrated": false,
+  "description": "Unmeasured waste receiver profile. Measured physical heights and full uncertainty must prove lower tip gap at least1mm. Not a dispensing calibration.",
+  "installedNeedleId": null,
+  "homeSha256": null,
+  "initialAccountingSha256": null,
+  "priorChargedDegrees": null,
+  "controllerBStepsPerUnit": null,
+  "controllerRounding": null,
+  "syringeId": null,
+  "measurementAxis": null,
+  "measuredTipHeightMm": null,
+  "measuredReceiverHeightMm": null
+}
