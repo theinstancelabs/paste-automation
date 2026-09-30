@@ -1,0 +1,26 @@
+{
+  "description": "Unusable staged request. Parent must bind a fresh exact live pose/config/JVM and reviewed corridor image. This permits only one camera survey of raw X+10, no Z or rotation, no dispensing or general air-run authorization.",
+  "schema": 1,
+  "scope": "camera-survey-raw-X-plus10-only",
+  "id": null,
+  "createdMs": null,
+  "jvmStartMs": null,
+  "operator": null,
+  "liveConfigurationSha256": null,
+  "deltaRawXmm": 10,
+  "speedFraction": 0.1,
+  "speedOverPrecision": true,
+  "operatorVerified10mmCorridor": false,
+  "bothHeadsClearAlongCorridor": false,
+  "motionAreaClear": false,
+  "noHeldPartsObserved": false,
+  "corridorEvidence": {"path": null, "sha256": null, "capturedMs": null},
+  "expectedRaw": {"X": null, "Y": null, "Z": null, "A": null, "B": null},
+  "expectedDriver": {"X": null, "Y": null, "Z": null, "A": null, "B": null},
+  "expectedNativePoses": {
+    "N1": {"x": null, "y": null, "z": null, "rotation": null},
+    "N2": {"x": null, "y": null, "z": null, "rotation": null},
+    "top": {"x": null, "y": null, "z": null, "rotation": null},
+    "bottom": {"x": null, "y": null, "z": null, "rotation": null}
+  }
+}
