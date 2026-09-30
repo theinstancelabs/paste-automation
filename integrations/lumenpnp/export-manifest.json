@@ -3,7 +3,7 @@
   "exportDate": "2026-09-30",
   "baseCommit": "c497bfbef2f7347538966c129bf7ac7bdc2c1a0f",
   "canonicalSourceRoot": "/home/lumen/lumenpnp",
-  "purpose": "Source-only reviewable mirror; no deployment, staging, commit or push performed by export.",
+  "purpose": "Source-only reviewable mirror; no deployment, machine operation, or private machine evidence included.",
   "excluded": [
     "automation/evidence/**",
     "automation/plans/**",
@@ -1150,13 +1150,6 @@
     },
     {
       "sourceRoot": "/home/lumen/lumenpnp",
-      "sourcePath": "automation/tests/test_z_observation_nashorn.py",
-      "destination": "integrations/lumenpnp/automation/tests/test_z_observation_nashorn.py",
-      "sha256": "af72723f6ecef226547cec8d699b1baf5384631e42d835b3ddbc484143210251",
-      "bytes": 1202
-    },
-    {
-      "sourceRoot": "/home/lumen/lumenpnp",
       "sourcePath": "automation/scripts/Capture_Paste_Bottom_Exposure.js",
       "destination": "integrations/lumenpnp/automation/scripts/Capture_Paste_Bottom_Exposure.js",
       "sha256": "bb9cf7341ebbefe1312c584b4c2d89020989f85e90e09215342547fa4960c8b7",
@@ -1168,20 +1161,6 @@
       "destination": "integrations/lumenpnp/automation/scripts/Capture_Paste_Top_Exposure.js",
       "sha256": "e1c821078881a0b46ec1a8ff5b3bcf44b8087c97568fe4b506737f9ea0192542",
       "bytes": 6028
-    },
-    {
-      "sourceRoot": "/home/lumen/lumenpnp",
-      "sourcePath": "automation/scripts/Automation_Reviewed_Command.js",
-      "destination": "integrations/lumenpnp/automation/scripts/Automation_Reviewed_Command.js",
-      "sha256": "d9acf809779fa2d412b897fcd6cd9ff53c2143cdd117fe44b6333d11f01ac534",
-      "bytes": 4203
-    },
-    {
-      "sourceRoot": "/home/lumen/lumenpnp",
-      "sourcePath": "automation/scripts/run_reviewed_action.py",
-      "destination": "integrations/lumenpnp/automation/scripts/run_reviewed_action.py",
-      "sha256": "b0b5b4c83e11a05a6c08cbfecb4584291b1cd0cffef0e34f74b3ad676774971f",
-      "bytes": 18185
     },
     {
       "sourceRoot": "/home/lumen/lumenpnp",
@@ -1273,6 +1252,69 @@
       "destination": "integrations/lumenpnp/automation/paste/observe-z-step.py",
       "sha256": "7fc32496268d6a66abee3945abb6db2b5f95b0a93d5992f10f775d34a617094b",
       "bytes": 6705
+    },
+    {
+      "sourceRoot": "/home/lumen/lumenpnp",
+      "sourcePath": "automation/paste/commissioning-stroke.cjs",
+      "destination": "integrations/lumenpnp/automation/paste/commissioning-stroke.cjs",
+      "sha256": "d82e0b135423b2b2abebfc394a608bd6a61a94425a9230af618cbf613a6527a5",
+      "bytes": 5779
+    },
+    {
+      "sourceRoot": "/home/lumen/lumenpnp",
+      "sourcePath": "automation/paste/commissioning-stroke.test.cjs",
+      "destination": "integrations/lumenpnp/automation/paste/commissioning-stroke.test.cjs",
+      "sha256": "74937ae71d66e0d02ac4a1bc8fadf1862a94aab133b2676137ca056bac375e64",
+      "bytes": 3248
+    },
+    {
+      "sourceRoot": "/home/lumen/lumenpnp",
+      "sourcePath": "automation/scripts/Commission_Paste_B_Stroke.js",
+      "destination": "integrations/lumenpnp/automation/scripts/Commission_Paste_B_Stroke.js",
+      "sha256": "02673541a6993672d69e490405aa5998ab9e2bc9db5ff29e1e2773ee7ff6bd0c",
+      "bytes": 33216
+    },
+    {
+      "sourceRoot": "/home/lumen/lumenpnp",
+      "sourcePath": "automation/scripts/Preview_Paste_Commissioning_Stroke.js",
+      "destination": "integrations/lumenpnp/automation/scripts/Preview_Paste_Commissioning_Stroke.js",
+      "sha256": "f5c97803178e1c902e2ab5d4470c4be1f1a0ed263486d87efd72e00c7bcbb474",
+      "bytes": 6899
+    },
+    {
+      "sourceRoot": "/home/lumen/lumenpnp",
+      "sourcePath": "automation/scripts/build_commissioning_stroke_request.cjs",
+      "destination": "integrations/lumenpnp/automation/scripts/build_commissioning_stroke_request.cjs",
+      "sha256": "86439d0a1c82c107ed2f29cc59e5420b1e892658e9c1c107e579ae778ce58f22",
+      "bytes": 6959
+    },
+    {
+      "sourceRoot": "/home/lumen/lumenpnp",
+      "sourcePath": "automation/scripts/build_commissioning_stroke_preview_request.cjs",
+      "destination": "integrations/lumenpnp/automation/scripts/build_commissioning_stroke_preview_request.cjs",
+      "sha256": "355a11cd7f0779cc29c4f8eef0329aa0efd2682f5fb5486996dd62b1c0955f88",
+      "bytes": 1612
+    },
+    {
+      "sourceRoot": "/home/lumen/lumenpnp",
+      "sourcePath": "automation/scripts/Automation_Reviewed_Command.js",
+      "destination": "integrations/lumenpnp/automation/scripts/Automation_Reviewed_Command.js",
+      "sha256": "2fed6ca16198c528589074d0d0b648707d1b269cd2293730d2dd3b928df34281",
+      "bytes": 4406
+    },
+    {
+      "sourceRoot": "/home/lumen/lumenpnp",
+      "sourcePath": "automation/scripts/run_reviewed_action.py",
+      "destination": "integrations/lumenpnp/automation/scripts/run_reviewed_action.py",
+      "sha256": "56d55478c353e6c498521ab215800a070d7b6e89f6abad53f2719b9469270ccc",
+      "bytes": 18321
+    },
+    {
+      "sourceRoot": "/home/lumen/lumenpnp",
+      "sourcePath": "automation/tests/test_z_observation_nashorn.py",
+      "destination": "integrations/lumenpnp/automation/tests/test_z_observation_nashorn.py",
+      "sha256": "972716b27cd1d2cf61a04f9be18f4f2df00146ef2d2e790f652ae3e71cf2b9f9",
+      "bytes": 1370
     }
   ],
   "manifestSelfHash": "Excluded to avoid a recursive digest; this manifest enumerates every other exported/generated file."
