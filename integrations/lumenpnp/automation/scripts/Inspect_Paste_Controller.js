@@ -20,6 +20,20 @@ try {
  for each(var driver in m.getDrivers()){
   if(String(driver.getClass().getName())!=='org.openpnp.machine.reference.driver.GcodeDriver')throw new Error('Unreviewed driver type');
   var record=report.drivers[i++];record.priorResponses=[];
+  var commandType=Java.type('org.openpnp.machine.reference.driver.GcodeDriver$CommandType');
+  if(['M114','M114 ; get position'].indexOf(String(driver.getCommand(null,commandType.GET_POSITION_COMMAND)).trim())<0)throw new Error('Unexpected position query command');
+  record.beforePositionQuery=[];var beforeAxis={};
+  for each(var axis in m.getAxes())if(String(axis.getClass().getName())==='org.openpnp.machine.reference.axis.ReferenceControllerAxis'){
+   var saved={id:String(axis.getId()),name:String(axis.getName()),letter:String(axis.getLetter()),modeledDriver:Number(axis.getDriverCoordinate()),modeled:Number(axis.getCoordinate())};
+   beforeAxis[saved.id]=saved;record.beforePositionQuery.push(saved);
+  }
+  save();
+  var observed=driver.getReportedLocation(3000);record.reportedLocation=String(observed);record.axisComparison=[];
+  for each(var axis in observed.getControllerAxes()){
+   var saved=beforeAxis[String(axis.getId())];if(!saved)throw new Error('Unrecorded position axis');
+   record.axisComparison.push({id:saved.id,name:saved.name,letter:saved.letter,reported:Number(observed.getCoordinate(axis)),modeledDriverBefore:saved.modeledDriver,modeledBefore:saved.modeled,modeledDriverAfter:Number(axis.getDriverCoordinate()),modeledAfter:Number(axis.getCoordinate())});
+  }
+
   for each(var prior in driver.receiveResponses())record.priorResponses.push(String(prior.getLine()));
   record.queries=[];
   for each(var cmd in ['M115','M503']){

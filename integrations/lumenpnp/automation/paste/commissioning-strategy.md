@@ -1,0 +1,15 @@
+# CAD-seeded purge-pad commissioning
+
+Use the upstream `opulo-inc/paste-extruder` FreeCAD assembly at `d1aa6cda9d3e40b7f3fbe797b8b84fd1cb556d55` as nominal geometry. The right-hand base and clamp mirror must be retained. Derive dimensions with a repeatable extractor and retain source hashes. Nominal geometry plus observations can establish a conservative initial approach envelope; manufacturing/assembly deviations are resolved by calibration, not treated as a reason to discard the CAD. Never label CAD values measured.
+
+The reported installed straight blunt-flat needle is22 gauge and1/4 inch (6.35mm). Gauge does not uniquely establish bore or hub seating. Keep tube length, hub geometry, syringe seat and mounted tool frame separate. Material reported by the operator is Multicore GC10 SAC305T4.
+
+Use the existing OpenPnP owner and preserve native axis state. First inspect the current scene and derive a bounded travel corridor accounting for both heads, syringe/clamp/cables and the opposing shared Z. Do not reuse generic moveToSafeZ routines without checking the complete two-head envelope. Compare controller-reported and modeled positions after commissioning steps because historical firmware clamping produced disagreement.
+
+Measure surfaces with the empty left nozzle and vacuum where a clean, flat region supports a repeatable seal. Bound descent before starting, establish a fresh free-air baseline, stop at the first credible deviation rather than press harder, and distinguish seal candidates from calibrated contact. Repeat after retract/release. The right needle offset requires a separate installed-tip observation/calibration; a left-nozzle surface result alone does not establish it.
+
+The purge coupon lies behind (+Y of) the raised demo board, directly on the machine bed. Its height, registration and permissible approach are independent of the demo board. Identify actual visible pads using the top camera before making a target list. Give each pad a stable ID, image reference, center and extent in the registered native frame. Do not invent pad coordinates from the wide overview. If targets differ in area/shape, do not compare raw deposit coverage as if they were identical.
+
+Prime over a reserved sacrificial area, then compare three bounded doses on separate comparable pads with current, speed, dwell, gap and retraction held fixed. Inspect coverage, centering, strings and bridges. Refine one variable at a time, re-prime after long pauses as indicated by observations, and use fresh pads for repeats. Test repeatability at the intended timing, including the first dot after a pause. Only then freeze a recipe tied to material, tip, configuration and measured registration.
+
+No software test establishes a physical pass. Save actual commands/completion, images and observations per trial. Keep tests of the demo-board path as air passes until purge-pad trials and right-tip registration pass review. Preserve old placement progress; the cleaned board receives a fresh paste run record.

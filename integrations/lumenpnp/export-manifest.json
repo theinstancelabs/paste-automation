@@ -20,11 +20,41 @@
   ],
   "entries": [
     {
+      "sourceRoot": "/home/lumen/paste-automation",
+      "sourcePath": "docs/VIDEO_NOTES.md",
+      "destination": "docs/VIDEO_NOTES.md",
+      "sha256": "014e257d5feec289f53466f91a3917b705dd0807f670be000a3aad6778b58149",
+      "bytes": 6668
+    },
+    {
+      "sourceRoot": null,
+      "sourcePath": null,
+      "destination": "integrations/lumenpnp/.gitignore",
+      "sha256": "83368351b896a8799f062f08470d833e9db85f62989b4b9afc2980c3ee1eac34",
+      "bytes": 187,
+      "generated": "Mirror-only explanatory metadata; no machine data"
+    },
+    {
+      "sourceRoot": null,
+      "sourcePath": null,
+      "destination": "integrations/lumenpnp/README.md",
+      "sha256": "1fa604b5a67eb16bd967ac0fb9fcafcb7a2b78a584522dbd063b7276709cb2c6",
+      "bytes": 3079,
+      "generated": "Mirror-only explanatory metadata; no machine data"
+    },
+    {
       "sourceRoot": "/home/lumen/lumenpnp",
       "sourcePath": "automation/paste/README.md",
       "destination": "integrations/lumenpnp/automation/paste/README.md",
       "sha256": "f7a58cb23687540321b8d024cb1a01e09ae9d3cef469b765b0ee335ead51fe3d",
       "bytes": 10157
+    },
+    {
+      "sourceRoot": "/home/lumen/lumenpnp",
+      "sourcePath": "automation/paste/commissioning-strategy.md",
+      "destination": "integrations/lumenpnp/automation/paste/commissioning-strategy.md",
+      "sha256": "2aafa4ef20bb357c7a8b4c79893d9c87b0503eb4c0f1201ddde876daf5dcfa5a",
+      "bytes": 3021
     },
     {
       "sourceRoot": "/home/lumen/lumenpnp",
@@ -39,6 +69,13 @@
       "destination": "integrations/lumenpnp/automation/paste/connection-policy.test.cjs",
       "sha256": "9bd3e86f59082e97cb7a7e53b477c499278885b1af3ef8a03a4fb4d86c860c7a",
       "bytes": 2595
+    },
+    {
+      "sourceRoot": "/home/lumen/lumenpnp",
+      "sourcePath": "automation/paste/extract-cad-parameters.py",
+      "destination": "integrations/lumenpnp/automation/paste/extract-cad-parameters.py",
+      "sha256": "e55839978921307f6154cc7f8f951cadb3fb65f40fa2a07708de115c18f6d789",
+      "bytes": 3103
     },
     {
       "sourceRoot": "/home/lumen/lumenpnp",
@@ -149,8 +186,8 @@
       "sourceRoot": "/home/lumen/lumenpnp",
       "sourcePath": "automation/scripts/Inspect_Paste_Controller.js",
       "destination": "integrations/lumenpnp/automation/scripts/Inspect_Paste_Controller.js",
-      "sha256": "0a30caadf211d83e6e22bf307873b859ff664526b635de14c224eec8a45cd12c",
-      "bytes": 3110
+      "sha256": "061e7f9332fca0159f9568b169af219b50a3696cbf0c72719049366df1793a57",
+      "bytes": 4401
     },
     {
       "sourceRoot": "/home/lumen/lumenpnp",
@@ -161,45 +198,10 @@
     },
     {
       "sourceRoot": "/home/lumen/lumenpnp",
-      "sourcePath": "automation/scripts/run_reviewed_action.py",
-      "destination": "integrations/lumenpnp/automation/scripts/run_reviewed_action.py",
-      "sha256": "a4f33ee78c120ed7a69c4db64a01abc92c2c4bf034e11f171907f31ae6a5e586",
-      "bytes": 17145
-    },
-    {
-      "sourceRoot": "/home/lumen/lumenpnp",
-      "sourcePath": "automation/scripts/paste_serial_preflight.py",
-      "destination": "integrations/lumenpnp/automation/scripts/paste_serial_preflight.py",
-      "sha256": "bed09ac73df00f78fa1be054679ecd7302fff770010150d774963f0c971a5ce0",
-      "bytes": 2621
-    },
-    {
-      "sourceRoot": "/home/lumen/lumenpnp",
-      "sourcePath": "automation/scripts/live_viewer.py",
-      "destination": "integrations/lumenpnp/automation/scripts/live_viewer.py",
-      "sha256": "463c51058ae85e2b31ac6d5d50f677da0ec6e91cec2ff2ba167c7e17345e6365",
-      "bytes": 23311
-    },
-    {
-      "sourceRoot": "/home/lumen/lumenpnp",
       "sourcePath": "automation/scripts/chat_mirror.py",
       "destination": "integrations/lumenpnp/automation/scripts/chat_mirror.py",
       "sha256": "2a484fca2ffa6d74b718dfde887c4d6946a1c7304c0d4b4720f537ecec4e0f15",
       "bytes": 3926
-    },
-    {
-      "sourceRoot": "/home/lumen/lumenpnp",
-      "sourcePath": "automation/scripts/message_outbox.py",
-      "destination": "integrations/lumenpnp/automation/scripts/message_outbox.py",
-      "sha256": "383daf77c50541a832418de52d24520ded80beb6564650bf65e1265283bfdff1",
-      "bytes": 5951
-    },
-    {
-      "sourceRoot": "/home/lumen/lumenpnp",
-      "sourcePath": "automation/scripts/start_webcam.sh",
-      "destination": "integrations/lumenpnp/automation/scripts/start_webcam.sh",
-      "sha256": "f0eda5c00f628bed869c7a3a4e649b5b66953c19d46f939021a863778ab703a6",
-      "bytes": 246
     },
     {
       "sourceRoot": "/home/lumen/lumenpnp",
@@ -214,6 +216,41 @@
       "destination": "integrations/lumenpnp/automation/scripts/java/ReviewedCommandAgent.java",
       "sha256": "44a75aa39dbca36f5b5c3a0246829efffd06c36b0b064259e03d8ceb7ff13043",
       "bytes": 1102
+    },
+    {
+      "sourceRoot": "/home/lumen/lumenpnp",
+      "sourcePath": "automation/scripts/live_viewer.py",
+      "destination": "integrations/lumenpnp/automation/scripts/live_viewer.py",
+      "sha256": "463c51058ae85e2b31ac6d5d50f677da0ec6e91cec2ff2ba167c7e17345e6365",
+      "bytes": 23311
+    },
+    {
+      "sourceRoot": "/home/lumen/lumenpnp",
+      "sourcePath": "automation/scripts/message_outbox.py",
+      "destination": "integrations/lumenpnp/automation/scripts/message_outbox.py",
+      "sha256": "383daf77c50541a832418de52d24520ded80beb6564650bf65e1265283bfdff1",
+      "bytes": 5951
+    },
+    {
+      "sourceRoot": "/home/lumen/lumenpnp",
+      "sourcePath": "automation/scripts/paste_serial_preflight.py",
+      "destination": "integrations/lumenpnp/automation/scripts/paste_serial_preflight.py",
+      "sha256": "bed09ac73df00f78fa1be054679ecd7302fff770010150d774963f0c971a5ce0",
+      "bytes": 2621
+    },
+    {
+      "sourceRoot": "/home/lumen/lumenpnp",
+      "sourcePath": "automation/scripts/run_reviewed_action.py",
+      "destination": "integrations/lumenpnp/automation/scripts/run_reviewed_action.py",
+      "sha256": "a4f33ee78c120ed7a69c4db64a01abc92c2c4bf034e11f171907f31ae6a5e586",
+      "bytes": 17145
+    },
+    {
+      "sourceRoot": "/home/lumen/lumenpnp",
+      "sourcePath": "automation/scripts/start_webcam.sh",
+      "destination": "integrations/lumenpnp/automation/scripts/start_webcam.sh",
+      "sha256": "f0eda5c00f628bed869c7a3a4e649b5b66953c19d46f939021a863778ab703a6",
+      "bytes": 246
     },
     {
       "sourceRoot": "/home/lumen/lumenpnp",
@@ -242,29 +279,6 @@
       "destination": "integrations/lumenpnp/automation/tests/test_paste_serial_preflight.py",
       "sha256": "a2789a3847950f5317fae7a42fb2b803e8303da15f4accd986e793acca95fec3",
       "bytes": 989
-    },
-    {
-      "sourceRoot": "/home/lumen/paste-automation",
-      "sourcePath": "docs/VIDEO_NOTES.md",
-      "destination": "docs/VIDEO_NOTES.md",
-      "sha256": "014e257d5feec289f53466f91a3917b705dd0807f670be000a3aad6778b58149",
-      "bytes": 6668
-    },
-    {
-      "sourceRoot": null,
-      "sourcePath": null,
-      "destination": "integrations/lumenpnp/README.md",
-      "sha256": "1fa604b5a67eb16bd967ac0fb9fcafcb7a2b78a584522dbd063b7276709cb2c6",
-      "bytes": 3079,
-      "generated": "Mirror-only explanatory metadata; no machine data"
-    },
-    {
-      "sourceRoot": null,
-      "sourcePath": null,
-      "destination": "integrations/lumenpnp/.gitignore",
-      "sha256": "83368351b896a8799f062f08470d833e9db85f62989b4b9afc2980c3ee1eac34",
-      "bytes": 187,
-      "generated": "Mirror-only explanatory metadata; no machine data"
     }
   ],
   "manifestSelfHash": "Excluded to avoid a recursive digest; this manifest enumerates every other exported/generated file."
