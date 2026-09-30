@@ -51,7 +51,8 @@ class PrepareSurveyRequestTests(unittest.TestCase):
         self.assertEqual(q['expectedDriver']['X'], 30.12)
         self.assertEqual(q['corridorEvidence']['capturedMs'], NOW-1000)
         self.assertFalse(info['dispatchPerformed'])
-        self.assertEqual(q['deltaRawXmm'], 10)
+        self.assertEqual(q['axis'], 'X')
+        self.assertEqual(q['deltaMm'], 10)
         self.assertNotEqual(q['id'], SOURCE_ID)
         other, _ = self.prepare()
         self.assertNotEqual(q['id'], other['id'])
@@ -88,6 +89,18 @@ class PrepareSurveyRequestTests(unittest.TestCase):
         self.image.write_bytes(b'not an image')
         os.utime(self.image, ns=(NOW*1000000, NOW*1000000))
         with self.assertRaises(ValueError): self.prepare()
+
+    def test_explicit_signed_xy_step_and_legacy_source(self):
+        old = report();old['request']['scope'] = module.LEGACY_SCOPE
+        self.source.write_text(json.dumps(old))
+        for axis in ('X', 'Y'):
+            for delta in (-10, -0.5, 0.5, 10):
+                q, _ = module.prepare(self.source, self.image, 'operator', True, NOW, axis, delta)
+                self.assertEqual((q['schema'], q['axis'], q['deltaMm']), (2, axis, delta))
+                self.assertNotIn('deltaRawXmm', q)
+        for axis, delta in [('Z', 1), ('XY', 1), ('Y', 0), ('Y', 10.01), ('Y', -10.01), ('Y', float('nan')), ('X', True)]:
+            with self.assertRaises(ValueError):
+                module.prepare(self.source, self.image, 'operator', True, NOW, axis, delta)
 
     def test_output_refuses_overwrite_and_exact_template_field_set(self):
         q, _ = self.prepare()

@@ -1,4 +1,4 @@
-// STAGED one-shot supervised camera survey: native raw X+10mm only.
+// STAGED one-shot supervised camera survey: one signed native raw X or Y step, at most 10 mm.
 // No serial ownership changes, safe-Z helper, rotation, pickup, vacuum or current.
 // Uses the existing single-worker native executor with audited busy bookkeeping;
 // bypasses the public wrapper whose completion/exception cleanup can flush motion.
@@ -44,7 +44,7 @@
   if(mapped.sort().join(',')!=='X,Y')throw Error('Top camera must map only physical X/Y (no Z/A/B)');
   var offsets=privateValue('org.openpnp.machine.reference.driver.AbstractMotionPlanner','lastDirectionalBacklashOffset',planner);
   for each(var axis in offsets.getAxes())if(Math.abs(Number(offsets.getCoordinate(axis)))>1e-9)throw Error('Unresolved directional backlash offset');
-  if(['None','OneSidedPositioning'].indexOf(String(axes.X.getBacklashCompensationMethod()))<0)throw Error('Unaudited X backlash method');
+  if(['None','OneSidedPositioning'].indexOf(String(axes[PasteSurveyRequest.step(q).axis].getBacklashCompensationMethod()))<0)throw Error('Unaudited selected-axis backlash method');
   if(['M114','M114 ; get position'].indexOf(String(d.getCommand(null,CT.GET_POSITION_COMMAND)).trim())<0)throw Error('Position query command changed');
   if(String(d.getCommand(null,CT.MOVE_TO_COMPLETE_COMMAND)).split(';')[0].trim()!=='M400')throw Error('Motion completion command changed');
  }
@@ -86,11 +86,11 @@
   PasteSurveyRequest.validate(q,Number(java.lang.System.currentTimeMillis()),jvm);stateGate();if(configHash()!==q.liveConfigurationSha256)throw Error('Configuration changed during preflight');
   if(!executor.getQueue().isEmpty())throw Error('Competing native work queued during camera preflight');
   var preMove=snapshot();PasteSurveyRequest.compareExact(preMove.raw,initial.raw,'unchanged pre-move raw');comparePoses(preMove.nativePoses,initial.nativePoses);PasteSurveyRequest.compareReported(r.before.reported,preMove.raw,preMove.driver);
-  var expected=PasteSurveyRequest.target(initial.raw),target=new AL(axes.X,expected.X);
-  if(target.getControllerAxes().size()!==1||!target.contains(axes.X)||Math.abs(Number(target.getCoordinate(axes.X))-expected.X)>1e-9)throw Error('Survey must command exactly one raw X target');
-  if(!planner.isValidLocation(top,target))throw Error('Native X target outside limits');
-  r.commandedControllerAxes=['X'];r.postmoveComparisonTolerance={linearMm:0.02,angularDegrees:0.3,meaning:'Firmware reporting precision, not permission to command other axes'};r.expectedAfterRaw=expected;r.preMoveSnapshot=preMove;r.motionSubmitted=true;save('submitting-one-native-X-move');
-  // Partial X axes location leaves all other axes untouched. This per-move
+  var move=PasteSurveyRequest.step(q),expected=PasteSurveyRequest.target(initial.raw,q),selectedAxis=axes[move.axis],target=new AL(selectedAxis,expected[move.axis]);
+  if(target.getControllerAxes().size()!==1||!target.contains(selectedAxis)||Math.abs(Number(target.getCoordinate(selectedAxis))-expected[move.axis])>1e-9)throw Error('Survey must command exactly one selected raw XY target');
+  if(!planner.isValidLocation(top,target))throw Error('Native selected-axis target outside limits');
+  r.commandedControllerAxes=[move.axis];r.postmoveComparisonTolerance={linearMm:0.02,angularDegrees:0.3,meaning:'Firmware reporting precision, not permission to command other axes'};r.expectedAfterRaw=expected;r.preMoveSnapshot=preMove;r.motionSubmitted=true;save('submitting-one-native-'+move.axis+'-move');
+  // Partial single-axis location leaves all other axes untouched. This per-move
   // option bypasses audited one-sided backlash overshoot, without config edits.
   planner.moveTo(top,target,0.1,MO.SpeedOverPrecision);
   r.nativeMotionCompletionReported=true;save('native-stillstand-reported');
@@ -98,7 +98,7 @@
   // issue a second generic completion or any recovery/park/lift on failure.
   var after=snapshot();r.afterQuerySnapshot=after;PasteSurveyRequest.comparePostModel(after.raw,expected);
   query(after,'after');PasteSurveyRequest.compareReported(r.after.reported,expected,after.driver);
-  PasteSurveyRequest.compareFirmwareStep(r.before.reported,r.after.reported);r.independentFirmwareStepVerified=true;
+  PasteSurveyRequest.compareFirmwareStep(r.before.reported,r.after.reported,q);r.independentFirmwareStepVerified=true;
   ['N1','N2','top','bottom'].forEach(function(k){['z','rotation'].forEach(function(a){PasteSurveyRequest.close(after.nativePoses[k][a],initial.nativePoses[k][a],a==='rotation'?0.3:0.02,'unchanged '+k+' '+a);});});
   r.controllerPositionVerified=true;save('controller-position-verified');settle();var afterTop=capture(top,'top-after-raw'),afterBottom=capture(bottom,'bottom-after-raw');r.afterImages={top:{path:afterTop.path,width:afterTop.width,height:afterTop.height},bottom:{path:afterBottom.path,width:afterBottom.width,height:afterBottom.height}};
   pair(beforeTop,afterTop,'top-before-after');pair(beforeBottom,afterBottom,'bottom-before-after');r.contactSheets=['top-before-after.png','bottom-before-after.png'];

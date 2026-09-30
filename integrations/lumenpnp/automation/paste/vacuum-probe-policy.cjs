@@ -54,6 +54,7 @@ function sample(state, value, atMs) {
 
   const directedDelta = c.responseDirection === 'decrease' ? state.baselineValue - value : value - state.baselineValue;
   state.levelSamples.push(directedDelta);
+  if (directedDelta < -c.noiseFloor) return stop(state, 'opposite-sign sensor deviation; hold Z and inspect');
   if (directedDelta > c.noiseFloor) {
     state.phase = 'confirming';
     const allCandidate = state.levelSamples.length >= c.samplesToConfirm && state.levelSamples.slice(-c.samplesToConfirm).every(d => d >= c.candidateMinDelta);

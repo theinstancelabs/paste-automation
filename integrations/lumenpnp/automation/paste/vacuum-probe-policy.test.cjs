@@ -72,6 +72,25 @@ test('ambiguous partial seal halts at first deviating level without another desc
   assert.match(r.reason, /ambiguous or partial-seal/);
   assert.equal(p.zmm, 7.8);
 });
+test('opposite-sign deviation aborts at the same Z for either polarity and cannot resume descent', () => {
+  for (const responseDirection of ['decrease', 'increase']) {
+    for (const alreadyConfirming of [false, true]) {
+      const p = createProbe(contract({ responseDirection }), 0);
+      baseline(p, 0, [100, 100, 100, 100]);
+      if (alreadyConfirming) {
+        const expectedSign = responseDirection === 'decrease' ? 98 : 102;
+        assert.equal(sample(p, expectedSign, 100).decision, 'hold-z-confirm-deviation');
+      }
+      const wrongSign = responseDirection === 'decrease' ? 102 : 98;
+      const r = sample(p, wrongSign, alreadyConfirming ? 120 : 100);
+      assert.equal(r.decision, 'abort');
+      assert.match(r.reason, /opposite-sign/);
+      assert.equal(p.zmm, 7.8);
+      assert.equal(p.targetZmm, null);
+      assert.equal(sample(p, 100, 140).decision, 'already-stopped');
+    }
+  }
+});
 test('sensor failure, too-fast/late samples, and elapsed deadline fail closed', () => {
   const failed = createProbe(contract(), 0);
   assert.match(sample(failed, NaN, 20).reason, /sensor-failure/);

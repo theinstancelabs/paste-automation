@@ -26,3 +26,17 @@ test('independent firmware step rejects nonX drift beyond precision, wrong X del
  assert.throws(()=>p.compareFirmwareStep(before,{...after,X:before.X}));
  assert.throws(()=>p.compareFirmwareStep(before,{X:30}));
 });
+function single(axis,deltaMm){const q=request();delete q.deltaRawXmm;return {...q,schema:2,scope:'camera-survey-single-raw-XY-axis',axis,deltaMm};}
+test('signed X and Y bounded steps change exactly the selected raw axis',()=>{
+ for(const axis of ['X','Y'])for(const delta of [-10,-0.25,0.25,10]){
+  const q=single(axis,delta);p.validate(q,1001,42);const expected={...q.expectedRaw,[axis]:q.expectedRaw[axis]+delta};
+  assert.deepEqual(p.target(q.expectedRaw,q),expected);p.compareFirmwareStep(q.expectedRaw,expected,q);
+  const other=axis==='X'?'Y':'X';assert.throws(()=>p.compareFirmwareStep(q.expectedRaw,{...expected,[other]:expected[other]+0.03},q));
+ }
+});
+test('invalid axes, zero/oversize/nonfinite deltas and diagonal/ambiguous fields fail closed',()=>{
+ for(const axis of ['Z','A','B','XY',['X','Y'],null])assert.throws(()=>p.validate(single(axis,5),1001,42));
+ for(const delta of [0,-0,10.01,-10.01,NaN,Infinity,'5',null])assert.throws(()=>p.validate(single('Y',delta),1001,42));
+ for(const extra of [{deltaRawXmm:10},{deltaRawYmm:1},{axes:['X','Y']},{targetRaw:{X:1,Y:1}}])assert.throws(()=>p.validate({...single('Y',-5),...extra},1001,42));
+ assert.throws(()=>p.validate({...request(),axis:'Y',deltaMm:5},1001,42));
+});

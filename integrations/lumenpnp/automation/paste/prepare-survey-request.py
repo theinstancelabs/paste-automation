@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Prepare, never dispatch, one new reviewed +10 raw-X camera-survey request."""
+"""Prepare, never dispatch, one new reviewed bounded single-axis XY camera-survey request."""
 import argparse
 import copy
 import hashlib
@@ -12,7 +12,8 @@ import uuid
 
 AXES = {'X', 'Y', 'Z', 'A', 'B'}
 POSES = {'N1', 'N2', 'top', 'bottom'}
-SCOPE = 'camera-survey-raw-X-plus10-only'
+LEGACY_SCOPE = 'camera-survey-raw-X-plus10-only'
+SCOPE = 'camera-survey-single-raw-XY-axis'
 UUID_PATTERN = r'[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}'
 SUCCESS = 'completed-camera-survey-awaiting-image-review'
 AUDIT_SUCCESS = 'audit-complete-awaiting-separate-reviewed-latch-clear'
@@ -37,7 +38,7 @@ def source_snapshot(report):
         raise ValueError('Failed, uncertain or incomplete reports cannot prepare a continuation')
     request = report.get('request')
     if report.get('status') == SUCCESS:
-        if (not isinstance(request, dict) or request.get('scope') != SCOPE
+        if (not isinstance(request, dict) or request.get('scope') not in (SCOPE, LEGACY_SCOPE)
                 or not isinstance(report.get('id'), str) or not re.fullmatch(UUID_PATTERN, report['id'])
                 or report.get('id') != request.get('id')
                 or any(report.get(key) is not True for key in ('motionSubmitted', 'nativeMotionCompletionReported', 'controllerPositionVerified', 'independentFirmwareStepVerified'))
@@ -84,9 +85,11 @@ def source_snapshot(report):
     return kind, jvm, config_hash, raw, driver, poses
 
 
-def prepare(report_path, image_path, operator, reviewed, now_ms=None):
+def prepare(report_path, image_path, operator, reviewed, now_ms=None, axis='X', delta_mm=10):
     if reviewed is not True or not isinstance(operator, str) or not operator.strip():
         raise ValueError('Named operator and explicit --reviewed-clear-corridor are required; this attests all four corridor/clearance/empty-part checks')
+    if axis not in ('X', 'Y') or not 0 < abs(finite(delta_mm, 'delta_mm')) <= 10:
+        raise ValueError('Select X or Y and a nonzero signed delta of magnitude at most 10 mm')
     now = time.time_ns() // 1_000_000 if now_ms is None else now_ms
     finite(now, 'current time')
     report_path, image_path = Path(report_path).resolve(strict=True), Path(image_path).resolve(strict=True)
@@ -107,7 +110,7 @@ def prepare(report_path, image_path, operator, reviewed, now_ms=None):
     template = json.loads(Path(__file__).with_name('survey-request.pending.json').read_text())
     request = copy.deepcopy(template)
     request.update(description='Prepared offline from a verified terminal pose. This does not dispatch, clear a latch, or authorize any other motion.',
-                   schema=1, scope=SCOPE, deltaRawXmm=10, speedFraction=0.1, speedOverPrecision=True,
+                   schema=2, scope=SCOPE, axis=axis, deltaMm=delta_mm, speedFraction=0.1, speedOverPrecision=True,
                    id=str(uuid.uuid4()), createdMs=now, jvmStartMs=jvm, operator=operator.strip(),
                    liveConfigurationSha256=config_hash,
                    operatorVerified10mmCorridor=True, bothHeadsClearAlongCorridor=True,
@@ -131,11 +134,13 @@ def main():
     parser.add_argument('corridor_image', type=Path)
     parser.add_argument('output', type=Path)
     parser.add_argument('--operator', required=True)
+    parser.add_argument('--axis', choices=('X', 'Y'), default='X')
+    parser.add_argument('--delta-mm', type=float, default=10)
     parser.add_argument('--reviewed-clear-corridor', action='store_true',
-                        help='explicitly attest fresh image review, clear +10 X corridor for both heads, clear motion area and no held parts')
+                        help='explicitly attest fresh image review, clear selected signed XY corridor for both heads, clear motion area and no held parts')
     args = parser.parse_args()
     try:
-        request, provenance = prepare(args.source_report, args.corridor_image, args.operator, args.reviewed_clear_corridor)
+        request, provenance = prepare(args.source_report, args.corridor_image, args.operator, args.reviewed_clear_corridor, axis=args.axis, delta_mm=args.delta_mm)
         write_request(args.output, request)
     except (OSError, ValueError, TypeError, KeyError) as exc:
         parser.error(str(exc))
