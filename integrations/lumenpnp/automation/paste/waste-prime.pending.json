@@ -86,5 +86,9 @@
   "installedNeedleId": null,
   "noHomeOrReceiverOrNeedleChangeSinceMeasurement": false,
   "expectedExpandedCommands": [],
-  "reviewedNegativeBWastePrime": false
+  "reviewedNegativeBWastePrime": false,
+  "nativePreviewEvidence": {
+    "path": null,
+    "sha256": null
+  }
 }

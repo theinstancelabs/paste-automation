@@ -21,3 +21,37 @@ java -cp '/tmp:/opt/openpnp/openpnp-gui-0.0.1-alpha-SNAPSHOT.jar:/opt/openpnp/li
 ```
 
 The Java runner evaluates only the synthetic detached fixture. Machine scripts themselves receive compile-only review. Activation remains a separate reviewed step after measured receiver evidence, actual expanded-command review, firmware identity/settings verification, and physical clearance; this staged implementation does not authorize movement.
+
+## Offline request preparation and later activation
+
+The request builder accepts a completed copy of `waste-prime-builder.pending.json`. Fill paths and review fields only from actual evidence. It hashes every artifact, checks the measured profile and uncertainty, validates the prior observation and durable ledger, and calculates the prospective reservation without writing it. It does not dispatch or enable anything. Run it from the canonical repository.
+
+1. Finish the separately reviewed B model configuration (`limitRotation=false`, `wrapAroundRotation=false`, `invertLinearRotational=true`, feed100, acceleration500, jerk2000). Preserve configuration evidence and the current home artifact. Verify installed firmware B steps/rounding. Establish the receiver's measured physical tip/surface heights and restrained identity, both-head clearance, needle identity, current XYZ/A pose, and initial syringe accounting. Do not substitute nozzle model offsets or the synthetic fixture.
+2. Obtain a fresh read-only position barrier at that exact pose. For the model-only formatter request, only `barrierPath` is needed in the input JSON:
+
+   ```sh
+   node automation/scripts/build_waste_prime_request.cjs --preview-only /absolute/path/to/reviewed-input.json automation/plans/paste-waste-prime-preview-request.json
+   ```
+
+3. After independent source review, the parent may register **only** `paste-waste-prime-preview` → `Preview_Paste_Waste_Prime.js` in the canonical JS action map and both JS/Python installation action allowlists/Python action list. It needs no busy exception and must not enable the wet adapter. The corresponding one-shot invocation is:
+
+   ```sh
+   python3 automation/scripts/run_reviewed_action.py paste-waste-prime-preview --confirmed
+   ```
+
+   Review the resulting `paste-waste-prime-preview-<UUID>/report.json`, including its literal B-only target, minimum-rate clamp, send-on-change behavior, and expanded command lines. This is current-model evidence, unlike the synthetic test. A changed pose/configuration or a trace older than five minutes requires a new preview. No controller command is sent by this script.
+4. Populate `nativePreviewPath` and all remaining measured input paths. For the first increment the ledger and observation paths are explicitly null; an existing fixed ledger directory prevents a new start. For continuation use the exact canonical ledger path and a new hash-bound outlet/receiver observation of the previous terminal report. Generate the single wet request:
+
+   ```sh
+   node automation/scripts/build_waste_prime_request.cjs /absolute/path/to/reviewed-input.json automation/plans/paste-waste-prime-request.json
+   ```
+
+5. Review the concrete request, full measured profile, actual preview, and prospective total. Only after separate physical/transport authorization may the parent change `PASTE_WASTE_PRIME_ENABLED` to true and register `paste-waste-prime` → `Prime_Paste_Into_Waste.js` in the same canonical allowlists, without a busy exception. Neither registration nor that gate change has been made here. Its later one-shot invocation would be:
+
+   ```sh
+   python3 automation/scripts/run_reviewed_action.py paste-waste-prime --confirmed
+   ```
+
+6. Inspect the specific terminal report and fresh outlet/receiver imagery before any next request. Do not automatically rerun a dispatch after consumption, timeout, or uncertainty. A failed or pending reservation stays charged; consistent paste ends priming. No tool in this preparation sequence clears the durable ledger.
+
+The builder atomically claims a new output JSON after validation and refuses an existing destination. Preserve/review a previous request before deliberately moving it aside; never infer that an old request is safe to repeat. A consumed dispatcher request is not completion evidence. Every physical increment still requires its own terminal M114/count/image/ledger audit and observation.

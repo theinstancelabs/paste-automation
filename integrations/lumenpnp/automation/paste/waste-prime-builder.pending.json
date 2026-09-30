@@ -1,0 +1,18 @@
+{
+  "schema": 1,
+  "scope": "reviewed-waste-prime-request-input",
+  "operator": null,
+  "reviewedMs": null,
+  "reviewedReceiverAndBothHeads": false,
+  "noChangesSinceMeasurement": false,
+  "installedNeedleId": null,
+  "barrierPath": null,
+  "profilePath": null,
+  "configurationPath": null,
+  "homePath": null,
+  "accountingPath": null,
+  "nativePreviewPath": null,
+  "corridor": {"path": null, "capturedMs": null},
+  "previousLedgerPath": null,
+  "observationPath": null
+}
