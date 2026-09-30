@@ -15,6 +15,10 @@ function validate(q,now,jvm){
  return q;
 }
 function installer(record,q){
+ if(record&&record.status==='completed-native-home-enabled-awaiting-image-review'){
+  if(!record.request||record.request.jvmStartMs!==q.jvmStartMs||record.liveConfigurationSha256!==q.liveConfigurationSha256||record.request.liveConfigurationSha256!==q.liveConfigurationSha256||record.controllerPositionVerified!==true||record.rotationUnchangedVerified!==true||record.nativeMotionCompletionReported!==true||record.uncertainCompletion!==false||record.diskUnchanged!==true||record.machineEnabled!==true||record.machineHomed!==true)throw Error('Verified same-JVM home configuration required');return;
+ }
+
  var errorInstall=record&&record.status==='installed-in-memory-awaiting-read-only-barrier-and-review'&&record.previousCommand===null;
  var bConfig=record&&record.status==='configured-B-prerequisites-in-memory-awaiting-fresh-barrier'&&record.exactTwoFieldChangeVerified===true&&record.previousLimitRotation===true&&record.requestedLimitRotation===false&&record.previousFeedratePerSecond===50000&&record.requestedFeedratePerSecond===100&&record.extrusionAuthorized===false;
  if(!record||(!errorInstall&&!bConfig)||record.diskUnchanged!==true||record.coordinatesUnchanged!==true||record.noControllerCommands!==true||record.configurationSaved!==false||!record.request||record.request.jvmStartMs!==q.jvmStartMs||record.liveConfigurationAfterSha256!==q.liveConfigurationSha256)throw Error('Successful same-JVM configuration installer required');
