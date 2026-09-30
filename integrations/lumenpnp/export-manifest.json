@@ -956,8 +956,8 @@
       "sourceRoot": "/home/lumen/lumenpnp",
       "sourcePath": "automation/scripts/build_waste_prime_request.cjs",
       "destination": "integrations/lumenpnp/automation/scripts/build_waste_prime_request.cjs",
-      "sha256": "68e9af4b8c7f0c117b89a384ede79d41695f5de6b78e7c79e55327004a6675bf",
-      "bytes": 6036
+      "sha256": "39f69fc301ed7a51ab19276307106710c832789c55a3f3e4a5cb9de068b661a2",
+      "bytes": 6241
     },
     {
       "sourceRoot": "/home/lumen/lumenpnp",
@@ -1019,8 +1019,8 @@
       "sourceRoot": "/home/lumen/lumenpnp",
       "sourcePath": "automation/scripts/start_webcam.sh",
       "destination": "integrations/lumenpnp/automation/scripts/start_webcam.sh",
-      "sha256": "f0eda5c00f628bed869c7a3a4e649b5b66953c19d46f939021a863778ab703a6",
-      "bytes": 246
+      "sha256": "31ef33e3d59f003ae757121c54fcf705c60fa639b130cb9a821486f8b9a58517",
+      "bytes": 252
     },
     {
       "sourceRoot": "/home/lumen/lumenpnp",
@@ -1187,8 +1187,8 @@
       "sourceRoot": "/home/lumen/lumenpnp",
       "sourcePath": "automation/scripts/Prime_Paste_Into_Waste.js",
       "destination": "integrations/lumenpnp/automation/scripts/Prime_Paste_Into_Waste.js",
-      "sha256": "e0e716052e0cb7038627c076d220a963f73c7dd940f240082179bb726520f300",
-      "bytes": 29155
+      "sha256": "39bfea74574fb6def404406a86b8ba30edfb70d94126cfd77e9579ea02ffee33",
+      "bytes": 29249
     },
     {
       "sourceRoot": "/home/lumen/lumenpnp",
@@ -1201,29 +1201,29 @@
       "sourceRoot": "/home/lumen/lumenpnp",
       "sourcePath": "automation/paste/waste-prime.cjs",
       "destination": "integrations/lumenpnp/automation/paste/waste-prime.cjs",
-      "sha256": "ecc146f6824f53a85dab93367fc76be320f302a1c4c36fcdb965bf92b0607f82",
-      "bytes": 17816
+      "sha256": "c19100adc38e779e885b8b0ee39eeb3437d1e374e44b9204b5139c5f03098f46",
+      "bytes": 19364
     },
     {
       "sourceRoot": "/home/lumen/lumenpnp",
       "sourcePath": "automation/paste/waste-prime.test.cjs",
       "destination": "integrations/lumenpnp/automation/paste/waste-prime.test.cjs",
-      "sha256": "0a1d0e2e4b17224384020240d022d84ab85c15462da5f76ed5144c076e2e5232",
-      "bytes": 14452
+      "sha256": "b2cde4de8e59e50f33789ac1a02755a6ca9d7f8e731e6af334e0c7e3a132bc77",
+      "bytes": 16334
     },
     {
       "sourceRoot": "/home/lumen/lumenpnp",
       "sourcePath": "automation/paste/continue-waste-prime.py",
       "destination": "integrations/lumenpnp/automation/paste/continue-waste-prime.py",
-      "sha256": "4a8eead3d62dc7aa7864bde5f7a87aaf2004d1fc5900cf2497e1459a4a9ae523",
-      "bytes": 4407
+      "sha256": "568449cb05e07f3b57d42f4c8119aea2eb04ced72f95f2c7fcb1b025c583ced3",
+      "bytes": 4548
     },
     {
       "sourceRoot": "/home/lumen/lumenpnp",
       "sourcePath": "automation/operations/paste-first-wet-trial.md",
       "destination": "integrations/lumenpnp/automation/operations/paste-first-wet-trial.md",
-      "sha256": "588db7b0f93b144493fb54ea1016e86464547c40df6f87e5de5cf01224b12b54",
-      "bytes": 1199
+      "sha256": "35a690fc214173e9bead18cc564722873aca7263741c6193c0d96cdd84cf296b",
+      "bytes": 2221
     }
   ],
   "manifestSelfHash": "Excluded to avoid a recursive digest; this manifest enumerates every other exported/generated file."
