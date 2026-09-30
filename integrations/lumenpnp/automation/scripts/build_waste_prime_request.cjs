@@ -13,8 +13,8 @@ function build(input,{now=Date.now(),id=crypto.randomUUID(),root=path.resolve(__
  const base={schema:1,id,createdMs:now,jvmStartMs:b.request.jvmStartMs,liveConfigurationSha256:b.liveConfigurationSha256,expectedRaw:b.afterQuerySnapshot.raw,expectedDriver:b.afterQuerySnapshot.driver,expectedNativePoses:b.afterQuerySnapshot.nativePoses};
  P.barrier(b,base,now);
  const deltaDegrees=input.deltaDegrees===undefined?-20:input.deltaDegrees;requireThat(deltaDegrees===-20||deltaDegrees===-100||deltaDegrees===-300,'Only minus20, minus100 or minus300 permitted');
- const speedFraction=deltaDegrees===-300?.2:.05;
- if(previewOnly)return {request:{...base,scope:deltaDegrees===-20?'model-only-B-minus20-native-preview':'model-only-B-waste-prime-native-preview',deltaDegrees,speedFraction},mode:'offline-model-preview-request'};
+ const speedFraction=input.supervisionPath?1:(deltaDegrees===-300?.2:.05);if(input.supervisionPath)requireThat(deltaDegrees===-300,'Supervised speed requires300-degree pulse');
+ if(previewOnly)return {request:{...base,scope:deltaDegrees===-20?'model-only-B-minus20-native-preview':'model-only-B-waste-prime-native-preview',deltaDegrees,speedFraction,supervised:!!input.supervisionPath},mode:'offline-model-preview-request'};
  requireThat(input.schema===1&&input.scope==='reviewed-waste-prime-request-input','Explicit offline request input required');
  requireThat(input.reviewedReceiverAndBothHeads===true&&(input.noChangesSinceMeasurement===true||input.supervisionPath),'Explicit current receiver/both-head and unchanged-measurement review required');
  requireThat(typeof input.reviewedMs==='number'&&Number.isFinite(input.reviewedMs)&&input.reviewedMs<=now&&now-input.reviewedMs<=300000,'Fresh input review required');
