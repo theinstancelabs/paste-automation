@@ -522,15 +522,15 @@
       "sourceRoot": "/home/lumen/lumenpnp",
       "sourcePath": "automation/paste/reset-home.cjs",
       "destination": "integrations/lumenpnp/automation/paste/reset-home.cjs",
-      "sha256": "0a0120179d4b2b96bad7dbac423155edcf84058e50268abafb7efc66b647f843",
-      "bytes": 6138
+      "sha256": "034dd6fb77f40de1fb3ce68202125b0a24c66f199e48e855b19da9c1dce0fa96",
+      "bytes": 6593
     },
     {
       "sourceRoot": "/home/lumen/lumenpnp",
       "sourcePath": "automation/paste/reset-home.test.cjs",
       "destination": "integrations/lumenpnp/automation/paste/reset-home.test.cjs",
-      "sha256": "4e05f478b9f8d30ecaab91b3cc609910763ffb09e7f3ab5059f06eadddd714fd",
-      "bytes": 5690
+      "sha256": "4c394d9853bc60815446c2682eb16b1bb6877056b8d5895ecdd42c3b06c15e52",
+      "bytes": 7038
     },
     {
       "sourceRoot": "/home/lumen/lumenpnp",
@@ -1222,8 +1222,8 @@
       "sourceRoot": "/home/lumen/lumenpnp",
       "sourcePath": "automation/operations/paste-first-wet-trial.md",
       "destination": "integrations/lumenpnp/automation/operations/paste-first-wet-trial.md",
-      "sha256": "3338b66c1072e1f20a917ca8885731c19c8150cfc3051280bb8c5bd696e272a8",
-      "bytes": 5030
+      "sha256": "9b97c42f56ae0e35562aa0e93302780106be2715baa83f8742b8ececcf89335a",
+      "bytes": 5536
     },
     {
       "sourceRoot": "/home/lumen/lumenpnp",
