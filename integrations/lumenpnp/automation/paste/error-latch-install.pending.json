@@ -1,0 +1,12 @@
+{
+  "schema": 1,
+  "scope": "install-absent-native-error-latch-in-memory",
+  "id": null,
+  "createdMs": null,
+  "jvmStartMs": null,
+  "operator": null,
+  "liveConfigurationSha256": null,
+  "diskMachineSha256": null,
+  "expectedPreviousCommand": null,
+  "reviewedNoMotionConfigurationChange": false
+}

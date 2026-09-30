@@ -1,0 +1,69 @@
+{
+  "description": "Unusable disabled positive raw Z observation request. Application interval is not physical calibration. No return, approach, actuation or dispensing.",
+  "schema": 1,
+  "scope": "single-positive-raw-Z-observation",
+  "id": null,
+  "createdMs": null,
+  "jvmStartMs": null,
+  "operator": null,
+  "liveConfigurationSha256": null,
+  "speedFraction": 0.05,
+  "speedOverPrecision": true,
+  "motionAreaClear": false,
+  "noHeldPartsObserved": false,
+  "corridorEvidence": {
+    "path": null,
+    "sha256": null,
+    "capturedMs": null
+  },
+  "expectedRaw": {
+    "X": null,
+    "Y": null,
+    "Z": null,
+    "A": null,
+    "B": null
+  },
+  "expectedDriver": {
+    "X": null,
+    "Y": null,
+    "Z": null,
+    "A": null,
+    "B": null
+  },
+  "expectedNativePoses": {
+    "N1": {
+      "x": null,
+      "y": null,
+      "z": null,
+      "rotation": null
+    },
+    "N2": {
+      "x": null,
+      "y": null,
+      "z": null,
+      "rotation": null
+    },
+    "top": {
+      "x": null,
+      "y": null,
+      "z": null,
+      "rotation": null
+    },
+    "bottom": {
+      "x": null,
+      "y": null,
+      "z": null,
+      "rotation": null
+    }
+  },
+  "axis": "Z",
+  "deltaMm": null,
+  "jointInterval": {
+    "minRawZ": 26.5,
+    "maxRawZ": 36.5,
+    "reviewedForCurrentPose": false,
+    "reviewRecord": null
+  },
+  "operatorVerifiedJointZStep": false,
+  "bothHeadsClearAlongStep": false
+}

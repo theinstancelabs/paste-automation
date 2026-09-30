@@ -46,8 +46,8 @@
       "sourceRoot": "/home/lumen/lumenpnp",
       "sourcePath": "automation/paste/README.md",
       "destination": "integrations/lumenpnp/automation/paste/README.md",
-      "sha256": "56b4d32da72f23d33155b04e28a3c5f6017fe6fdcfc0b35a1fec23bc6e029377",
-      "bytes": 12315
+      "sha256": "7982d21874bd911b7220e1f00de85875c9d3862a4883469bc44d3480ff432791",
+      "bytes": 12836
     },
     {
       "sourceRoot": "/home/lumen/lumenpnp",
@@ -181,6 +181,34 @@
       "destination": "integrations/lumenpnp/automation/paste/coupon-trials.test.cjs",
       "sha256": "af6969de583aef55f9db2792e0b7ce0d2a5a4bb54dbc636ea941793e57ae16d6",
       "bytes": 10953
+    },
+    {
+      "sourceRoot": "/home/lumen/lumenpnp",
+      "sourcePath": "automation/paste/error-latch-install.cjs",
+      "destination": "integrations/lumenpnp/automation/paste/error-latch-install.cjs",
+      "sha256": "2c5ab3f46ec0de2c4253bf8b6e9776710585584de7117eac989c4512c8fc8540",
+      "bytes": 1199
+    },
+    {
+      "sourceRoot": "/home/lumen/lumenpnp",
+      "sourcePath": "automation/paste/error-latch-install.md",
+      "destination": "integrations/lumenpnp/automation/paste/error-latch-install.md",
+      "sha256": "ca0aeb5119e509dfc369f72dd51e8fe2f03edc8db1f4982055dba10c0eedca90",
+      "bytes": 2579
+    },
+    {
+      "sourceRoot": "/home/lumen/lumenpnp",
+      "sourcePath": "automation/paste/error-latch-install.pending.json",
+      "destination": "integrations/lumenpnp/automation/paste/error-latch-install.pending.json",
+      "sha256": "7f7fac5c290fa232a90da63df0e3693062fc4ec5409c095ba693c7208bb54bb2",
+      "bytes": 300
+    },
+    {
+      "sourceRoot": "/home/lumen/lumenpnp",
+      "sourcePath": "automation/paste/error-latch-install.test.cjs",
+      "destination": "integrations/lumenpnp/automation/paste/error-latch-install.test.cjs",
+      "sha256": "d5438117724a6848a2d58e86a486d53e6918a39058022bfddea5229ee7fcca13",
+      "bytes": 1264
     },
     {
       "sourceRoot": "/home/lumen/lumenpnp",
@@ -375,8 +403,8 @@
       "sourceRoot": "/home/lumen/lumenpnp",
       "sourcePath": "automation/paste/vacuum-native-review.md",
       "destination": "integrations/lumenpnp/automation/paste/vacuum-native-review.md",
-      "sha256": "6569f7743c016979773890aa62cb0b4c8920b8d7beebe7f9357f119b5a65ea9d",
-      "bytes": 11129
+      "sha256": "5289dc9a3c8fe4a7a936e59cb035ca232d5d77647677ea4f230efab36e43ff32",
+      "bytes": 12079
     },
     {
       "sourceRoot": "/home/lumen/lumenpnp",
@@ -408,6 +436,34 @@
     },
     {
       "sourceRoot": "/home/lumen/lumenpnp",
+      "sourcePath": "automation/paste/z-observation.cjs",
+      "destination": "integrations/lumenpnp/automation/paste/z-observation.cjs",
+      "sha256": "ce2e07801d77f7f80d018dd99f013013d5efb677a34f5132f9165bcdc84fceee",
+      "bytes": 5425
+    },
+    {
+      "sourceRoot": "/home/lumen/lumenpnp",
+      "sourcePath": "automation/paste/z-observation.md",
+      "destination": "integrations/lumenpnp/automation/paste/z-observation.md",
+      "sha256": "a270a89bbcd59b479a979a9a1368645efa63bbaa7cf5c8806984ed38da702467",
+      "bytes": 3769
+    },
+    {
+      "sourceRoot": "/home/lumen/lumenpnp",
+      "sourcePath": "automation/paste/z-observation.pending.json",
+      "destination": "integrations/lumenpnp/automation/paste/z-observation.pending.json",
+      "sha256": "12ee7724bdabbfaed85a3d6f024c8502f083d03d99cf5dd654594fa1b6111fad",
+      "bytes": 1399
+    },
+    {
+      "sourceRoot": "/home/lumen/lumenpnp",
+      "sourcePath": "automation/paste/z-observation.test.cjs",
+      "destination": "integrations/lumenpnp/automation/paste/z-observation.test.cjs",
+      "sha256": "455f0f2f86a84af23b2baaa45d2596aab6d4c031a44544ff58c40f77954c3c92",
+      "bytes": 3895
+    },
+    {
+      "sourceRoot": "/home/lumen/lumenpnp",
       "sourcePath": "automation/scripts/Apply_Paste_Quarantine.js",
       "destination": "integrations/lumenpnp/automation/scripts/Apply_Paste_Quarantine.js",
       "sha256": "266d7899e158e412816cf327c7ccad434758ed3ca63bff8472be44fefe0ea7bd",
@@ -424,8 +480,8 @@
       "sourceRoot": "/home/lumen/lumenpnp",
       "sourcePath": "automation/scripts/Automation_Reviewed_Command.js",
       "destination": "integrations/lumenpnp/automation/scripts/Automation_Reviewed_Command.js",
-      "sha256": "f30fdacc19786b150ed7da58db41835a1bba5ea8cd1001b8a89ddbec5512968a",
-      "bytes": 2670
+      "sha256": "cebee32f79993fad09a5013c78387248390d3544e93c8772ffb06bb7eb6cc49d",
+      "bytes": 2741
     },
     {
       "sourceRoot": "/home/lumen/lumenpnp",
@@ -447,6 +503,20 @@
       "destination": "integrations/lumenpnp/automation/scripts/Inspect_Paste_Controller.js",
       "sha256": "061e7f9332fca0159f9568b169af219b50a3696cbf0c72719049366df1793a57",
       "bytes": 4401
+    },
+    {
+      "sourceRoot": "/home/lumen/lumenpnp",
+      "sourcePath": "automation/scripts/Install_Paste_Error_Latch.js",
+      "destination": "integrations/lumenpnp/automation/scripts/Install_Paste_Error_Latch.js",
+      "sha256": "0bf83641cc34b6bb8b0b6c8a17f42fb3d06af273ce4c11c05797c37e806514be",
+      "bytes": 8118
+    },
+    {
+      "sourceRoot": "/home/lumen/lumenpnp",
+      "sourcePath": "automation/scripts/Observe_Paste_Z.js",
+      "destination": "integrations/lumenpnp/automation/scripts/Observe_Paste_Z.js",
+      "sha256": "96fcf55f851a6316b02771ff27438f9aa075a9d9c2c2fe0d69cecc7e68422370",
+      "bytes": 19878
     },
     {
       "sourceRoot": "/home/lumen/lumenpnp",
@@ -529,8 +599,8 @@
       "sourceRoot": "/home/lumen/lumenpnp",
       "sourcePath": "automation/scripts/run_reviewed_action.py",
       "destination": "integrations/lumenpnp/automation/scripts/run_reviewed_action.py",
-      "sha256": "999b4e97d58e641efade969dd6d7c85b63cc9517e9a0f0fcfeecbf87960c5888",
-      "bytes": 17319
+      "sha256": "5cab938c33c57aa92c12ea965b827e3f3fef477c1b52c6f18fd2469f1bf677f9",
+      "bytes": 17361
     },
     {
       "sourceRoot": "/home/lumen/lumenpnp",
@@ -545,6 +615,13 @@
       "destination": "integrations/lumenpnp/automation/tests/java/CheckNativeAir.java",
       "sha256": "198afb0f5e9a6c3bfc4babca47ba51bac2273ef2d01cfd33c21b8e3f79ac3594",
       "bytes": 1292
+    },
+    {
+      "sourceRoot": "/home/lumen/lumenpnp",
+      "sourcePath": "automation/tests/java/CheckNativeErrorLatch.java",
+      "destination": "integrations/lumenpnp/automation/tests/java/CheckNativeErrorLatch.java",
+      "sha256": "326e78dd1f5e880f1e81c4cf970a0df57b8cfde4f5ecc73af73303273580265c",
+      "bytes": 3515
     },
     {
       "sourceRoot": "/home/lumen/lumenpnp",
@@ -590,6 +667,13 @@
     },
     {
       "sourceRoot": "/home/lumen/lumenpnp",
+      "sourcePath": "automation/tests/test_native_error_latch.py",
+      "destination": "integrations/lumenpnp/automation/tests/test_native_error_latch.py",
+      "sha256": "d2a3e6a451f8864cfe21751db1aeeab6b8d2cd1f4580e2f40d8785e9f394a63c",
+      "bytes": 1129
+    },
+    {
+      "sourceRoot": "/home/lumen/lumenpnp",
       "sourcePath": "automation/tests/test_paste_installation_lock.py",
       "destination": "integrations/lumenpnp/automation/tests/test_paste_installation_lock.py",
       "sha256": "a3e0681913c653ec11d60beff047df427332436b4ad0aa93e50d03f04b43593e",
@@ -615,6 +699,13 @@
       "destination": "integrations/lumenpnp/automation/tests/test_vacuum_policy_nashorn.py",
       "sha256": "b0176e4c053b46b44d8f8fa30ea4b41b1dfbbf2912000c6c1ee05eebc2e02bda",
       "bytes": 1649
+    },
+    {
+      "sourceRoot": "/home/lumen/lumenpnp",
+      "sourcePath": "automation/tests/test_z_observation_nashorn.py",
+      "destination": "integrations/lumenpnp/automation/tests/test_z_observation_nashorn.py",
+      "sha256": "4fac44c5a62ad8d0cb2533d22b51ebcaa019173c493eb7eb0374cc4970dc8186",
+      "bytes": 1030
     }
   ],
   "manifestSelfHash": "Excluded to avoid a recursive digest; this manifest enumerates every other exported/generated file."

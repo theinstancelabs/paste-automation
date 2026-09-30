@@ -1,0 +1,6 @@
+const test=require('node:test'),assert=require('node:assert/strict'),p=require('./error-latch-install.cjs');
+const request=()=>({schema:1,scope:'install-absent-native-error-latch-in-memory',id:'12345678-1234-1234-1234-123456789abc',createdMs:100,jvmStartMs:1,operator:'offline test',liveConfigurationSha256:'a'.repeat(64),diskMachineSha256:'b'.repeat(64),expectedPreviousCommand:null,reviewedNoMotionConfigurationChange:true});
+test('accepts exact fresh absent-command contract',()=>assert.equal(p.validate(request(),100,1).schema,1));
+test('rejects stale and mismatched bindings',()=>{for(const q of [ {...request(),createdMs:NaN},{...request(),createdMs:101},{...request(),jvmStartMs:2},{...request(),diskMachineSha256:null},{...request(),liveConfigurationSha256:''},{...request(),expectedPreviousCommand:''},{...request(),reviewedNoMotionConfigurationChange:false}])assert.throws(()=>p.validate(q,100,1));assert.throws(()=>p.validate(request(),300101,1));});
+test('cannot substitute caller command or regex',()=>{for(const key of ['command','regex','errorRegex'])assert.throws(()=>p.validate({...request(),[key]:'G28'},100,1));});
+test('pending template remains unusable',()=>assert.throws(()=>p.validate(require('./error-latch-install.pending.json'),100,1)));
