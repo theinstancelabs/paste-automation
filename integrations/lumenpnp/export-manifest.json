@@ -65,6 +65,20 @@
     },
     {
       "sourceRoot": "/home/lumen/lumenpnp",
+      "sourcePath": "automation/paste/analysis/fiducial_registration.md",
+      "destination": "integrations/lumenpnp/automation/paste/analysis/fiducial_registration.md",
+      "sha256": "7b8e6102711fdfe7ffc822be959df40e6a06fae802678fdf2663c98812d41d99",
+      "bytes": 2681
+    },
+    {
+      "sourceRoot": "/home/lumen/lumenpnp",
+      "sourcePath": "automation/paste/analysis/fiducial_registration.py",
+      "destination": "integrations/lumenpnp/automation/paste/analysis/fiducial_registration.py",
+      "sha256": "0d38906741784bbe1e1f8a4d29ff1ccaced87f82159cf0aed927a5698cf06ad0",
+      "bytes": 7830
+    },
+    {
+      "sourceRoot": "/home/lumen/lumenpnp",
       "sourcePath": "automation/paste/analysis/image_region_translation.md",
       "destination": "integrations/lumenpnp/automation/paste/analysis/image_region_translation.md",
       "sha256": "bcc9cbf31adc9d79e32ab4284f8932626b72469f9175899acb886ae6423adca3",
@@ -97,6 +111,13 @@
       "destination": "integrations/lumenpnp/automation/paste/analysis/test_deposit_metrics.py",
       "sha256": "cd6f234610b49c63a3c32671a43771b9228c56a84fa10d19eaa3a7ead50f77c7",
       "bytes": 5505
+    },
+    {
+      "sourceRoot": "/home/lumen/lumenpnp",
+      "sourcePath": "automation/paste/analysis/test_fiducial_registration.py",
+      "destination": "integrations/lumenpnp/automation/paste/analysis/test_fiducial_registration.py",
+      "sha256": "a4277fb8350e5369812e666474645bdb5964cbbd7056c79980fd53ad5a63e9b7",
+      "bytes": 4138
     },
     {
       "sourceRoot": "/home/lumen/lumenpnp",
