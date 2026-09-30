@@ -1,5 +1,5 @@
 {
-  "description": "Unusable staged N1 VAC1 probe request. DISABLED adapter only. No valid request, route, activation or physical authorization is provided.",
+  "description": "Unusable pending probe request. Requires newly reviewed same-pose twenty-sample free-air stream, current barrier and explicit target/envelope. No automatic physical authorization.",
   "schema": 1,
   "scope": "native-N1-vacuum-surface-probe",
   "id": null,
@@ -75,9 +75,9 @@
     "capturedMs": null
   },
   "baselineContractEvidence": {
-    "path": "/home/lumen/lumenpnp/automation/evidence/paste-vacuum-baseline-b1398ea4-e5c6-401c-8b4c-4ba7d923c823/report.json",
-    "sha256": "64a90301c841b9831d591411268c408ef2f0f0a3e41c4ea178274c65032961ff",
-    "reviewedMs": 1790763110000
+    "path": null,
+    "sha256": null,
+    "reviewedMs": null
   },
   "barrierEvidence": {
     "path": null,
@@ -117,7 +117,7 @@
     "maxDurationMs": null,
     "offBaselineSamples": 3,
     "offBaselineTolerance": 1,
-    "expectedEmptyMean": 232.25,
+    "expectedEmptyMean": null,
     "expectedEmptyTolerance": 1.5,
     "minimumPumpResponseDelta": 10
   }

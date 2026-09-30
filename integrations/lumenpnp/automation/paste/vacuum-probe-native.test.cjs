@@ -101,20 +101,25 @@ test('barrier must be same JVM/config, fresh, read-only and exact at target', ()
   assert.throws(() => n.barrier({ ...record, finishedAt: new Date(1).toISOString() }, q, 400001, 42), /stale/);
 });
 
-test('historical baseline requires the exact reviewed report, identity, and no-motion status', () => {
-  const crypto = require('node:crypto');
-  const report = { status: 'completed-free-air-baseline-awaiting-review', motionSubmitted: false, controllerPositionVerified: true, normalOffAcknowledged: true, uncertainCompletion: false, physicalAcceptanceEstablished: false, request: {id: 'synthetic', scope: 'stationary-N1-VAC1-free-air-baseline', createdMs: 80000, jvmStartMs: 42, liveConfigurationSha256: '1'.repeat(64), expectedLeftTipId: 'test-tip'}, baseline: {finalOffAcknowledged: true, offSummary: {count: 8, mean: 255, spread: 0}, onSummary: {count: 8, mean: 232.25, spread: 1, acceptanceEstablished: false}} };
-  const bytes = Buffer.from(JSON.stringify(report));
-  const digest = crypto.createHash('sha256').update(bytes).digest('hex');
-  const q = request(); q.createdMs = report.request.createdMs + 10000;
-  q.jvmStartMs = report.request.jvmStartMs;
-  q.liveConfigurationSha256 = report.request.liveConfigurationSha256;
-  q.expectedLeftTipId = report.request.expectedLeftTipId;
-  q.baselineContractEvidence.sha256 = digest;
-  assert.equal(n.validateBaselineReference(report, q, digest).emptyOnMean, 232.25);
-  assert.throws(() => n.validateBaselineReference(report, q, '0'.repeat(64)), /hash/);
-  assert.throws(() => n.validateBaselineReference({ ...report, status: 'failed' }, q, digest), /report/);
-  assert.throws(() => n.validateBaselineReference({ ...report, request: { ...report.request, jvmStartMs: 1 } }, q, digest), /JVM/);
-  assert.throws(() => n.validateBaselineReference({ ...report, request: { ...report.request, liveConfigurationSha256: 'bad' } }, q, digest), /config/);
-  assert.throws(() => n.validateBaselineReference({ ...report, request: { ...report.request, expectedLeftTipId: 'wrong' } }, q, digest), /tip/);
+test('new baseline binds recomputed stream, same pose/session, fresh review and conservative thresholds', () => {
+ const q=request();q.createdMs=100000;q.baselineContractEvidence.reviewedMs=99000;q.contract.expectedEmptyMean=232;
+ const report={status:'completed-free-air-baseline-awaiting-review',motionSubmitted:false,controllerPositionVerified:true,normalOffAcknowledged:true,uncertainCompletion:false,physicalAcceptanceEstablished:false,finishedAt:new Date(98000).toISOString(),request:{id:'synthetic',scope:'stationary-N1-VAC1-free-air-baseline',createdMs:80000,jvmStartMs:q.jvmStartMs,liveConfigurationSha256:q.liveConfigurationSha256,expectedLeftTipId:q.expectedLeftTipId,sampleCountPerPhase:20,settleMs:2000,maxDurationMs:60000},afterQuerySnapshot:{raw:q.expectedRaw},baseline:{finalOffAcknowledged:true}};
+ for(const [phase,value,start] of [['off',255,2000],['on',232,6000]]){
+  report.baseline[phase]=Array.from({length:20},(_,i)=>({raw:String(value),value,elapsedMs:start+100*i}));
+  report.baseline[phase+'Summary']={count:20,mean:value,min:value,max:value,spread:0,acceptanceEstablished:false};
+ }
+ const hash=q.baselineContractEvidence.sha256;
+ assert.equal(n.validateBaselineReference(report,q,hash).emptyOnMean,232);
+ const clone=()=>JSON.parse(JSON.stringify(report));
+ for(const mutate of [r=>r.request.createdMs=NaN,r=>r.request.maxDurationMs=NaN,r=>r.baseline.off[0].elapsedMs=-.5,r=>r.request.jvmStartMs++,r=>r.request.liveConfigurationSha256='0'.repeat(64),r=>r.request.expectedLeftTipId='wrong',r=>r.afterQuerySnapshot.raw.Z+=.05,r=>r.baseline.onSummary.mean=232.25,r=>r.baseline.on.pop(),r=>r.baseline.on[3].elapsedMs=0,r=>r.status='failed',r=>r.finishedAt=new Date(-300000).toISOString()]){
+  const r=clone();mutate(r);assert.throws(()=>n.validateBaselineReference(r,q,hash));
+ }
+ assert.throws(()=>n.validateBaselineReference(report,{...q,contract:{...q.contract,expectedEmptyMean:232.25}},hash));
+ assert.throws(()=>n.validateBaselineReference(report,q,'0'.repeat(64)));
+});
+
+test('probe OFF and ON settling matches current twenty-sample reference recorder',()=>{
+ const source=require('node:fs').readFileSync(require('node:path').join(__dirname,'../scripts/Probe_Paste_Surface_By_Vacuum.js'),'utf8');
+ assert.match(source,/actuate\(false\);settle\(2000\);r\.vacuumOffBaselineStarted/);
+ assert.match(source,/actuate\(true\);settle\(2000\);r\.vacuumOnBaselineStarted/);
 });
