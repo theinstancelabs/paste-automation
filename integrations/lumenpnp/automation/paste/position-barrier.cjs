@@ -19,5 +19,10 @@ function installer(record,q){
  var bConfig=record&&record.status==='configured-B-prerequisites-in-memory-awaiting-fresh-barrier'&&record.exactTwoFieldChangeVerified===true&&record.previousLimitRotation===true&&record.requestedLimitRotation===false&&record.previousFeedratePerSecond===50000&&record.requestedFeedratePerSecond===100&&record.extrusionAuthorized===false;
  if(!record||(!errorInstall&&!bConfig)||record.diskUnchanged!==true||record.coordinatesUnchanged!==true||record.noControllerCommands!==true||record.configurationSaved!==false||!record.request||record.request.jvmStartMs!==q.jvmStartMs||record.liveConfigurationAfterSha256!==q.liveConfigurationSha256)throw Error('Successful same-JVM configuration installer required');
 }
-var api={validate:validate,installer:installer};if(typeof module!=='undefined')module.exports=api;else root.PastePositionBarrier=api;
+function calibrationXml(before,after){
+ var re=/(<entry>\s*<string>N1<\/string>\s*)(<runout-compensation\s[^>]*\/>)/g;
+ function normalized(xml){var count=0;var out=xml.replace(re,function(all,prefix,tag){count++;var attrs={},m,ar=/([\w-]+)="([^"]*)"/g;while((m=ar.exec(tag))!==null)attrs[m[1]]=m[2];if(Object.keys(attrs).sort().join(',')!=='center-x,center-y,class,peak-error,phase-shift,radius,rms-error,units'||attrs['class']!=='org.openpnp.machine.reference.ReferenceNozzleTipCalibration$ModelBasedRunoutCameraOffsetCompensation'||attrs.units!=='Millimeters')throw Error('Unexpected N1 calibration type');['center-x','center-y','peak-error','phase-shift','radius','rms-error'].forEach(function(k){if(attrs[k].trim()===''||!isFinite(Number(attrs[k])))throw Error('Nonfinite N1 calibration');});return prefix+'<reviewed-N1-runout/>';});if(count!==1)throw Error('Exactly one N1 runout required');return out;}
+ if(normalized(before)!==normalized(after))throw Error('Configuration changes beyond N1 runout calibration');return true;
+}
+var api={validate:validate,installer:installer,calibrationXml:calibrationXml};if(typeof module!=='undefined')module.exports=api;else root.PastePositionBarrier=api;
 })(this);
