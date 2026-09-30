@@ -3,7 +3,7 @@
  var C=Java.type('org.openpnp.model.Configuration'),F=Java.type('java.io.File'),Fs=Java.type('java.nio.file.Files'),AL=Java.type('org.openpnp.model.AxesLocation'),MD=Java.type('java.security.MessageDigest'),UTF=Java.type('java.nio.charset.StandardCharsets').UTF_8;
  function field(c,n,o){var f=Java.type(c).class.getDeclaredField(n);f.setAccessible(true);return f.get(o);}
  function hash(b){var a=MD.getInstance('SHA-256').digest(b),s='';for(var i=0;i<a.length;i++)s+=('0'+((a[i]&255).toString(16))).slice(-2);return s;}
- var m=C.get().getMachine(),p=m.getMotionPlanner(),h=m.getDefaultHead(),r={scope:'pure-model-state-no-controller-access',time:new Date().toISOString(),jvmStartMs:Number(Java.type('java.lang.management.ManagementFactory').getRuntimeMXBean().getStartTime()),enabled:m.isEnabled(),homed:m.isHomed(),busy:m.isBusy(),drivers:[],nozzles:[],axes:[],nativePoses:{},controllerPoseTrusted:false};
+ var m=C.get().getMachine(),p=m.getMotionPlanner(),h=m.getDefaultHead(),r={scope:'pure-model-state-no-controller-access',time:new Date().toISOString(),jvmStartMs:Number(Java.type('java.lang.management.ManagementFactory').getRuntimeMXBean().getStartTime()),enabled:m.isEnabled(),homed:m.isHomed(),busy:m.isBusy(),speed:Number(m.getSpeed()),drivers:[],nozzles:[],axes:[],nativePoses:{},controllerPoseTrusted:false};
  var e=field('org.openpnp.spi.base.AbstractMachine','executor',m),t=field('org.openpnp.spi.base.AbstractMachine','taskThread',m);
  r.executor=e==null?null:{shutdown:e.isShutdown(),terminated:e.isTerminated(),active:Number(e.getActiveCount()),queued:Number(e.getQueue().size())};r.taskOwner=t==null?null:{name:String(t.getName()),alive:t.isAlive()};
  for each(var d in m.getDrivers()){
