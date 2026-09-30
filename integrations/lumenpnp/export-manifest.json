@@ -65,10 +65,31 @@
     },
     {
       "sourceRoot": "/home/lumen/lumenpnp",
+      "sourcePath": "automation/paste/analysis/needle_centroid.md",
+      "destination": "integrations/lumenpnp/automation/paste/analysis/needle_centroid.md",
+      "sha256": "375821b68048b458438f9c4db8869ad5595406eedd441863df60800f446d9cc5",
+      "bytes": 3642
+    },
+    {
+      "sourceRoot": "/home/lumen/lumenpnp",
+      "sourcePath": "automation/paste/analysis/needle_centroid.py",
+      "destination": "integrations/lumenpnp/automation/paste/analysis/needle_centroid.py",
+      "sha256": "d6cb0ea4d3b49727392b10465f590d8c96e7f807129fb6140d53b50fe000b717",
+      "bytes": 10004
+    },
+    {
+      "sourceRoot": "/home/lumen/lumenpnp",
       "sourcePath": "automation/paste/analysis/test_deposit_metrics.py",
       "destination": "integrations/lumenpnp/automation/paste/analysis/test_deposit_metrics.py",
       "sha256": "cd6f234610b49c63a3c32671a43771b9228c56a84fa10d19eaa3a7ead50f77c7",
       "bytes": 5505
+    },
+    {
+      "sourceRoot": "/home/lumen/lumenpnp",
+      "sourcePath": "automation/paste/analysis/test_needle_centroid.py",
+      "destination": "integrations/lumenpnp/automation/paste/analysis/test_needle_centroid.py",
+      "sha256": "92e77a636f125727a32edaf1a6d12b4ca2853547ed676359518ed71bd0186488",
+      "bytes": 4549
     },
     {
       "sourceRoot": "/home/lumen/lumenpnp",
