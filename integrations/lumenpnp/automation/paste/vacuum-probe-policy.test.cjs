@@ -1,7 +1,7 @@
 'use strict';
 const { test } = require('node:test');
 const assert = require('node:assert/strict');
-const { createProbe, sample, acknowledgeZMove, evaluateContactRepeatability } = require('./vacuum-probe-policy.cjs');
+const { createProbe, sample, acknowledgeZMove, evaluateContactRepeatability, isControlledMeasurementStop } = require('./vacuum-probe-policy.cjs');
 
 // Synthetic-only contract and sensor traces; values are not machine calibration.
 function contract(overrides = {}) {
@@ -105,4 +105,13 @@ test('repeated contact consistency accepts only enough finite independently supp
   assert.equal(evaluateContactRepeatability([5, 5.4, 5.1], 0.1, 3).consistent, false);
   assert.equal(evaluateContactRepeatability([5], 0.1, 3).consistent, false);
   assert.equal(evaluateContactRepeatability([5, NaN, 5], 0.1, 3).consistent, false);
+});
+
+test('only explicit measurement policy stops permit controlled vacuum-off handling', () => {
+  for (const reason of ['unstable empty baseline', 'no seal within maximum bounded descent',
+    'ambiguous or partial-seal deviation; hold Z and inspect', 'Fresh vacuum-on mean outside reviewed empty-nozzle band'])
+    assert.equal(isControlledMeasurementStop(reason), true);
+  for (const reason of ['sensor-failure: invalid timestamp', 'sample timing outside contract',
+    'native Z move did not reach exact requested target', 'controller reset'])
+    assert.equal(isControlledMeasurementStop(reason), false);
 });

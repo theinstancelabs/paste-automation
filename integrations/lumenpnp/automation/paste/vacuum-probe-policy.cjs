@@ -112,7 +112,18 @@ function evaluateContactRepeatability(contactZsMm, toleranceMm, minimumCount) {
   return { consistent: max - min <= toleranceMm, minZmm: min, maxZmm: max, spreadMm: max - min,
     meaning: 'Repeatability of externally verified contact observations only; sensor seal candidates are not contact observations.' };
 }
-var api = { createProbe: createProbe, sample: sample, acknowledgeZMove: acknowledgeZMove, evaluateContactRepeatability: evaluateContactRepeatability };
+function isControlledMeasurementStop(reason){return [
+ 'unstable empty baseline',
+ 'no seal within maximum bounded descent',
+ 'opposite-sign sensor deviation; hold Z and inspect',
+ 'ambiguous or partial-seal deviation; hold Z and inspect',
+ 'deviation disappeared during confirmation; ambiguous partial seal',
+ 'Unstable fresh vacuum-off sensor baseline',
+ 'Unstable fresh vacuum-on empty baseline',
+ 'Fresh vacuum-on mean outside reviewed empty-nozzle band',
+ 'Fresh VAC1 pump response below minimum; no Z motion'
+ ].indexOf(String(reason))>=0;}
+var api = { createProbe: createProbe, sample: sample, acknowledgeZMove: acknowledgeZMove, evaluateContactRepeatability: evaluateContactRepeatability, isControlledMeasurementStop:isControlledMeasurementStop };
 if (typeof module !== 'undefined' && module.exports) module.exports = api;
 else root.VacuumProbePolicy = api;
 })(this);
