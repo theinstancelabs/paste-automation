@@ -37,8 +37,9 @@ def source_snapshot(report):
     if report.get('error') or report.get('uncertainCompletion') is True or report.get('auditIncomplete') is True:
         raise ValueError('Failed, uncertain or incomplete reports cannot prepare a continuation')
     request = report.get('request')
-    if report.get('status') == SUCCESS:
-        if (not isinstance(request, dict) or request.get('scope') not in (SCOPE, LEGACY_SCOPE)
+    if report.get('status') in (SUCCESS, 'completed-Z-observation-awaiting-image-review'):
+        allowed_scopes = (SCOPE, LEGACY_SCOPE) if report['status'] == SUCCESS else ('single-positive-raw-Z-observation', 'bounded-signed-raw-Z-observation')
+        if (not isinstance(request, dict) or request.get('scope') not in allowed_scopes
                 or not isinstance(report.get('id'), str) or not re.fullmatch(UUID_PATTERN, report['id'])
                 or report.get('id') != request.get('id')
                 or any(report.get(key) is not True for key in ('motionSubmitted', 'nativeMotionCompletionReported', 'controllerPositionVerified', 'independentFirmwareStepVerified'))
@@ -50,6 +51,17 @@ def source_snapshot(report):
         reported = frame.get('reported')
         jvm, config_hash = request.get('jvmStartMs'), request.get('liveConfigurationSha256')
         kind = 'successful-survey'
+    elif report.get('status') == 'completed-read-only-position-barrier':
+        if (not isinstance(request, dict) or request.get('scope') != 'read-only-native-position-barrier'
+                or not isinstance(report.get('id'), str) or not re.fullmatch(UUID_PATTERN, report['id']) or request.get('id') != report['id']
+                or report.get('noMotionCommandSubmitted') is not True
+                or report.get('controllerPositionVerified') is not True or report.get('uncertainCompletion') is not False):
+            raise ValueError('Barrier lacks explicit verified read-only completion')
+        reported = report.get('reported')
+        jvm, config_hash = request.get('jvmStartMs'), report.get('liveConfigurationSha256')
+        if config_hash != request.get('liveConfigurationSha256'):
+            raise ValueError('Barrier configuration mismatch')
+        kind = 'successful-position-barrier'
     elif report.get('status') == AUDIT_SUCCESS:
         if (report.get('scope') != 'read-only-specific-survey-stop-audit'
                 or not isinstance(report.get('faultId'), str) or not re.fullmatch(UUID_PATTERN, report['faultId'])

@@ -102,6 +102,16 @@ class PrepareSurveyRequestTests(unittest.TestCase):
             with self.assertRaises(ValueError):
                 module.prepare(self.source, self.image, 'operator', True, NOW, axis, delta)
 
+    def test_completed_signed_z_and_read_only_barrier_sources(self):
+        r = report();r['status']='completed-Z-observation-awaiting-image-review';r['request']['scope']='bounded-signed-raw-Z-observation'
+        q, _ = self.prepare(r);self.assertEqual(q['expectedRaw']['B'],720)
+        r['request']['scope']='single-bounded-raw-Z-observation'
+        with self.assertRaises(ValueError):self.prepare(r)
+        r = report();r.update(status='completed-read-only-position-barrier',noMotionCommandSubmitted=True,reported=r['after']['reported'],liveConfigurationSha256='a'*64);r['request']['scope']='read-only-native-position-barrier'
+        q, _ = self.prepare(r);self.assertEqual(q['expectedDriver']['X'],30.12)
+        r['request']['id']='00000000-0000-0000-0000-000000000000'
+        with self.assertRaises(ValueError):self.prepare(r)
+
     def test_output_refuses_overwrite_and_exact_template_field_set(self):
         q, _ = self.prepare()
         self.assertEqual(set(q), set(json.loads(MODULE.with_name('survey-request.pending.json').read_text())))

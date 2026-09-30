@@ -73,3 +73,5 @@ The staged [stationary N1 free-air baseline recorder](vacuum-baseline.md) sample
 ## Staged Z observation and native fault latch
 
 The separate [one-step Z observer](z-observation.md) has a narrowly reviewed `paste-z-observe` route, bound to a successful fresh position barrier and an explicitly reviewed physical interval. It permits only one reviewed ±1 mm or ±5 mm raw Z observation, never a surface approach or automatic return. The [native error-latch installer](error-latch-install.md) has a guarded no-motion route with private backups and exact live/disk hash bindings. The separately reviewed [read-only position barrier](position-barrier.md) verifies the new configuration and reported stationary state. Installing its in-memory regex does not itself authorize either motion adapter or establish physical calibration.
+
+The [reviewed constant-Z survey route wrapper](survey-route.md) chains only the existing bounded XY camera action, with a single five-minute full-corridor review, terminal-record checks and no retry. It does not enable general paste air runs or dispensing.

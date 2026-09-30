@@ -9,6 +9,6 @@ class ZObservationCompileTests(unittest.TestCase):
     def test_compile_without_evaluation(self):
         with tempfile.TemporaryDirectory(prefix='z-observation-compile-') as temporary:
             subprocess.run(['javac','-d',temporary,str(ROOT/'tests/java/CheckNativeAir.java')],check=True,timeout=20)
-            for source in ['scripts/Observe_Paste_Z.js','paste/z-observation.cjs','scripts/Install_Paste_Error_Latch.js','paste/error-latch-install.cjs','scripts/Automation_Reviewed_Command.js','scripts/Read_Paste_Position_Barrier.js','paste/position-barrier.cjs']:
+            for source in ['scripts/Survey_Paste_Coupon.js','scripts/Observe_Paste_Z.js','paste/z-observation.cjs','scripts/Install_Paste_Error_Latch.js','paste/error-latch-install.cjs','scripts/Automation_Reviewed_Command.js','scripts/Read_Paste_Position_Barrier.js','paste/position-barrier.cjs']:
                 output=subprocess.check_output(['java','-cp',temporary+':/opt/openpnp/lib/*','CheckNativeAir',str(ROOT/'paste/native-air.cjs'),str(ROOT/source)],text=True,timeout=20)
                 self.assertIn('without evaluation',output)

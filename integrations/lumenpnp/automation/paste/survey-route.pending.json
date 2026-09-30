@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "scope": "reviewed-constant-Z-XY-survey-route",
+  "id": null,
+  "sourceReport": null,
+  "sourceSha256": null,
+  "operator": null,
+  "reviewedEntireCorridor": false,
+  "corridorEvidence": {"path": null, "sha256": null, "capturedMs": null},
+  "waypoints": []
+}
