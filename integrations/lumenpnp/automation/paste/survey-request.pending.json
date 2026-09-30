@@ -7,7 +7,7 @@
   "jvmStartMs": null,
   "operator": null,
   "liveConfigurationSha256": null,
-  "speedFraction": 0.1,
+  "speedFraction": 1.0,
   "speedOverPrecision": true,
   "operatorVerified10mmCorridor": false,
   "bothHeadsClearAlongCorridor": false,

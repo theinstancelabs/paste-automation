@@ -473,7 +473,7 @@
       "sourceRoot": "/home/lumen/lumenpnp",
       "sourcePath": "automation/paste/prepare-survey-request.py",
       "destination": "integrations/lumenpnp/automation/paste/prepare-survey-request.py",
-      "sha256": "09da6b74a992d8819fd80776ff418bc2da4324d444311f9bf064ea870e0daf1b",
+      "sha256": "b83137818fb88c11161c0e5a51f56d7812fe91212721f3303a266515c9826d26",
       "bytes": 9801
     },
     {
@@ -578,22 +578,22 @@
       "sourceRoot": "/home/lumen/lumenpnp",
       "sourcePath": "automation/paste/survey-request.cjs",
       "destination": "integrations/lumenpnp/automation/paste/survey-request.cjs",
-      "sha256": "9ff71b4c1dcdd38175ba3e97c907541ec1bb08b64a2583d0557b02058704cdb1",
+      "sha256": "92ab08072bcda877c0ea97895a42a9be5b4771922c28b6d8e26becf1eb3c03ec",
       "bytes": 5109
     },
     {
       "sourceRoot": "/home/lumen/lumenpnp",
       "sourcePath": "automation/paste/survey-request.pending.json",
       "destination": "integrations/lumenpnp/automation/paste/survey-request.pending.json",
-      "sha256": "ea942041c29399f6295a13c91303148295ef8c85d567bb281d5ec89500bcabc4",
+      "sha256": "8f64d45fa49e5123feab9a684605e57cda5aed812fdf34956bf149e186d4422c",
       "bytes": 1347
     },
     {
       "sourceRoot": "/home/lumen/lumenpnp",
       "sourcePath": "automation/paste/survey-request.test.cjs",
       "destination": "integrations/lumenpnp/automation/paste/survey-request.test.cjs",
-      "sha256": "e7818367a961abde6307bb90905b6f9882b919585430b3b3583f49b87774ba69",
-      "bytes": 5336
+      "sha256": "b97feb1bbff70c9611c7b6102a2cccc0d453cd9afb27fc56de4df85ce2ea1e72",
+      "bytes": 5337
     },
     {
       "sourceRoot": "/home/lumen/lumenpnp",
@@ -781,8 +781,8 @@
       "sourceRoot": "/home/lumen/lumenpnp",
       "sourcePath": "automation/paste/z-observation.cjs",
       "destination": "integrations/lumenpnp/automation/paste/z-observation.cjs",
-      "sha256": "1848915c170fb2db6cf4ffb259041df6cfb4afe8d8f9f3864ea57b09211fc444",
-      "bytes": 11067
+      "sha256": "3d67624d048d86fad8fe7dec7804ebff3c9a8ea07a25c3729edc93fa2879812e",
+      "bytes": 11065
     },
     {
       "sourceRoot": "/home/lumen/lumenpnp",
@@ -795,15 +795,15 @@
       "sourceRoot": "/home/lumen/lumenpnp",
       "sourcePath": "automation/paste/z-observation.pending.json",
       "destination": "integrations/lumenpnp/automation/paste/z-observation.pending.json",
-      "sha256": "27bacc2c05b2f0f65eed6a494522d16fd44db9e51e30b68cee0ecd33b1275e96",
-      "bytes": 1758
+      "sha256": "5f14e6e6c3dac9ff9911eaf10d0080afa174c2246f52778fec8307544850e52f",
+      "bytes": 1757
     },
     {
       "sourceRoot": "/home/lumen/lumenpnp",
       "sourcePath": "automation/paste/z-observation.test.cjs",
       "destination": "integrations/lumenpnp/automation/paste/z-observation.test.cjs",
-      "sha256": "a3d5943520848bf089b8d906f565b678f23b9d2615e17b40a1c5741558324270",
-      "bytes": 10938
+      "sha256": "53e06e1c563368b61e7f5bcfe573360b462597b4a54772e92abb0357dc2f3e2a",
+      "bytes": 10946
     },
     {
       "sourceRoot": "/home/lumen/lumenpnp",
@@ -886,8 +886,8 @@
       "sourceRoot": "/home/lumen/lumenpnp",
       "sourcePath": "automation/scripts/Observe_Paste_Z.js",
       "destination": "integrations/lumenpnp/automation/scripts/Observe_Paste_Z.js",
-      "sha256": "b58acc42a43702557da7b1eb9a6753e441b3cce67b8f1c6ca8f32f3e1d3a8966",
-      "bytes": 22530
+      "sha256": "a717b50e9ca87ade24e54ac61f973c970f4e5705332314545561e9b7e7bc3838",
+      "bytes": 22529
     },
     {
       "sourceRoot": "/home/lumen/lumenpnp",
@@ -949,7 +949,7 @@
       "sourceRoot": "/home/lumen/lumenpnp",
       "sourcePath": "automation/scripts/Survey_Paste_Coupon.js",
       "destination": "integrations/lumenpnp/automation/scripts/Survey_Paste_Coupon.js",
-      "sha256": "ac363a271deeb84ee4fb7f81bb613ca3acf59862090752ba220887f1302c78db",
+      "sha256": "eed9dea19f24f9e03c12de657cd2714cc8d56772ba87641c03e3a9a50ff56f3b",
       "bytes": 19250
     },
     {
@@ -1259,6 +1259,13 @@
       "destination": "integrations/lumenpnp/automation/scripts/Restore_Paste_Startup_Quarantine.js",
       "sha256": "4a033dfb789bbcac4c75c1e2c9b03327c1e022f959972892b43b452bdae1240a",
       "bytes": 2382
+    },
+    {
+      "sourceRoot": "/home/lumen/lumenpnp",
+      "sourcePath": "automation/operations/paste-commissioning.md",
+      "destination": "integrations/lumenpnp/automation/operations/paste-commissioning.md",
+      "sha256": "26cde8495c2d437bccd75aab934f7ea11387e6f8acdcb082daf1d877518f7f25",
+      "bytes": 26922
     }
   ],
   "manifestSelfHash": "Excluded to avoid a recursive digest; this manifest enumerates every other exported/generated file."

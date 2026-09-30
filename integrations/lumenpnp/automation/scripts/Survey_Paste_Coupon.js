@@ -119,7 +119,7 @@
   r.commandedControllerAxes=[move.axis];r.postmoveComparisonTolerance={linearMm:0.02,angularDegrees:0.3,meaning:'Firmware reporting precision, not permission to command other axes'};r.expectedAfterRaw=expected;r.preMoveSnapshot=preMove;r.motionSubmitted=true;save('submitting-one-native-'+move.axis+'-move');
   // Partial single-axis location leaves all other axes untouched. This per-move
   // option bypasses audited one-sided backlash overshoot, without config edits.
-  planner.moveTo(top,target,0.1,MO.SpeedOverPrecision);
+  planner.moveTo(top,target,1.0,MO.SpeedOverPrecision);
   r.nativeMotionCompletionReported=true;save('native-stillstand-reported');
   // Audited NullMotionPlanner has already waited for stillstand here. Do not
   // issue a second generic completion or any recovery/park/lift on failure.

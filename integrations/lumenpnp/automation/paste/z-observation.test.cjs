@@ -10,8 +10,8 @@ test('pending cannot authorize and only discrete signed1/5mm Z observations are 
  for(const delta of [-6,-2,-.5,0,1e-8,.025,.5,1.001,2,6,NaN,Infinity,'1']){const q=request();q.deltaMm=delta;assert.throws(()=>z.step(q));}
  for(const edit of [{axis:'X'},{axis:'B'},{axes:['Z']},{target:{Z:27.5}},{deltaZ:1}])assert.throws(()=>z.step({...request(),...edit}));
 });
-test('whole proposed step remains within explicit reviewed interval and speed cannot be silently clamped',()=>{
- for(const change of [q=>q.expectedRaw.Z=26.49,q=>q.expectedRaw.Z=35.51,q=>q.jointInterval.reviewedForCurrentPose=false,q=>q.jointInterval.maxRawZ=40,q=>q.speedFraction=.01,q=>q.speedFraction=.1,q=>q.speedOverPrecision=false]){const q=request();change(q);assert.throws(()=>z.validate(q,1001,1));}
+test('whole proposed step remains within explicit reviewed interval and full configured travel speed is required',()=>{
+ for(const change of [q=>q.expectedRaw.Z=26.49,q=>q.expectedRaw.Z=35.51,q=>q.jointInterval.reviewedForCurrentPose=false,q=>q.jointInterval.maxRawZ=40,q=>q.speedFraction=.05,q=>q.speedFraction=.1,q=>q.speedOverPrecision=false]){const q=request();change(q);assert.throws(()=>z.validate(q,1001,1));}
  const q=request();q.expectedRaw.Z=35.5;q.jointInterval.minRawZ=35.5;q.jointInterval.maxRawZ=36.5;z.validate(q,1001,1);
 });
 test('fresh identity, all evidence, no-held-parts and complete exact start are required',()=>{

@@ -122,7 +122,7 @@ def prepare(report_path, image_path, operator, reviewed, now_ms=None, axis='X', 
     template = json.loads(Path(__file__).with_name('survey-request.pending.json').read_text())
     request = copy.deepcopy(template)
     request.update(description='Prepared offline from a verified terminal pose. This does not dispatch, clear a latch, or authorize any other motion.',
-                   schema=2, scope=SCOPE, axis=axis, deltaMm=delta_mm, speedFraction=0.1, speedOverPrecision=True,
+                   schema=2, scope=SCOPE, axis=axis, deltaMm=delta_mm, speedFraction=1.0, speedOverPrecision=True,
                    id=str(uuid.uuid4()), createdMs=now, jvmStartMs=jvm, operator=operator.strip(),
                    liveConfigurationSha256=config_hash,
                    operatorVerified10mmCorridor=True, bothHeadsClearAlongCorridor=True,

@@ -38,7 +38,7 @@ function validate(q,now,jvm){
  if(!q)fail('Restricted survey request required');step(q);
  if(typeof q.id!=='string'||!/^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/.test(q.id))fail('Fresh survey UUID required');
  finite(q.createdMs,'createdMs');if(q.createdMs>now||now-q.createdMs>300000||q.jvmStartMs!==jvm)fail('Stale or different JVM survey request');
- if(q.speedFraction!==0.05||q.speedOverPrecision!==true)fail('Native speed fraction 0.05 with audited backlash bypass required');
+ if(q.speedFraction!==1.0||q.speedOverPrecision!==true)fail('Native speed fraction 1.0 with audited backlash bypass required');
  text(q.operator,'operator');if(typeof q.liveConfigurationSha256!=='string'||!/^[a-f0-9]{64}$/.test(q.liveConfigurationSha256))fail('Exact live configuration SHA256 required');
  ['operatorVerifiedJointZStep','bothHeadsClearAlongStep','motionAreaClear','noHeldPartsObserved'].forEach(function(k){if(q[k]!==true)fail(k+' attestation required');});
  if(!q.corridorEvidence||typeof q.corridorEvidence.path!=='string'||q.corridorEvidence.path.charAt(0)!=='/'||!/^[a-f0-9]{64}$/.test(q.corridorEvidence.sha256))fail('Reviewed corridor image path and SHA256 required');

@@ -7,7 +7,7 @@
   "jvmStartMs": null,
   "operator": null,
   "liveConfigurationSha256": null,
-  "speedFraction": 0.05,
+  "speedFraction": 1.0,
   "speedOverPrecision": true,
   "motionAreaClear": false,
   "noHeldPartsObserved": false,
