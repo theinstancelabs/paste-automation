@@ -1,5 +1,5 @@
-// STAGED DISABLED positive raw Z observation, exactly +1 mm; no automatic return.
-var PASTE_Z_OBSERVATION_ENABLED = false;
+// REVIEWED NARROW positive raw Z observation, exactly +1 mm; no automatic return.
+var PASTE_Z_OBSERVATION_ENABLED = true;
 // No serial ownership changes, safe-Z helper, rotation, pickup, vacuum or current.
 // Uses the existing single-worker native executor with audited busy bookkeeping;
 // bypasses the public wrapper whose completion/exception cleanup can flush motion.
@@ -20,6 +20,7 @@ var PASTE_Z_OBSERVATION_ENABLED = false;
  var q=JSON.parse(read(root+'automation/plans/paste-z-observation-request.json')),jvm=Number(Java.type('java.lang.management.ManagementFactory').getRuntimeMXBean().getStartTime());
  PasteZObservation.validate(q,Number(java.lang.System.currentTimeMillis()),jvm);
  var corridor=new F(q.corridorEvidence.path);if(!corridor.isFile()||hash(Fs.readAllBytes(corridor.toPath()))!==q.corridorEvidence.sha256)throw Error('Reviewed corridor image missing/changed');
+ var barrierFile=new F(q.barrierEvidence.path);if(!barrierFile.isFile())throw Error('Position barrier evidence missing');var barrierBytes=Fs.readAllBytes(barrierFile.toPath());if(hash(barrierBytes)!==q.barrierEvidence.sha256)throw Error('Position barrier evidence changed');var barrierRecord=JSON.parse(String(new java.lang.String(barrierBytes,UTF)));PasteZObservation.barrier(barrierRecord,q,Number(java.lang.System.currentTimeMillis()));
  var panel=Java.type('org.openpnp.gui.MainFrame').get().getJobTab(),state=panel.getClass().getDeclaredField('state');state.setAccessible(true);
  if(m.getDrivers().size()!==1)throw Error('Unexpected driver topology');var d=m.getDrivers().get(0);
  if(String(d.getClass().getName())!=='org.openpnp.machine.reference.driver.GcodeDriver'||String(d.getId())!=='DRV16982438146c1dd4')throw Error('Unknown driver');
@@ -38,7 +39,9 @@ var PASTE_Z_OBSERVATION_ENABLED = false;
  if(Object.keys(axes).sort().join(',')!=='A,B,X,Y,Z')throw Error('Missing raw axis');
  function projectedPoses(raw){var result={};Object.keys(items).forEach(function(k){var n=items[k],location=n.getMappedAxes(m);Object.keys(axes).forEach(function(a){location=location.put(new AL(axes[a],raw[a]));});var p=n.toHeadMountableLocation(n.toTransformed(location)).convertToUnits(MM);result[k]={x:Number(p.getX()),y:Number(p.getY()),z:Number(p.getZ()),rotation:Number(p.getRotation())};});return result;}
  function snapshot(){var s={raw:{},driver:{},nativePoses:poses()};Object.keys(axes).forEach(function(k){s.raw[k]=Number(axes[k].getCoordinate());s.driver[k]=Number(axes[k].getDriverCoordinate());});return s;}
+ var originalReader=privateValue('org.openpnp.machine.reference.driver.GcodeDriver','readerThread',d),originalCommands=d.commands;
  function stateGate(){
+  if(d.commands!==originalCommands||originalReader==null||!originalReader.isAlive()||privateValue('org.openpnp.machine.reference.driver.GcodeDriver','readerThread',d)!==originalReader||privateValue('org.openpnp.machine.reference.driver.GcodeDriver','errorResponse',d)!=null)throw Error('Reader/commands changed or prior native error');
   if((m.isBusy()&&!m.isTask(java.lang.Thread.currentThread()))||!m.isEnabled()||!m.isHomed()||String(state.get(panel))!=='Stopped')throw Error('Need idle enabled homed machine, stopped job');
   if(String(privateValue('org.openpnp.machine.reference.driver.GcodeDriver','connected',d))!=='true'||d.isMotionPending())throw Error('Driver disconnected or prior motion pending');
   if(privateValue('org.openpnp.machine.reference.driver.AbstractMotionPlanner','motionCommands',planner).size()!==0)throw Error('Prior native motion queued');
@@ -108,12 +111,12 @@ var PASTE_Z_OBSERVATION_ENABLED = false;
  try{
   if(m.isBusy()||!executor.getQueue().isEmpty())throw Error('Native task ownership changed before survey');
   taskOwner(java.lang.Thread.currentThread());ownedTask=true;m.fireMachineBusy(true);
-  PasteZObservation.validate(q,Number(java.lang.System.currentTimeMillis()),jvm);stateGate();
+  PasteZObservation.validate(q,Number(java.lang.System.currentTimeMillis()),jvm);PasteZObservation.barrier(barrierRecord,q,Number(java.lang.System.currentTimeMillis()));stateGate();
   if(configHash()!==q.liveConfigurationSha256)throw Error('Configuration changed before native task');
   var taskStart=snapshot();PasteZObservation.compareExact(taskStart.raw,initial.raw,'queued raw');PasteZObservation.compareExact(taskStart.driver,initial.driver,'queued driver');comparePoses(taskStart.nativePoses,initial.nativePoses);
   query(initial,'before');PasteZObservation.compareExact(snapshot().raw,initial.raw,'post-query unchanged raw');
   settle();var beforeTop=capture(top,'top-before-raw'),beforeBottom=capture(bottom,'bottom-before-raw');r.beforeImages={top:{path:beforeTop.path,width:beforeTop.width,height:beforeTop.height},bottom:{path:beforeBottom.path,width:beforeBottom.width,height:beforeBottom.height}};save('before-images-captured');
-  PasteZObservation.validate(q,Number(java.lang.System.currentTimeMillis()),jvm);stateGate();if(configHash()!==q.liveConfigurationSha256)throw Error('Configuration changed during preflight');
+  PasteZObservation.validate(q,Number(java.lang.System.currentTimeMillis()),jvm);PasteZObservation.barrier(barrierRecord,q,Number(java.lang.System.currentTimeMillis()));stateGate();if(configHash()!==q.liveConfigurationSha256)throw Error('Configuration changed during preflight');
   if(!executor.getQueue().isEmpty())throw Error('Competing native work queued during camera preflight');
   var preMove=snapshot();PasteZObservation.compareExact(preMove.raw,initial.raw,'unchanged pre-move raw');comparePoses(preMove.nativePoses,initial.nativePoses);PasteZObservation.compareReported(r.before.reported,preMove.raw,preMove.driver);
   var move=PasteZObservation.step(q),expected=PasteZObservation.target(initial.raw,q),selectedAxis=axes[move.axis],target=new AL(selectedAxis,expected[move.axis]);

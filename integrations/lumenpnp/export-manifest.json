@@ -46,8 +46,8 @@
       "sourceRoot": "/home/lumen/lumenpnp",
       "sourcePath": "automation/paste/README.md",
       "destination": "integrations/lumenpnp/automation/paste/README.md",
-      "sha256": "557ec0edf14d3de760459b5e58de2d9c574763892075c98bfcb207b034e61858",
-      "bytes": 12998
+      "sha256": "f86f35a101a5da177699fb1777259942b42f9312028c3d0f00b33d424930bdc4",
+      "bytes": 13156
     },
     {
       "sourceRoot": "/home/lumen/lumenpnp",
@@ -270,8 +270,8 @@
       "sourceRoot": "/home/lumen/lumenpnp",
       "sourcePath": "automation/paste/native-air.md",
       "destination": "integrations/lumenpnp/automation/paste/native-air.md",
-      "sha256": "68b2c2d9d99f25a70158dbfe2ed889f2808b1eed0c77777208f4bb602c850d89",
-      "bytes": 4635
+      "sha256": "b6421cd0b4a1a841de2e2721eea7795545d8d441b786cfdac2b93d9e8343c72b",
+      "bytes": 4705
     },
     {
       "sourceRoot": "/home/lumen/lumenpnp",
@@ -473,29 +473,29 @@
       "sourceRoot": "/home/lumen/lumenpnp",
       "sourcePath": "automation/paste/z-observation.cjs",
       "destination": "integrations/lumenpnp/automation/paste/z-observation.cjs",
-      "sha256": "ce2e07801d77f7f80d018dd99f013013d5efb677a34f5132f9165bcdc84fceee",
-      "bytes": 5425
+      "sha256": "20681bc27c9b5cad1937e489572b4cd6d582f792020d4f4aae114c11d16736f6",
+      "bytes": 6866
     },
     {
       "sourceRoot": "/home/lumen/lumenpnp",
       "sourcePath": "automation/paste/z-observation.md",
       "destination": "integrations/lumenpnp/automation/paste/z-observation.md",
-      "sha256": "a270a89bbcd59b479a979a9a1368645efa63bbaa7cf5c8806984ed38da702467",
-      "bytes": 3769
+      "sha256": "4ac2b06b86d276a8be17c58701c184f824a3329d9ccf335c5fd1cff0918c8ad0",
+      "bytes": 4345
     },
     {
       "sourceRoot": "/home/lumen/lumenpnp",
       "sourcePath": "automation/paste/z-observation.pending.json",
       "destination": "integrations/lumenpnp/automation/paste/z-observation.pending.json",
-      "sha256": "12ee7724bdabbfaed85a3d6f024c8502f083d03d99cf5dd654594fa1b6111fad",
-      "bytes": 1399
+      "sha256": "30aeb21bc41873393ddf8716748e7b31bfda789dec43fd23ac280ad3eeec03cb",
+      "bytes": 1464
     },
     {
       "sourceRoot": "/home/lumen/lumenpnp",
       "sourcePath": "automation/paste/z-observation.test.cjs",
       "destination": "integrations/lumenpnp/automation/paste/z-observation.test.cjs",
-      "sha256": "455f0f2f86a84af23b2baaa45d2596aab6d4c031a44544ff58c40f77954c3c92",
-      "bytes": 3895
+      "sha256": "8ed275f4f06061893cfb9e40ca89233872f161cc729a727bf701a5782f6fa414",
+      "bytes": 5327
     },
     {
       "sourceRoot": "/home/lumen/lumenpnp",
@@ -515,8 +515,8 @@
       "sourceRoot": "/home/lumen/lumenpnp",
       "sourcePath": "automation/scripts/Automation_Reviewed_Command.js",
       "destination": "integrations/lumenpnp/automation/scripts/Automation_Reviewed_Command.js",
-      "sha256": "da7a084c8a5f19c4191ad187680583486dbc2f503cf754a14eb67537265c9012",
-      "bytes": 2824
+      "sha256": "d22ac5e011edffeaf0de59727cdd732384d19d878212c9f19731489aa9620995",
+      "bytes": 2881
     },
     {
       "sourceRoot": "/home/lumen/lumenpnp",
@@ -550,8 +550,8 @@
       "sourceRoot": "/home/lumen/lumenpnp",
       "sourcePath": "automation/scripts/Observe_Paste_Z.js",
       "destination": "integrations/lumenpnp/automation/scripts/Observe_Paste_Z.js",
-      "sha256": "96fcf55f851a6316b02771ff27438f9aa075a9d9c2c2fe0d69cecc7e68422370",
-      "bytes": 19878
+      "sha256": "b5086902e937584240e14dd9e062cdaa6cf774ebb7386108cac9364271add571",
+      "bytes": 20960
     },
     {
       "sourceRoot": "/home/lumen/lumenpnp",
@@ -641,8 +641,8 @@
       "sourceRoot": "/home/lumen/lumenpnp",
       "sourcePath": "automation/scripts/run_reviewed_action.py",
       "destination": "integrations/lumenpnp/automation/scripts/run_reviewed_action.py",
-      "sha256": "b1fe9eccb8f28cc98584cc5a9a0506c6480af4fd3f7772e4b2d0bce35c61c833",
-      "bytes": 17413
+      "sha256": "60b697724698ad93a686d67b84e081d5a4431ee9ae46b94253f7c0ae3df87a3f",
+      "bytes": 17451
     },
     {
       "sourceRoot": "/home/lumen/lumenpnp",

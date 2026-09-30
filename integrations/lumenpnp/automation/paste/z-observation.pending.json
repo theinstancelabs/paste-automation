@@ -59,11 +59,15 @@
   "axis": "Z",
   "deltaMm": null,
   "jointInterval": {
-    "minRawZ": 26.5,
-    "maxRawZ": 36.5,
+    "minRawZ": null,
+    "maxRawZ": null,
     "reviewedForCurrentPose": false,
     "reviewRecord": null
   },
   "operatorVerifiedJointZStep": false,
-  "bothHeadsClearAlongStep": false
+  "bothHeadsClearAlongStep": false,
+  "barrierEvidence": {
+    "path": null,
+    "sha256": null
+  }
 }

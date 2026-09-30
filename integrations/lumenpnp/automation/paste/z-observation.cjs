@@ -1,4 +1,4 @@
-/* Narrow ES5 contract for the disabled single-step Z observer. No hardware. */
+/* Narrow ES5 contract for the single-step Z observer. No hardware. */
 (function(root){
 'use strict';
 function fail(message){throw Error(message);}
@@ -21,11 +21,12 @@ function validate(q,now,jvm){
  if(!q.corridorEvidence||typeof q.corridorEvidence.path!=='string'||q.corridorEvidence.path.charAt(0)!=='/'||!/^[a-f0-9]{64}$/.test(q.corridorEvidence.sha256))fail('Reviewed corridor image path and SHA256 required');
  finite(q.corridorEvidence.capturedMs,'corridor capturedMs');if(q.corridorEvidence.capturedMs>q.createdMs||now-q.corridorEvidence.capturedMs>300000)fail('Reviewed corridor image stale/future');
  ['expectedRaw','expectedDriver'].forEach(function(k){if(!q[k]||Object.keys(q[k]).sort().join(',')!=='A,B,X,Y,Z')fail('Exact five-axis snapshot required');Object.keys(q[k]).forEach(function(a){finite(q[k][a],k+' '+a);});});
+ if(!q.barrierEvidence||typeof q.barrierEvidence.path!=='string'||q.barrierEvidence.path.charAt(0)!=='/'||!/^[a-f0-9]{64}$/.test(q.barrierEvidence.sha256))fail('Successful position barrier path/hash required');
  if(!q.expectedNativePoses)fail('Expected native poses required');
  ['N1','N2','top','bottom'].forEach(function(k){if(!q.expectedNativePoses[k])fail('Missing '+k+' pose');['x','y','z','rotation'].forEach(function(a){finite(q.expectedNativePoses[k][a],k+' '+a);});});
- if(!q.jointInterval||q.jointInterval.minRawZ!==26.5||q.jointInterval.maxRawZ!==36.5||q.jointInterval.reviewedForCurrentPose!==true)fail('Explicit current-pose joint interval review required');
+ if(!q.jointInterval||finite(q.jointInterval.minRawZ,'reviewed minimum')<26.5||finite(q.jointInterval.maxRawZ,'reviewed maximum')>36.5||q.jointInterval.minRawZ>=q.jointInterval.maxRawZ||q.jointInterval.reviewedForCurrentPose!==true)fail('Explicit current-pose joint interval review required');
  text(q.jointInterval.reviewRecord,'joint interval review record');
- var z=q.expectedRaw.Z,end=z+q.deltaMm;if(z<26.5||end>36.5)fail('Z step outside restricted application interval');
+ var z=q.expectedRaw.Z,end=z+q.deltaMm;if(z<26.5||end>36.5||z<q.jointInterval.minRawZ||end>q.jointInterval.maxRawZ)fail('Z step outside restricted application interval');
  return q;
 }
 function compareReported(reported,savedRaw,savedDriver){
@@ -50,5 +51,12 @@ function compareNativeStep(before,after,q,tolerance){
  ['N1','N2','top','bottom'].forEach(function(k){['x','y','z','rotation'].forEach(function(a){var delta=a==='z'?(k==='N1'?dz:k==='N2'?-dz:0):0;close(after[k][a],before[k][a]+delta,typeof tolerance==='number'?tolerance:(a==='rotation'?0.3:0.02),'native polarity '+k+' '+a);});});
 }
 function compareExact(actual,expected,label){['X','Y','Z','A','B'].forEach(function(a){close(actual[a],expected[a],0.0001,label+' '+a);});}
-var api={compareNativeStep:compareNativeStep,step:step,validate:validate,close:close,compareReported:compareReported,target:target,compareExact:compareExact,comparePostModel:comparePostModel,compareFirmwareStep:compareFirmwareStep};if(typeof module!=='undefined')module.exports=api;else root.PasteZObservation=api;
+function barrier(record,q,now){
+ if(!record||record.status!=='completed-read-only-position-barrier'||record.noMotionCommandSubmitted!==true||record.controllerPositionVerified!==true||record.uncertainCompletion!==false||!record.request||record.request.jvmStartMs!==q.jvmStartMs||record.liveConfigurationSha256!==q.liveConfigurationSha256||record.request.liveConfigurationSha256!==q.liveConfigurationSha256)fail('Successful same-JVM/config position barrier required');
+ var done=Date.parse(record.finishedAt);if(!isFinite(done)||done>q.createdMs||now-done>300000)fail('Position barrier stale/future');
+ var state=record.afterQuerySnapshot;if(!state||!state.nativePoses)fail('Barrier snapshots missing');compareExact(state.raw,q.expectedRaw,'barrier raw');compareExact(state.driver,q.expectedDriver,'barrier driver');
+ ['N1','N2','top','bottom'].forEach(function(k){['x','y','z','rotation'].forEach(function(a){close(state.nativePoses[k][a],q.expectedNativePoses[k][a],0.0001,'barrier native '+k+' '+a);});});
+ compareReported(record.reported,state.raw,state.driver);
+}
+var api={barrier:barrier,compareNativeStep:compareNativeStep,step:step,validate:validate,close:close,compareReported:compareReported,target:target,compareExact:compareExact,comparePostModel:comparePostModel,compareFirmwareStep:compareFirmwareStep};if(typeof module!=='undefined')module.exports=api;else root.PasteZObservation=api;
 })(this);
