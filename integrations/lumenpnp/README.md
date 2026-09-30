@@ -13,6 +13,7 @@ Offline checks on the original machine (from this directory):
 ```sh
 node --test automation/paste/*.test.cjs
 python3 -m unittest discover -s automation/tests
+python3 -m unittest discover -s automation/paste/analysis -p 'test_*.py'
 ```
 
 The pinned-planner tests explicitly read `/home/lumen/paste-automation`; they intentionally fail if its commit/source changes. Other machines need a separately reviewed path adaptation. Fork-wide checks remain `npm test` and `npm run build` from the fork root. None of these checks demonstrates physical clearance, successful extrusion or supervised commissioning. JavaScript machine scripts are compiled for syntax without evaluation during review.

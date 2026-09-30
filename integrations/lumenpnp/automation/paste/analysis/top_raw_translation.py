@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
-"""Estimate a 2-D image translation between same-size raw camera frames (Pillow only).
+"""Deprecated exploratory whole-frame registration (Pillow only).
 
-This reports image-plane translation and an optional known-move scale estimate.
-It does not infer camera calibration, depth, or a physical axis transform.
+Repeated labels may alias; do not use its scale estimate for calibration.
+For a selected same-feature match with explicit search bounds, use
+top_feature_match.py instead. Neither tool estimates depth or a machine transform.
 """
 import argparse
 import hashlib
