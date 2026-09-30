@@ -1,0 +1,15 @@
+# Capture-only paste measurement records
+
+`Capture_Paste_Measurement.js` takes a software snapshot through the existing OpenPnP scripting bridge. It does not connect, query serial, home, move, acquire/reopen cameras, change offsets or save configuration. The reviewed `paste-measure` route is installed; this script does not dispatch itself. Use `paste-state` to obtain the running JVM start time before preparing a request.
+
+Copy `measurement-request.pending.json` to `automation/plans/paste-measurement-request.json` and supply a new UUID, current `createdMs`, running OpenPnP `jvmStartMs`, operator and identified fixed physical target/fixture. Requests expire after five minutes. `sampleRole` is `setup`, `camera-centered`, `right-tip-centered`, `joint-clearance` or `surface`. Non-setup roles require `operatorObservedTarget: true`; this records an operator assertion, not automatic proof. No sample automatically authorizes motion.
+
+Optional `evidencePaths` refer to existing absolute local files. The recorder hashes them; it does not create an image or decide whether it shows the intended target. `firmwareQueryRecord` optionally references the existing connection/settings report. Each optional `physicalMeasurements` entry has `name`, finite `value`, explicit `unit` and `method`; supply only actual observations. Supported units are mm, degrees, degrees/min, mm/min, mA, ms, count and fraction. Empty measurements are valid for a setup snapshot.
+
+The unique result directory is `automation/evidence/paste-measurement-<UUID>/`, containing exact request and report. A byte-verified serialized live machine snapshot is kept privately under `.local-machine-backups/paste-measurement-<UUID>/`; the report records its SHA-256. It also records native N1/N2 and camera **software** poses, offsets, logical tip/part state, time, JVM identity and enabled/homed flags. It issues no M114 and does not establish actual physical position. Unhomed coordinates are explicitly marked unusable as calibration. Every result retains `calibrationEstablished: false` and `physicalValidation: false`; a failed/partial record cannot be reused under the same UUID.
+
+For repeatable offset work, keep the same identified fixed target and fixture, and take separate camera-centered and right-tip-centered records only after independently supervised positioning and visual confirmation. Repeat both samples and retain their evidence, configuration hashes and actual tip/mount identity in notes. Review repeatability and coordinate meanings before deriving or applying any correction. This recorder neither computes offsets nor copies values into the calibrated profile. A homed software flag alone does not establish clearances or registration.
+
+Before physical work, use `../operations/paste-commissioning.md`. The measurement recorder does not bypass the installation lock or disabled air-run gate.
+
+Offline checks: `node --test automation/paste/measurement-request.test.cjs`; compile the capture script with the installed Nashorn engine without evaluating it. Neither check establishes physical behavior.

@@ -1,0 +1,14 @@
+{
+  "schema": 1,
+  "id": null,
+  "createdMs": null,
+  "jvmStartMs": null,
+  "operator": null,
+  "sampleRole": "setup",
+  "target": {"id": null, "description": null, "fixture": null},
+  "operatorObservedTarget": false,
+  "evidencePaths": [],
+  "firmwareQueryRecord": null,
+  "physicalMeasurements": [],
+  "notes": "Pending request, not calibration. Setup snapshots may be unhomed. No movement or camera capture occurs."
+}

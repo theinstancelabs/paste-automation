@@ -1,0 +1,23 @@
+{
+  "description": "NOT AN AUTHORIZATION. Complete from this supervised session only after physical gates and independent code-gate review. Valid for 5 minutes in exactly one OpenPnP JVM session.",
+  "planId": null,
+  "planSha256": null,
+  "jvmStartMs": null,
+  "createdMs": null,
+  "operator": null,
+  "evidenceRecord": null,
+  "installationComplete": false,
+  "motionAreaClear": false,
+  "bothHeadsClear": false,
+  "homingCurrent": false,
+  "registrationCurrent": false,
+  "supervisorPresent": false,
+  "physicalStopAccessible": false,
+  "rightHeadExcludedFromPlacement": false,
+  "nativeFrameVerified": false,
+  "startPoseCameraVerified": false,
+  "start": {
+    "left": {"x": null, "y": null, "z": null, "rotation": null},
+    "right": {"x": null, "y": null, "z": null, "rotation": null}
+  }
+}

@@ -1,0 +1,12 @@
+# Runtime state never belongs in this source mirror.
+.local-machine-backups/
+.local-viewer/
+automation/evidence/
+automation/plans/
+__pycache__/
+*.py[cod]
+*.xml
+*.job*
+*.log
+token
+tokens/

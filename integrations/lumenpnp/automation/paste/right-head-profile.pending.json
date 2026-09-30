@@ -1,0 +1,23 @@
+{
+  "description": "UNMEASURED. Never substitute old N1 or example/raw-G-code values. Native N2 coordinates and joint Z must be measured after mounting.",
+  "calibrated": false,
+  "liveConfigurationSha256": null,
+  "nativeCoordinateFrame": "openpnp-N2-mm",
+  "measurementRecord": null,
+  "registrationRecord": null,
+  "jointClearanceRecord": null,
+  "configurationBackup": null,
+  "firmwareSettingsRecord": null,
+  "nativeSpeedRecord": null,
+  "leftNozzleId": "N1",
+  "rightNozzleId": "NOZ1710829fd33a0170",
+  "leftHeadOffsets": null,
+  "rightHeadOffsets": null,
+  "xMin": null, "xMax": null, "yMin": null, "yMax": null,
+  "zMin": null, "zMax": null, "safeZ": null, "leftClearanceZ": null,
+  "clearanceDirection": null,
+  "travelFeed": null, "zFeed": null, "dispenseFeed": null,
+  "tipXoffset": null, "tipYoffset": null,
+  "speedFraction": null,
+  "rawBounds": {}
+}

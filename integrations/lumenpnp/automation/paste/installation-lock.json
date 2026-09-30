@@ -1,0 +1,8 @@
+{
+  "schema": 1,
+  "locked": true,
+  "reason": "User reports right-head installation complete. Both-head clearance, native tool exclusion after restart, exclusive controller ownership and measured profile remain uncommissioned. Legacy reviewed motion stays locked.",
+  "releaseRequirement": "Deliberate reviewed change only after completed installation, measured joint clearance, guarded N2, and updated commissioning record. Removing/corrupting this file remains locked. Direct manual UI controls require separate quarantine and supervision.",
+  "installationReportedComplete": true,
+  "installationReportDate": "2026-09-30"
+}
