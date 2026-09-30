@@ -1215,8 +1215,15 @@
       "sourceRoot": "/home/lumen/lumenpnp",
       "sourcePath": "automation/paste/continue-waste-prime.py",
       "destination": "integrations/lumenpnp/automation/paste/continue-waste-prime.py",
-      "sha256": "688a3f1f033ef1c3dcd9acccd40e450ec39dbc8d260a470cdc25b21c0e944fc1",
-      "bytes": 4343
+      "sha256": "4a8eead3d62dc7aa7864bde5f7a87aaf2004d1fc5900cf2497e1459a4a9ae523",
+      "bytes": 4407
+    },
+    {
+      "sourceRoot": "/home/lumen/lumenpnp",
+      "sourcePath": "automation/operations/paste-first-wet-trial.md",
+      "destination": "integrations/lumenpnp/automation/operations/paste-first-wet-trial.md",
+      "sha256": "588db7b0f93b144493fb54ea1016e86464547c40df6f87e5de5cf01224b12b54",
+      "bytes": 1199
     }
   ],
   "manifestSelfHash": "Excluded to avoid a recursive digest; this manifest enumerates every other exported/generated file."

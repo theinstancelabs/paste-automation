@@ -11,7 +11,9 @@ def wait(p,success):
  end=time.monotonic()+30
  while time.monotonic()<end:
   if p.exists():
-   r=read(p)
+   try:r=read(p)
+   except json.JSONDecodeError:
+    time.sleep(.1);continue
    if r.get('error'):raise RuntimeError(r['error'])
    if r.get('status')==success:return r
   time.sleep(.25)
