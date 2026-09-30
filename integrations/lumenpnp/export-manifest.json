@@ -1315,6 +1315,27 @@
       "destination": "integrations/lumenpnp/automation/tests/test_z_observation_nashorn.py",
       "sha256": "972716b27cd1d2cf61a04f9be18f4f2df00146ef2d2e790f652ae3e71cf2b9f9",
       "bytes": 1370
+    },
+    {
+      "sourceRoot": "/home/lumen/lumenpnp",
+      "sourcePath": "automation/paste/analysis/fresh_ftp_registration.py",
+      "destination": "integrations/lumenpnp/automation/paste/analysis/fresh_ftp_registration.py",
+      "sha256": "d73fb8d22a5bf7fdab7b81c189b99818e87db00dc4ad1f143ff18d37099ae92f",
+      "bytes": 11781
+    },
+    {
+      "sourceRoot": "/home/lumen/lumenpnp",
+      "sourcePath": "automation/paste/analysis/fresh_ftp_registration.md",
+      "destination": "integrations/lumenpnp/automation/paste/analysis/fresh_ftp_registration.md",
+      "sha256": "faceccc24b6f2139920d04d19dd05cabe7171ef349f0b7b4d3105fb29eaf0f14",
+      "bytes": 3518
+    },
+    {
+      "sourceRoot": "/home/lumen/lumenpnp",
+      "sourcePath": "automation/paste/analysis/test_fresh_ftp_registration.py",
+      "destination": "integrations/lumenpnp/automation/paste/analysis/test_fresh_ftp_registration.py",
+      "sha256": "ff9a57c4fa676dd3e764ab3830f9f075ffc78208917c4355aa1d5febb4e7224b",
+      "bytes": 7178
     }
   ],
   "manifestSelfHash": "Excluded to avoid a recursive digest; this manifest enumerates every other exported/generated file."
