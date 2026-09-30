@@ -1,0 +1,44 @@
+{
+  "description": "UNMEASURED offline template. An intentionally empty pad list is valid preparation, but cannot generate a trial plan. Register six distinct unused matching pads on the unplatformed scrap; +Y words alone are not registration. No values copied from demo surface or video examples.",
+  "schema": 1,
+  "coordinateFrame": "openpnp-N2-mm",
+  "substrate": {
+    "id": null,
+    "kind": "scrap",
+    "support": "unplatformed",
+    "registrationRecord": null,
+    "surfaceRecord": null,
+    "tipAndMaterialRecord": null,
+    "clearanceRecord": null,
+    "bounds": {"xMin": null, "xMax": null, "yMin": null, "yMax": null}
+  },
+  "demoBounds": {"xMin": null, "xMax": null, "yMin": null, "yMax": null},
+  "minDemoGapMm": null,
+  "minPadGapMm": null,
+  "tipEdgeMarginMm": null,
+  "pads": [],
+  "process": {
+    "dosesDegrees": [],
+    "retractionDegrees": null,
+    "dwellMilliseconds": null,
+    "standoffMm": null,
+    "verifiedDispenseSign": null,
+    "directionRecord": null,
+    "observedCurrentMa": null,
+    "currentSettingsRecord": null,
+    "dispenseDegreesPerMinute": null,
+    "retractionDegreesPerMinute": null
+  },
+  "limits": {
+    "maxDoseDegrees": null,
+    "maxTotalGrossDegrees": null,
+    "maxRetractionDegrees": null,
+    "maxDwellMilliseconds": null,
+    "doseLimitRecord": null,
+    "remainingStrokeRecord": null,
+    "maxMotorCurrentMa": null,
+    "maxDispenseDegreesPerMinute": null,
+    "maxRetractionDegreesPerMinute": null,
+    "currentRateLimitRecord": null
+  }
+}

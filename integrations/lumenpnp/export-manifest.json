@@ -51,6 +51,27 @@
     },
     {
       "sourceRoot": "/home/lumen/lumenpnp",
+      "sourcePath": "automation/paste/cad/README.md",
+      "destination": "integrations/lumenpnp/automation/paste/cad/README.md",
+      "sha256": "5b5b86309c7c2c25baa0f7685ab1329de6e540eaa82306049318b8cb52b55d05",
+      "bytes": 1857
+    },
+    {
+      "sourceRoot": "/home/lumen/lumenpnp",
+      "sourcePath": "automation/paste/cad/extract_brep.py",
+      "destination": "integrations/lumenpnp/automation/paste/cad/extract_brep.py",
+      "sha256": "949bdbf6bfbdcd6967c548e22f8a7df778ac629fc21314522a41cf95abffb89e",
+      "bytes": 3916
+    },
+    {
+      "sourceRoot": "/home/lumen/lumenpnp",
+      "sourcePath": "automation/paste/cad/requirements.txt",
+      "destination": "integrations/lumenpnp/automation/paste/cad/requirements.txt",
+      "sha256": "6cbb38c857305217252179df4d070a4d40dc6c08a4683143519e2af307aff958",
+      "bytes": 24
+    },
+    {
+      "sourceRoot": "/home/lumen/lumenpnp",
       "sourcePath": "automation/paste/commissioning-strategy.md",
       "destination": "integrations/lumenpnp/automation/paste/commissioning-strategy.md",
       "sha256": "2aafa4ef20bb357c7a8b4c79893d9c87b0503eb4c0f1201ddde876daf5dcfa5a",
@@ -69,6 +90,34 @@
       "destination": "integrations/lumenpnp/automation/paste/connection-policy.test.cjs",
       "sha256": "9bd3e86f59082e97cb7a7e53b477c499278885b1af3ef8a03a4fb4d86c860c7a",
       "bytes": 2595
+    },
+    {
+      "sourceRoot": "/home/lumen/lumenpnp",
+      "sourcePath": "automation/paste/coupon-request.pending.json",
+      "destination": "integrations/lumenpnp/automation/paste/coupon-request.pending.json",
+      "sha256": "eef40f84bef2157ba0836a06828fcb9b8797e9231a700e39fbaffc8b96856a5b",
+      "bytes": 1498
+    },
+    {
+      "sourceRoot": "/home/lumen/lumenpnp",
+      "sourcePath": "automation/paste/coupon-trials.md",
+      "destination": "integrations/lumenpnp/automation/paste/coupon-trials.md",
+      "sha256": "695bdc6bac9e43a0bbd24e7dd598292252cf73a7528a4c1d04d01a0b94eb6d94",
+      "bytes": 6701
+    },
+    {
+      "sourceRoot": "/home/lumen/lumenpnp",
+      "sourcePath": "automation/paste/coupon-trials.mjs",
+      "destination": "integrations/lumenpnp/automation/paste/coupon-trials.mjs",
+      "sha256": "e2b35e9f08055cc610ff6b71a8f8fee80de5b8c26edc3c44871312808b56f813",
+      "bytes": 16232
+    },
+    {
+      "sourceRoot": "/home/lumen/lumenpnp",
+      "sourcePath": "automation/paste/coupon-trials.test.cjs",
+      "destination": "integrations/lumenpnp/automation/paste/coupon-trials.test.cjs",
+      "sha256": "af6969de583aef55f9db2792e0b7ce0d2a5a4bb54dbc636ea941793e57ae16d6",
+      "bytes": 10953
     },
     {
       "sourceRoot": "/home/lumen/lumenpnp",
@@ -121,6 +170,13 @@
     },
     {
       "sourceRoot": "/home/lumen/lumenpnp",
+      "sourcePath": "automation/paste/nominal-geometry-review.md",
+      "destination": "integrations/lumenpnp/automation/paste/nominal-geometry-review.md",
+      "sha256": "067cd3f5222c258756f4524191ea9d4a5709f8ddac86a660173bf51b12b25608",
+      "bytes": 9371
+    },
+    {
+      "sourceRoot": "/home/lumen/lumenpnp",
       "sourcePath": "automation/paste/prepare-air-plan.mjs",
       "destination": "integrations/lumenpnp/automation/paste/prepare-air-plan.mjs",
       "sha256": "6d1028bb757ba8e08867b8c353da3b11f0e5f5318227d609e18b332f7e19f24a",
@@ -153,6 +209,27 @@
       "destination": "integrations/lumenpnp/automation/paste/session.pending.json",
       "sha256": "8b473ee7c34cf51776abed08257a140860fd917a0faf1191b1482598e6f5d4d7",
       "bytes": 798
+    },
+    {
+      "sourceRoot": "/home/lumen/lumenpnp",
+      "sourcePath": "automation/paste/vacuum-probe-policy.cjs",
+      "destination": "integrations/lumenpnp/automation/paste/vacuum-probe-policy.cjs",
+      "sha256": "44c8fbaab7f4e8d41c69659097c2827ed4005aca9998f4b978f4262788e54c82",
+      "bytes": 7341
+    },
+    {
+      "sourceRoot": "/home/lumen/lumenpnp",
+      "sourcePath": "automation/paste/vacuum-probe-policy.md",
+      "destination": "integrations/lumenpnp/automation/paste/vacuum-probe-policy.md",
+      "sha256": "fea53941b0faf8fa320021cef10f7f14301e2207ea3d7a5345772731e0edf7e8",
+      "bytes": 1662
+    },
+    {
+      "sourceRoot": "/home/lumen/lumenpnp",
+      "sourcePath": "automation/paste/vacuum-probe-policy.test.cjs",
+      "destination": "integrations/lumenpnp/automation/paste/vacuum-probe-policy.test.cjs",
+      "sha256": "2068bacd95aaad7534ce9dd519dc7fe9fcf25f2e0d7aff3c3ae6f898a2459eeb",
+      "bytes": 4461
     },
     {
       "sourceRoot": "/home/lumen/lumenpnp",
