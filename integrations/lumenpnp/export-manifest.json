@@ -135,10 +135,31 @@
     },
     {
       "sourceRoot": "/home/lumen/lumenpnp",
+      "sourcePath": "automation/paste/analysis/test_tip_height_interval.py",
+      "destination": "integrations/lumenpnp/automation/paste/analysis/test_tip_height_interval.py",
+      "sha256": "843e59bb20a10be1320721249465f893137654fd39c578bd9530b25a1b1779c2",
+      "bytes": 7517
+    },
+    {
+      "sourceRoot": "/home/lumen/lumenpnp",
       "sourcePath": "automation/paste/analysis/test_top_feature_match.py",
       "destination": "integrations/lumenpnp/automation/paste/analysis/test_top_feature_match.py",
       "sha256": "a16529fc1e54e7d64fe1eeee59f2d70f45a05001ae674f068e96a76ce0ab1ac7",
       "bytes": 2255
+    },
+    {
+      "sourceRoot": "/home/lumen/lumenpnp",
+      "sourcePath": "automation/paste/analysis/tip_height_interval.md",
+      "destination": "integrations/lumenpnp/automation/paste/analysis/tip_height_interval.md",
+      "sha256": "67f86c7c769c4cf646ea768a697b5d779e1486b93ce5538202719c636a35c0bc",
+      "bytes": 5041
+    },
+    {
+      "sourceRoot": "/home/lumen/lumenpnp",
+      "sourcePath": "automation/paste/analysis/tip_height_interval.py",
+      "destination": "integrations/lumenpnp/automation/paste/analysis/tip_height_interval.py",
+      "sha256": "1be337316dd9d3598d2bfe7d6b4079ff1e56bfbece8dd09fffa3936036e9ac9c",
+      "bytes": 14011
     },
     {
       "sourceRoot": "/home/lumen/lumenpnp",
