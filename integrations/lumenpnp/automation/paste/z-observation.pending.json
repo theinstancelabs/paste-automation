@@ -1,5 +1,5 @@
 {
-  "description": "Unusable one-step signed raw Z observation request. Only +/-1 or +/-5 mm; exact current start-to-target reviewed interval, fresh barrier and image required. No global travel-clearance inference or return.",
+  "description": "Unusable one-step signed raw Z observation request. Coarse steps are \u00b11 or \u00b15 mm. Fine \u00b10.1, \u00b10.25 and \u00b10.5 mm require hash-bound same-JVM controller-count evidence plus separate runtime enable review. Exact current start-to-target interval, fresh barrier and image required; no global clearance inference or return.",
   "schema": 2,
   "scope": "bounded-signed-raw-Z-observation",
   "id": null,

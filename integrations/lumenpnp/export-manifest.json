@@ -781,29 +781,29 @@
       "sourceRoot": "/home/lumen/lumenpnp",
       "sourcePath": "automation/paste/z-observation.cjs",
       "destination": "integrations/lumenpnp/automation/paste/z-observation.cjs",
-      "sha256": "3d67624d048d86fad8fe7dec7804ebff3c9a8ea07a25c3729edc93fa2879812e",
-      "bytes": 11065
+      "sha256": "79fd8c3b04522413ff08c7903400507ad95ddbccb9b1f2ac6e2a629455a482fb",
+      "bytes": 13860
     },
     {
       "sourceRoot": "/home/lumen/lumenpnp",
       "sourcePath": "automation/paste/z-observation.md",
       "destination": "integrations/lumenpnp/automation/paste/z-observation.md",
-      "sha256": "cf9816c665b99900d4253e835ea30415d33179e9f89dbfe0c4bcac411dd46e06",
-      "bytes": 6465
+      "sha256": "942e8a5fcf1760ffe165189e578d2db443eb2df9b2c42bb64ea488342ded7c8e",
+      "bytes": 6491
     },
     {
       "sourceRoot": "/home/lumen/lumenpnp",
       "sourcePath": "automation/paste/z-observation.pending.json",
       "destination": "integrations/lumenpnp/automation/paste/z-observation.pending.json",
-      "sha256": "5f14e6e6c3dac9ff9911eaf10d0080afa174c2246f52778fec8307544850e52f",
-      "bytes": 1757
+      "sha256": "101d2ed2a1b1dd1e69b6ffd01c230d73c15810f996055c08ed0ac3f6751de920",
+      "bytes": 1894
     },
     {
       "sourceRoot": "/home/lumen/lumenpnp",
       "sourcePath": "automation/paste/z-observation.test.cjs",
       "destination": "integrations/lumenpnp/automation/paste/z-observation.test.cjs",
-      "sha256": "53e06e1c563368b61e7f5bcfe573360b462597b4a54772e92abb0357dc2f3e2a",
-      "bytes": 10946
+      "sha256": "b3a9afd2f8f45030b5094f679de4ee4defaea1d3b3d0d7af2ef5b3d99392484d",
+      "bytes": 13985
     },
     {
       "sourceRoot": "/home/lumen/lumenpnp",
@@ -886,8 +886,8 @@
       "sourceRoot": "/home/lumen/lumenpnp",
       "sourcePath": "automation/scripts/Observe_Paste_Z.js",
       "destination": "integrations/lumenpnp/automation/scripts/Observe_Paste_Z.js",
-      "sha256": "a717b50e9ca87ade24e54ac61f973c970f4e5705332314545561e9b7e7bc3838",
-      "bytes": 22529
+      "sha256": "07d3d83a8313f6c575d9c27879d8025802916e67247782acf43b32f40a9713db",
+      "bytes": 22698
     },
     {
       "sourceRoot": "/home/lumen/lumenpnp",
@@ -1266,6 +1266,13 @@
       "destination": "integrations/lumenpnp/automation/operations/paste-commissioning.md",
       "sha256": "26cde8495c2d437bccd75aab934f7ea11387e6f8acdcb082daf1d877518f7f25",
       "bytes": 26922
+    },
+    {
+      "sourceRoot": "/home/lumen/lumenpnp",
+      "sourcePath": "automation/paste/observe-z-step.py",
+      "destination": "integrations/lumenpnp/automation/paste/observe-z-step.py",
+      "sha256": "7fc32496268d6a66abee3945abb6db2b5f95b0a93d5992f10f775d34a617094b",
+      "bytes": 6705
     }
   ],
   "manifestSelfHash": "Excluded to avoid a recursive digest; this manifest enumerates every other exported/generated file."

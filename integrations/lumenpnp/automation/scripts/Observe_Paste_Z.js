@@ -1,6 +1,6 @@
 // REVIEWED NARROW signed raw Z observation; finer discrete choices separately staged.
 var PASTE_Z_OBSERVATION_ENABLED = true;
-var PASTE_FINE_Z_OBSERVATION_ENABLED = false;
+var PASTE_FINE_Z_OBSERVATION_ENABLED = true;
 // No serial ownership changes, safe-Z helper, rotation, pickup, vacuum or current.
 // Uses the existing single-worker native executor with audited busy bookkeeping;
 // bypasses the public wrapper whose completion/exception cleanup can flush motion.
@@ -22,7 +22,7 @@ var PASTE_FINE_Z_OBSERVATION_ENABLED = false;
  PasteZObservation.validate(q,Number(java.lang.System.currentTimeMillis()),jvm);
  PasteZObservation.fineStepGate(q,PASTE_FINE_Z_OBSERVATION_ENABLED);
  var fineZ=Math.abs(q.deltaMm)<1,firmwareStepReview=null;
- if(fineZ){var settingsBytes=Fs.readAllBytes(new F(q.firmwareSettingsEvidence.path).toPath());if(hash(settingsBytes)!==q.firmwareSettingsEvidence.sha256)throw Error('Firmware settings evidence changed');firmwareStepReview=PasteZObservation.firmwareStepsEvidence(JSON.parse(String(new java.lang.String(settingsBytes,UTF))),q);}
+ if(fineZ){var firmwareEvidence=q.firmwareStepEvidence||q.firmwareSettingsEvidence;if(!firmwareEvidence)throw Error('Fine Z step-scale evidence missing');var settingsBytes=Fs.readAllBytes(new F(firmwareEvidence.path).toPath());if(hash(settingsBytes)!==firmwareEvidence.sha256)throw Error('Firmware step-scale evidence changed');firmwareStepReview=PasteZObservation.firmwareStepsEvidence(JSON.parse(String(new java.lang.String(settingsBytes,UTF))),q,Number(java.lang.System.currentTimeMillis()));}
  var corridor=new F(q.corridorEvidence.path);if(!corridor.isFile()||hash(Fs.readAllBytes(corridor.toPath()))!==q.corridorEvidence.sha256)throw Error('Reviewed corridor image missing/changed');
  var barrierFile=new F(q.barrierEvidence.path);if(!barrierFile.isFile())throw Error('Position barrier evidence missing');var barrierBytes=Fs.readAllBytes(barrierFile.toPath());if(hash(barrierBytes)!==q.barrierEvidence.sha256)throw Error('Position barrier evidence changed');var barrierRecord=JSON.parse(String(new java.lang.String(barrierBytes,UTF)));PasteZObservation.barrier(barrierRecord,q,Number(java.lang.System.currentTimeMillis()));
  var panel=Java.type('org.openpnp.gui.MainFrame').get().getJobTab(),state=panel.getClass().getDeclaredField('state');state.setAccessible(true);

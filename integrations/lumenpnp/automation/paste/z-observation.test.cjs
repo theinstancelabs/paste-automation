@@ -91,8 +91,8 @@ test('fine controller steps must be exact 4/10/20, with every other controller c
   for(const axis of ['X','Y','Z','A','B'])assert.throws(()=>z.compareControllerCounts(before,{...after,[axis]:after[axis]+1},q));
  }
 });
-test('fine activation remains disabled in runtime source',()=>{
- const source=fs.readFileSync(__dirname+'/../scripts/Observe_Paste_Z.js','utf8');assert.match(source,/var PASTE_FINE_Z_OBSERVATION_ENABLED = false;/);
+test('fine activation is explicitly enabled in runtime source behind policy evidence gates',()=>{
+ const source=fs.readFileSync(__dirname+'/../scripts/Observe_Paste_Z.js','utf8');assert.match(source,/var PASTE_FINE_Z_OBSERVATION_ENABLED = true;/);
  assert.ok(source.indexOf('PasteZObservation.fineStepGate(q,PASTE_FINE_Z_OBSERVATION_ENABLED)')<source.indexOf('d.getReportedLocation('));
 });
 
@@ -102,4 +102,21 @@ test('fine firmware calibration binds same-JVM acknowledged post-reset M503 and 
  for(const edit of [{jvmStartMs:2},{status:'failed'},{driverId:'other'},{controllerFrameSynchronized:false}])assert.throws(()=>z.firmwareStepsEvidence({...r,...edit},q));
  for(const line of ['echo:  M92 X320 Y320 Z80 A4.44 B4.44','echo: M92 Z40','echo: M92 X320 Y320 Z40 A4.44 B4.44\nM92 Z80']){const bad=JSON.parse(JSON.stringify(r));bad.queries[0].responses=[line,'ok'];assert.throws(()=>z.firmwareStepsEvidence(bad,q));}
  for(const edit of [{reviewedFirmwareZStepsPerMm:80},{firmwareSettingsEvidence:{...q.firmwareSettingsEvidence,noInterveningResetOrSettingsChange:false}},{firmwareSettingsEvidence:{...q.firmwareSettingsEvidence,sha256:'bad'}}])assert.throws(()=>z.step({...q,...edit}));
+});
+
+function measuredStepEvidence(){
+ const fine={...request(),deltaMm:-.5,reviewedFineZStep:true,firmwareStepEvidence:{path:'/synthetic-measured-z-step.json',sha256:'e'.repeat(64)}};fine.jointInterval.minRawZ=26.0;fine.jointInterval.maxRawZ=26.5;
+ const before={X:94688,Y:97664,Z:1900,A:3197,B:-1066},after={...before,Z:1700},braw={X:295.9,Y:305.2,Z:47.5,A:720,B:-240},araw={...braw,Z:42.5};
+ const line=(p,c)=>`X:${p.X.toFixed(2)} Y:${p.Y.toFixed(2)} Z:${p.Z.toFixed(2)} A:${p.A.toFixed(2)} B:${p.B.toFixed(2)} Count X:${c.X} Y:${c.Y} Z:${c.Z} A:${c.A} B:${c.B}`;
+ const sourceRequest={schema:2,scope:'bounded-signed-raw-Z-observation',id:'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa',jvmStartMs:1,liveConfigurationSha256:fine.liveConfigurationSha256,axis:'Z',deltaMm:-5,expectedRaw:braw,expectedDriver:braw};
+ const record={id:sourceRequest.id,status:'completed-Z-observation-awaiting-image-review',request:sourceRequest,finishedAt:new Date(900).toISOString(),uncertainCompletion:false,motionSubmitted:true,nativeMotionCompletionReported:true,controllerPositionVerified:true,independentFirmwareStepVerified:true,commandedControllerAxes:['Z'],before:{saved:{raw:braw,driver:braw},reported:braw,responses:[line(braw,before),'ok']},after:{saved:{raw:araw,driver:araw},reported:araw,responses:[line(araw,after),'ok']},afterQuerySnapshot:{raw:araw,driver:araw}};
+ return {fine,record,before,after};
+}
+test('fine step scale can use hashed same-JVM completed Z-count evidence without reconnect evidence',()=>{
+ const {fine,record}=measuredStepEvidence();assert.equal(z.firmwareStepsEvidence(record,fine,1001).firmwareZStepsPerMm,40);z.validate(fine,1001,1);
+ for(const edit of [{uncertainCompletion:true},{controllerPositionVerified:false},{independentFirmwareStepVerified:false},{commandedControllerAxes:['Z','B']},{request:{...record.request,jvmStartMs:2}},{request:{...record.request,liveConfigurationSha256:'f'.repeat(64)}},{afterControllerCounts:{X:1,Y:2,Z:3,A:4,B:5}}])assert.throws(()=>z.firmwareStepsEvidence({...record,...edit},fine,1001));
+ for(const axis of ['X','Y','A','B']){const bad=JSON.parse(JSON.stringify(record)),index=['X','Y','Z','A','B'].indexOf(axis);bad.after.responses[0]=bad.after.responses[0].replace(/Count X:(-?\d+) Y:(-?\d+) Z:(-?\d+) A:(-?\d+) B:(-?\d+)/,(_,...values)=>'Count '+values.slice(0,5).map((v,i)=>Number(v)+(i===index?1:0)).map((v,i)=>['X','Y','Z','A','B'][i]+':'+v).join(' '));assert.throws(()=>z.firmwareStepsEvidence(bad,fine,1001));}
+ const wrongZ=JSON.parse(JSON.stringify(record));wrongZ.after.responses[0]=wrongZ.after.responses[0].replace(' Z:1700',' Z:1701');assert.throws(()=>z.firmwareStepsEvidence(wrongZ,fine,1001));
+ const wrongReported=JSON.parse(JSON.stringify(record));wrongReported.after.responses[0]=wrongReported.after.responses[0].replace('Z:42.50','Z:42.00');assert.throws(()=>z.firmwareStepsEvidence(wrongReported,fine,1001));
+ for(const edit of [{sha256:'bad'},{path:'relative.json'}])assert.throws(()=>z.step({...fine,firmwareStepEvidence:edit}));
 });
