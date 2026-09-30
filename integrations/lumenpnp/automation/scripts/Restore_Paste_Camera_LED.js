@@ -1,5 +1,5 @@
 // STAGED stationary camera LED restore through the existing driver boolean API.
-var PASTE_CAMERA_LED_RESTORE_ENABLED = false;
+var PASTE_CAMERA_LED_RESTORE_ENABLED = true;
 // No motion, home, Z, rotation, pickup, motor-current or configuration changes.
 // Uses the existing single-worker native executor with audited busy bookkeeping;
 // bypasses the public wrapper whose completion/exception cleanup can flush motion.

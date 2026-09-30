@@ -1,0 +1,10 @@
+{
+  "schema": 1,
+  "scope": "post-reset-connect-and-sync-unhomed",
+  "id": null,
+  "createdMs": null,
+  "jvmStartMs": null,
+  "operator": null,
+  "reviewedNativeConnectAndUnhomedSync": false,
+  "invalidationEvidence": {"path": null, "sha256": null}
+}

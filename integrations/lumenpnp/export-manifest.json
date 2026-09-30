@@ -457,6 +457,55 @@
     },
     {
       "sourceRoot": "/home/lumen/lumenpnp",
+      "sourcePath": "automation/paste/reset-clearance.cjs",
+      "destination": "integrations/lumenpnp/automation/paste/reset-clearance.cjs",
+      "sha256": "c5bd20e3aaf552acea01b8b8e6bacbc704f97154262576b518206e73b46045f1",
+      "bytes": 2026
+    },
+    {
+      "sourceRoot": "/home/lumen/lumenpnp",
+      "sourcePath": "automation/paste/reset-clearance.pending.json",
+      "destination": "integrations/lumenpnp/automation/paste/reset-clearance.pending.json",
+      "sha256": "e7c226f0d9f4f508ede3096a366787bf202eead5dcd579b915b250b598944bd4",
+      "bytes": 1842
+    },
+    {
+      "sourceRoot": "/home/lumen/lumenpnp",
+      "sourcePath": "automation/paste/reset-clearance.test.cjs",
+      "destination": "integrations/lumenpnp/automation/paste/reset-clearance.test.cjs",
+      "sha256": "ff44c96dd202b169cdeda3fec6fd5aecf6e4ff749cc77ee2fb38606dd056d979",
+      "bytes": 2617
+    },
+    {
+      "sourceRoot": "/home/lumen/lumenpnp",
+      "sourcePath": "automation/paste/reset-connect.pending.json",
+      "destination": "integrations/lumenpnp/automation/paste/reset-connect.pending.json",
+      "sha256": "8fc6c7b15a5b0f94af75f8681cbf13167ce27e20b3f1e95e1ecb72c6db1e1775",
+      "bytes": 251
+    },
+    {
+      "sourceRoot": "/home/lumen/lumenpnp",
+      "sourcePath": "automation/paste/reset-home.cjs",
+      "destination": "integrations/lumenpnp/automation/paste/reset-home.cjs",
+      "sha256": "d1e9115e11af8393a89a3eb0e8738083faecf1348c390ab0dbad74234daad459",
+      "bytes": 5366
+    },
+    {
+      "sourceRoot": "/home/lumen/lumenpnp",
+      "sourcePath": "automation/paste/reset-home.test.cjs",
+      "destination": "integrations/lumenpnp/automation/paste/reset-home.test.cjs",
+      "sha256": "9de3bd775f096462b72f3ceacb318dc10b0190687b23d9aa378c5424eb42fefa",
+      "bytes": 4518
+    },
+    {
+      "sourceRoot": "/home/lumen/lumenpnp",
+      "sourcePath": "automation/paste/reset-recovery.md",
+      "destination": "integrations/lumenpnp/automation/paste/reset-recovery.md",
+      "sha256": "481c5473db9c4799ca23cdea0f89320a09ebe2d1da078b59fb46c3c77a4af76e",
+      "bytes": 3463
+    },
+    {
+      "sourceRoot": "/home/lumen/lumenpnp",
       "sourcePath": "automation/paste/right-head-profile.pending.json",
       "destination": "integrations/lumenpnp/automation/paste/right-head-profile.pending.json",
       "sha256": "0c442977a4f2e5cf32b7de177163f63aa11969db91d43a23013020da1da6fdd7",
@@ -676,8 +725,8 @@
       "sourceRoot": "/home/lumen/lumenpnp",
       "sourcePath": "automation/scripts/Automation_Reviewed_Command.js",
       "destination": "integrations/lumenpnp/automation/scripts/Automation_Reviewed_Command.js",
-      "sha256": "5adf40405ceabd06728d37f8d8183cfd2d19ce3b2f2bc83ca8f170812eb87d1b",
-      "bytes": 3020
+      "sha256": "f4abad6211db21b85b03be82d5ec4265e04291b7be5f63628d80d077a77e456d",
+      "bytes": 3615
     },
     {
       "sourceRoot": "/home/lumen/lumenpnp",
@@ -702,6 +751,20 @@
     },
     {
       "sourceRoot": "/home/lumen/lumenpnp",
+      "sourcePath": "automation/scripts/Finalize_Paste_Home_After_Report.js",
+      "destination": "integrations/lumenpnp/automation/scripts/Finalize_Paste_Home_After_Report.js",
+      "sha256": "ec7053bee78de0e4cf303cdf4ba4e91a497f1a5a5547027fefa7cc343eaf37cc",
+      "bytes": 21214
+    },
+    {
+      "sourceRoot": "/home/lumen/lumenpnp",
+      "sourcePath": "automation/scripts/Home_Paste_After_Reset.js",
+      "destination": "integrations/lumenpnp/automation/scripts/Home_Paste_After_Reset.js",
+      "sha256": "353542f00ee41cab515cc87e940e9c98014e756ef4f40741295b92d014a13b34",
+      "bytes": 24610
+    },
+    {
+      "sourceRoot": "/home/lumen/lumenpnp",
       "sourcePath": "automation/scripts/Inspect_Paste_Controller.js",
       "destination": "integrations/lumenpnp/automation/scripts/Inspect_Paste_Controller.js",
       "sha256": "061e7f9332fca0159f9568b169af219b50a3696cbf0c72719049366df1793a57",
@@ -713,6 +776,20 @@
       "destination": "integrations/lumenpnp/automation/scripts/Install_Paste_Error_Latch.js",
       "sha256": "0bf83641cc34b6bb8b0b6c8a17f42fb3d06af273ce4c11c05797c37e806514be",
       "bytes": 8118
+    },
+    {
+      "sourceRoot": "/home/lumen/lumenpnp",
+      "sourcePath": "automation/scripts/Invalidate_Paste_Reset_State.js",
+      "destination": "integrations/lumenpnp/automation/scripts/Invalidate_Paste_Reset_State.js",
+      "sha256": "9993ea831582f47c13509c297bd5403a01f406ef676ce0a27521fc7dba65c42c",
+      "bytes": 9019
+    },
+    {
+      "sourceRoot": "/home/lumen/lumenpnp",
+      "sourcePath": "automation/scripts/Observe_Paste_Reset_Clearance.js",
+      "destination": "integrations/lumenpnp/automation/scripts/Observe_Paste_Reset_Clearance.js",
+      "sha256": "16385d13eeec70d08ec007f8543047366354533fa3d67ea754ffeb8017781f9c",
+      "bytes": 22495
     },
     {
       "sourceRoot": "/home/lumen/lumenpnp",
@@ -730,10 +807,24 @@
     },
     {
       "sourceRoot": "/home/lumen/lumenpnp",
+      "sourcePath": "automation/scripts/Read_Paste_Model_State.js",
+      "destination": "integrations/lumenpnp/automation/scripts/Read_Paste_Model_State.js",
+      "sha256": "db827fcb6c38ae4c9f277365d6cf728e8cc94052f046edb9d5b1deadd275420d",
+      "bytes": 3003
+    },
+    {
+      "sourceRoot": "/home/lumen/lumenpnp",
       "sourcePath": "automation/scripts/Read_Paste_Position_Barrier.js",
       "destination": "integrations/lumenpnp/automation/scripts/Read_Paste_Position_Barrier.js",
       "sha256": "b0cf5418010a033afc35ad7e2f08d53a3dd56c594a1e637da07637a322aa9132",
       "bytes": 15998
+    },
+    {
+      "sourceRoot": "/home/lumen/lumenpnp",
+      "sourcePath": "automation/scripts/Reconnect_Paste_After_Reset.js",
+      "destination": "integrations/lumenpnp/automation/scripts/Reconnect_Paste_After_Reset.js",
+      "sha256": "a54224003e164f295856c18cc23ffc1dd70ae05dc199bc1a26092e17167a1192",
+      "bytes": 18678
     },
     {
       "sourceRoot": "/home/lumen/lumenpnp",
@@ -753,8 +844,8 @@
       "sourceRoot": "/home/lumen/lumenpnp",
       "sourcePath": "automation/scripts/Restore_Paste_Camera_LED.js",
       "destination": "integrations/lumenpnp/automation/scripts/Restore_Paste_Camera_LED.js",
-      "sha256": "21d8d0a66b554d1b290d8637c4bd1af3f572b2227a5a90ab9ed1ca6a54eb08b6",
-      "bytes": 19091
+      "sha256": "596d4a5cf16dceb5a7cf5bf5afaad1eaf95497632759b10299f38c6e924994bd",
+      "bytes": 19090
     },
     {
       "sourceRoot": "/home/lumen/lumenpnp",
@@ -823,8 +914,8 @@
       "sourceRoot": "/home/lumen/lumenpnp",
       "sourcePath": "automation/scripts/run_reviewed_action.py",
       "destination": "integrations/lumenpnp/automation/scripts/run_reviewed_action.py",
-      "sha256": "1a8da628f34ff1df0683e871e3d008bee30989aaf3a97e6cf409708e7e795166",
-      "bytes": 17531
+      "sha256": "ab4ad8ca74bfde49a0774a31568eefdab83b1a6d5ffb520198a1d0091557acfb",
+      "bytes": 17847
     },
     {
       "sourceRoot": "/home/lumen/lumenpnp",
