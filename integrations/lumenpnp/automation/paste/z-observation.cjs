@@ -8,8 +8,31 @@ function close(a,b,tolerance,label){if(Math.abs(finite(a,label)-finite(b,label))
 function step(q){
  if(!q||q.schema!==2||q.scope!=='bounded-signed-raw-Z-observation')fail('Restricted raw Z observation required');
  Object.keys(q).forEach(function(k){if((/^delta/i.test(k)||k==='axis'||k==='axes'||k==='target'||k==='targetRaw')&&['axis','deltaMm'].indexOf(k)<0)fail('Ambiguous motion fields');});
- if(q.axis!=='Z'||[-5,-1,1,5].indexOf(finite(q.deltaMm,'deltaMm'))<0)fail('Only discrete signed 1 or 5 mm raw Z steps allowed');
+ if(q.axis!=='Z'||[-5,-1,-.5,-.25,-.1,.1,.25,.5,1,5].indexOf(finite(q.deltaMm,'deltaMm'))<0)fail('Only discrete signed 0.1, 0.25, 0.5, 1 or 5 mm raw Z steps allowed');
+ if(Math.abs(q.deltaMm)<1){
+  if(q.reviewedFineZStep!==true||q.reviewedFirmwareZStepsPerMm!==40)fail('Explicit fine Z step and firmware Z40 review required');
+  var e=q.firmwareSettingsEvidence;if(!e||typeof e.path!=='string'||e.path.charAt(0)!=='/'||!/^[a-f0-9]{64}$/.test(e.sha256)||e.noInterveningResetOrSettingsChange!==true)fail('Hashed unchanged-session firmware settings evidence required');
+  text(e.configurationLineageReview,'firmware/configuration lineage review');
+ }
  return {axis:'Z',deltaMm:q.deltaMm};
+}
+function fineStepGate(q,enabled){step(q);if(Math.abs(q.deltaMm)<1&&enabled!==true)fail('Fine Z observation disabled pending separate review');}
+function firmwareStepsEvidence(record,q){
+ step(q);if(!record||record.status!=='connected-disabled-unhomed-reported-frame-synchronized'||record.controllerFrameSynchronized!==true||record.jvmStartMs!==q.jvmStartMs||record.driverId!=='DRV16982438146c1dd4'||record.error||!Array.isArray(record.queries))fail('Successful same-JVM reset connection settings record required');
+ var queries=record.queries.filter(function(v){return v.command==='M503';});if(queries.length!==1||queries[0].status!=='acknowledged'||!Array.isArray(queries[0].responses))fail('One acknowledged M503 record required');
+ var lines=queries[0].responses.filter(function(v){return /\bM92\b/.test(String(v));});if(lines.length!==1||!/^echo:\s*M92\s+X-?\d+(?:\.\d+)?\s+Y-?\d+(?:\.\d+)?\s+Z40(?:\.0+)?\s+A-?\d+(?:\.\d+)?\s+B-?\d+(?:\.\d+)?\s*$/.test(String(lines[0])))fail('Exact firmware Z40 steps/mm record required');
+ return {firmwareZStepsPerMm:40,sourceStatus:record.status,configurationLineageReview:q.firmwareSettingsEvidence.configurationLineageReview};
+}
+function controllerCounts(lines){
+ var found=[];lines.forEach(function(line){var m=/^.*X:-?\d+\.\d+\s*Y:-?\d+\.\d+\s*Z:-?\d+\.\d+\s*A:-?\d+\.\d+\s*B:-?\d+\.\d+\s+Count X:(-?\d+) Y:(-?\d+) Z:(-?\d+) A:(-?\d+) B:(-?\d+)\s*$/.exec(String(line));if(!m&&(/\bCount\b/.test(String(line))||/^.*X:-?\d+\.\d+\s*Y:/.test(String(line))))fail('Malformed M114 controller-count report');if(m){var counts={};['X','Y','Z','A','B'].forEach(function(a,i){counts[a]=Number(m[i+1]);if(Math.abs(counts[a])>9007199254740991)fail('Controller step count outside exact integer range');});found.push(counts);}});
+ if(found.length!==1)fail('Exactly one full M114 controller-count report required');return found[0];
+}
+function compareControllerCounts(before,after,q){
+ var move=step(q),delta=move.deltaMm*40;
+ if(Math.abs(delta-Math.round(delta))>1e-9)fail('Requested Z delta is not an integer at reviewed 40 steps/mm');
+ [before,after].forEach(function(c){if(!c||Object.keys(c).sort().join(',')!=='A,B,X,Y,Z')fail('Five controller counts required');Object.keys(c).forEach(function(a){finite(c[a],'controller count');if(Math.floor(c[a])!==c[a]||Math.abs(c[a])>9007199254740991)fail('Exact integer controller count required');});});
+ ['X','Y','Z','A','B'].forEach(function(a){if(after[a]-before[a] !== (a==='Z'?Math.round(delta):0))fail('Controller step-count delta mismatch '+a);});
+ return {assumedZStepsPerMm:40,expectedSignedZSteps:Math.round(delta),reportedSignedZSteps:after.Z-before.Z,physicalDisplacementVerified:false};
 }
 function validate(q,now,jvm){
  if(!q)fail('Restricted survey request required');step(q);
@@ -66,5 +89,5 @@ function barrier(record,q,now){
  ['N1','N2','top','bottom'].forEach(function(k){['x','y','z','rotation'].forEach(function(a){close(state.nativePoses[k][a],q.expectedNativePoses[k][a],0.0001,'barrier native '+k+' '+a);});});
  compareReported(record.reported,state.raw,state.driver);
 }
-var api={nativeConfiguration:nativeConfiguration,barrier:barrier,compareNativeStep:compareNativeStep,step:step,validate:validate,close:close,compareReported:compareReported,target:target,compareExact:compareExact,comparePostModel:comparePostModel,compareFirmwareStep:compareFirmwareStep};if(typeof module!=='undefined')module.exports=api;else root.PasteZObservation=api;
+var api={firmwareStepsEvidence:firmwareStepsEvidence,fineStepGate:fineStepGate,controllerCounts:controllerCounts,compareControllerCounts:compareControllerCounts,nativeConfiguration:nativeConfiguration,barrier:barrier,compareNativeStep:compareNativeStep,step:step,validate:validate,close:close,compareReported:compareReported,target:target,compareExact:compareExact,comparePostModel:comparePostModel,compareFirmwareStep:compareFirmwareStep};if(typeof module!=='undefined')module.exports=api;else root.PasteZObservation=api;
 })(this);

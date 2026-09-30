@@ -1,5 +1,6 @@
-// REVIEWED NARROW signed raw Z observation, exactly +/-1 or +/-5 mm; no automatic return.
+// REVIEWED NARROW signed raw Z observation; finer discrete choices separately staged.
 var PASTE_Z_OBSERVATION_ENABLED = true;
+var PASTE_FINE_Z_OBSERVATION_ENABLED = false;
 // No serial ownership changes, safe-Z helper, rotation, pickup, vacuum or current.
 // Uses the existing single-worker native executor with audited busy bookkeeping;
 // bypasses the public wrapper whose completion/exception cleanup can flush motion.
@@ -19,6 +20,9 @@ var PASTE_Z_OBSERVATION_ENABLED = true;
  eval(read(root+'automation/paste/connection-policy.cjs'));
  var q=JSON.parse(read(root+'automation/plans/paste-z-observation-request.json')),jvm=Number(Java.type('java.lang.management.ManagementFactory').getRuntimeMXBean().getStartTime());
  PasteZObservation.validate(q,Number(java.lang.System.currentTimeMillis()),jvm);
+ PasteZObservation.fineStepGate(q,PASTE_FINE_Z_OBSERVATION_ENABLED);
+ var fineZ=Math.abs(q.deltaMm)<1,firmwareStepReview=null;
+ if(fineZ){var settingsBytes=Fs.readAllBytes(new F(q.firmwareSettingsEvidence.path).toPath());if(hash(settingsBytes)!==q.firmwareSettingsEvidence.sha256)throw Error('Firmware settings evidence changed');firmwareStepReview=PasteZObservation.firmwareStepsEvidence(JSON.parse(String(new java.lang.String(settingsBytes,UTF))),q);}
  var corridor=new F(q.corridorEvidence.path);if(!corridor.isFile()||hash(Fs.readAllBytes(corridor.toPath()))!==q.corridorEvidence.sha256)throw Error('Reviewed corridor image missing/changed');
  var barrierFile=new F(q.barrierEvidence.path);if(!barrierFile.isFile())throw Error('Position barrier evidence missing');var barrierBytes=Fs.readAllBytes(barrierFile.toPath());if(hash(barrierBytes)!==q.barrierEvidence.sha256)throw Error('Position barrier evidence changed');var barrierRecord=JSON.parse(String(new java.lang.String(barrierBytes,UTF)));PasteZObservation.barrier(barrierRecord,q,Number(java.lang.System.currentTimeMillis()));
  var panel=Java.type('org.openpnp.gui.MainFrame').get().getJobTab(),state=panel.getClass().getDeclaredField('state');state.setAccessible(true);
@@ -116,7 +120,9 @@ var PASTE_Z_OBSERVATION_ENABLED = true;
   PasteZObservation.validate(q,Number(java.lang.System.currentTimeMillis()),jvm);PasteZObservation.barrier(barrierRecord,q,Number(java.lang.System.currentTimeMillis()));stateGate();
   if(configHash()!==q.liveConfigurationSha256)throw Error('Configuration changed before native task');
   var taskStart=snapshot();PasteZObservation.compareExact(taskStart.raw,initial.raw,'queued raw');PasteZObservation.compareExact(taskStart.driver,initial.driver,'queued driver');comparePoses(taskStart.nativePoses,initial.nativePoses);
+  PasteZObservation.fineStepGate(q,PASTE_FINE_Z_OBSERVATION_ENABLED);
   query(initial,'before');PasteZObservation.compareExact(snapshot().raw,initial.raw,'post-query unchanged raw');
+  if(fineZ){r.firmwareStepReview=firmwareStepReview;r.beforeControllerCounts=PasteZObservation.controllerCounts(r.before.responses);}
   settle();var beforeTop=capture(top,'top-before-raw'),beforeBottom=capture(bottom,'bottom-before-raw');r.beforeImages={top:{path:beforeTop.path,width:beforeTop.width,height:beforeTop.height},bottom:{path:beforeBottom.path,width:beforeBottom.width,height:beforeBottom.height}};save('before-images-captured');
   PasteZObservation.validate(q,Number(java.lang.System.currentTimeMillis()),jvm);PasteZObservation.barrier(barrierRecord,q,Number(java.lang.System.currentTimeMillis()));stateGate();if(configHash()!==q.liveConfigurationSha256)throw Error('Configuration changed during preflight');
   if(!executor.getQueue().isEmpty())throw Error('Competing native work queued during camera preflight');
@@ -135,6 +141,7 @@ var PASTE_Z_OBSERVATION_ENABLED = true;
   var after=snapshot();r.afterQuerySnapshot=after;PasteZObservation.comparePostModel(after.raw,expected);
   query(after,'after');PasteZObservation.compareReported(r.after.reported,expected,after.driver);
   PasteZObservation.compareFirmwareStep(r.before.reported,r.after.reported,q);r.independentFirmwareStepVerified=true;
+  if(fineZ){r.afterControllerCounts=PasteZObservation.controllerCounts(r.after.responses);r.fineControllerStepVerification=PasteZObservation.compareControllerCounts(r.beforeControllerCounts,r.afterControllerCounts,q);}
   PasteZObservation.compareNativeStep(initial.nativePoses,after.nativePoses,q);
   r.controllerPositionVerified=true;save('controller-position-verified');settle();var afterTop=capture(top,'top-after-raw'),afterBottom=capture(bottom,'bottom-after-raw');r.afterImages={top:{path:afterTop.path,width:afterTop.width,height:afterTop.height},bottom:{path:afterBottom.path,width:afterBottom.width,height:afterBottom.height}};
   pair(beforeTop,afterTop,'top-before-after');pair(beforeBottom,afterBottom,'bottom-before-after');r.contactSheets=['top-before-after.png','bottom-before-after.png'];
