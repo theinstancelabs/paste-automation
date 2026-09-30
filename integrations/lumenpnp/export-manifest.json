@@ -205,6 +205,27 @@
     },
     {
       "sourceRoot": "/home/lumen/lumenpnp",
+      "sourcePath": "automation/paste/camera-led.cjs",
+      "destination": "integrations/lumenpnp/automation/paste/camera-led.cjs",
+      "sha256": "2751f63ef3a6190c09063305cd8b883ff519524334ab8e809d88788059f81165",
+      "bytes": 2025
+    },
+    {
+      "sourceRoot": "/home/lumen/lumenpnp",
+      "sourcePath": "automation/paste/camera-led.md",
+      "destination": "integrations/lumenpnp/automation/paste/camera-led.md",
+      "sha256": "aefb69e40c89aefca5027f399fe557b39996c94eeace33b7a4af3f66c2213154",
+      "bytes": 2115
+    },
+    {
+      "sourceRoot": "/home/lumen/lumenpnp",
+      "sourcePath": "automation/paste/camera-led.test.cjs",
+      "destination": "integrations/lumenpnp/automation/paste/camera-led.test.cjs",
+      "sha256": "98a71a774c7559a06d9311f5566cd6c5afc029f35751d0307f1fb4d6bd0475c5",
+      "bytes": 1710
+    },
+    {
+      "sourceRoot": "/home/lumen/lumenpnp",
       "sourcePath": "automation/paste/commissioning-strategy.md",
       "destination": "integrations/lumenpnp/automation/paste/commissioning-strategy.md",
       "sha256": "2aafa4ef20bb357c7a8b4c79893d9c87b0503eb4c0f1201ddde876daf5dcfa5a",
@@ -727,6 +748,13 @@
       "destination": "integrations/lumenpnp/automation/scripts/Release_Paste_Survey_Stop.js",
       "sha256": "8634980bf6d2c7e03e1b31800fc75d497207cc70266150c6dc70f37200b4c461",
       "bytes": 7841
+    },
+    {
+      "sourceRoot": "/home/lumen/lumenpnp",
+      "sourcePath": "automation/scripts/Restore_Paste_Camera_LED.js",
+      "destination": "integrations/lumenpnp/automation/scripts/Restore_Paste_Camera_LED.js",
+      "sha256": "21d8d0a66b554d1b290d8637c4bd1af3f572b2227a5a90ab9ed1ca6a54eb08b6",
+      "bytes": 19091
     },
     {
       "sourceRoot": "/home/lumen/lumenpnp",
