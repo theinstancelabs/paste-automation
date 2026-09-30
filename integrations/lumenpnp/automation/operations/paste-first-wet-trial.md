@@ -13,3 +13,9 @@ User confirmed no paste at needle and requested additional extrusion followed by
 Completed constant-Z camera route to rawX340,Y246,Z31.5,A720,B400 (route283c121a-0182-423c-9d0e-9eb8b9606042). Top exposure bracket1790797594236 restored settings; comparison with pre-prime image shows no obvious new deposit. Scrap surface is out of focus, so absence of a tiny deposit cannot be established. No successful dispensing or flow calibration claimed.
 
 Web viewer now uses Galyimage stable USB identity with1920x1080 MJPG preview. Local and existing authenticated external frame endpoint verified. OpenPnP top/bottom camera and serial ownership unchanged.
+
+## Gear observation and completion-timeout diagnosis
+
+A recorded20degree B400to380 diagnostic established visible drive-gear rotation; outlet remained bare. User then explicitly requested sustained priming until paste emerges. A100degree B380to280 pulse encountered the native10second M400 timeout despite the physical move requiring approximately25seconds. No replay was sent. Exact read-only audit of faultba7bf3db-7458-47e4-9e80-d9f90df6ac89 received late completion ACK and fresh M114 showing B280 count1243, with all XYZ/A unchanged. The440degree total stays charged. Original fault report remains immutable.
+
+Runtime100degree pulses now temporarily use a finite60second driver timeout, restored to the original10seconds in finally; no saved configuration change. Fresh visual observations and explicit ledger-bound amendments remain required between pulses.

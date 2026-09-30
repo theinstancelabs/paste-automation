@@ -1,4 +1,4 @@
-// STAGED DISABLED waste-only prime: one literal absolute target currentB minus20.
+// Reviewed waste-only prime: one bound absolute B-only target (20 or100 degrees).
 // No dispatcher registration. Fresh physical observation required between increments.
 var PASTE_WASTE_PRIME_ENABLED = true;
 // No serial ownership changes, XYZ/A move, wrap/reset, pickup, vacuum or current change.
@@ -70,6 +70,7 @@ var PASTE_WASTE_PRIME_ENABLED = true;
   if(String(axes.B.getBacklashCompensationMethod())!=='None'||Number(axes.B.getBacklashOffset().convertToUnits(MM).getValue())!==0)throw Error('Unexpected B backlash');
   if(String(d.getMotionControlType())!=='ConstantAcceleration'||String(d.getUnits())!=='Millimeters')throw Error('Unaudited controller motion mode/units');
   if(Number(planner.getMinimumSpeed())!==0.05)throw Error('Audited native minimum speed changed');
+  if(Number(d.getTimeoutMilliseconds())!==10000)throw Error('Reviewed original driver timeout changed');
   var completeRegex=d.getCommand(top,CT.MOVE_TO_COMPLETE_REGEX);if(completeRegex!=null&&String(completeRegex).trim())throw Error('Native completion regex could hide responses');
   if(String(d.getCommand(null,CT.COMMAND_CONFIRM_REGEX)).trim()!=='^ok.*')throw Error('Native ACK regex changed');
   if(String(d.getCommand(null,CT.COMMAND_ERROR_REGEX))!==NativePasteAir.nativeErrorRegex)throw Error('Native per-line error/reset latch absent or unaudited; activation blocked');
@@ -157,7 +158,14 @@ var PASTE_WASTE_PRIME_ENABLED = true;
   r.commandedControllerAxes=[move.axis];r.postmoveComparisonTolerance={linearMm:0.02,angularDegrees:0.3,meaning:'Firmware reporting precision, not permission to command other axes'};r.expectedAfterRaw=expected;r.preMoveSnapshot=preMove;r.motionSubmitted=true;save('submitting-one-native-'+move.axis+'-move');
   // Partial single-axis location leaves all other axes untouched. This per-move
   // option bypasses audited one-sided backlash overshoot, without config edits.
-  planner.moveTo(top,target,0.05,MO.SpeedOverPrecision);
+  // The100degree native move takes about25s; retain finite completion wait.
+  // Temporary in-memory timeout is restored on success or failure, never saved.
+  var oldTimeout=Number(d.getTimeoutMilliseconds());r.originalDriverTimeoutMs=oldTimeout;
+  try{
+   if(q.deltaDegrees===-100){d.setTimeoutMilliseconds(60000);if(Number(d.getTimeoutMilliseconds())!==60000)throw Error('Temporary completion timeout not applied');}
+   r.activeDriverTimeoutMs=Number(d.getTimeoutMilliseconds());
+   planner.moveTo(top,target,0.05,MO.SpeedOverPrecision);
+  }finally{d.setTimeoutMilliseconds(oldTimeout);r.driverTimeoutRestored=Number(d.getTimeoutMilliseconds())===oldTimeout;if(!r.driverTimeoutRestored)throw Error('Original driver timeout not restored');}
   r.nativeMotionCompletionReported=true;save('native-stillstand-reported');
   // Audited NullMotionPlanner has already waited for stillstand here. Do not
   // issue a second generic completion or any recovery/park/lift on failure.
