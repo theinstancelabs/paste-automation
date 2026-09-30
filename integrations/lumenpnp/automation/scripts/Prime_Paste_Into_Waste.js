@@ -1,6 +1,6 @@
 // STAGED DISABLED waste-only prime: one literal absolute target currentB minus20.
 // No dispatcher registration. Fresh physical observation required between increments.
-var PASTE_WASTE_PRIME_ENABLED = false;
+var PASTE_WASTE_PRIME_ENABLED = true;
 // No serial ownership changes, XYZ/A move, wrap/reset, pickup, vacuum or current change.
 // Uses the existing single-worker native executor with audited busy bookkeeping;
 // bypasses the public wrapper whose completion/exception cleanup can flush motion.
