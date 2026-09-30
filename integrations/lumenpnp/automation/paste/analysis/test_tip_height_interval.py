@@ -24,7 +24,7 @@ class HeightTests(unittest.TestCase):
            'localLinearityReview':'synthetic linear projection', 'fixedCameraAndLightingReviewed':True,'sameWorldXYReviewed':True,
            'stationaryCapturesReviewed':True,'endpointIdentityReviewed':True,'n1DatumUncertaintyMm':.1,
            'sameWorldXYRowUncertaintyPx':.5,'localLinearityUncertaintyMm':.01,'rawZUncertaintyMm':.02,
-           'referenceN1HeightMm':31.5,'coupledZSumMm':63,'reviewedRightRawZIntervalMm':[30.5,32.5],'poses':{},
+           'referenceN1HeightMm':31.5,'coupledZSumMm':63,'reviewedN1RawZIntervalMm':[31.5,32.5],'reviewedRightRawZIntervalMm':[30.5,32.5],'poses':{},
            'bottomAlignmentEvidence':{'N1':bound('align-left.png',image_bytes(300,41)), 'N2':bound('align-right.png',image_bytes(300,42))}}
         for i,(name,z,y) in enumerate([('n1Reference',31.5,300),('n1Dither',32.5,280),('n1Return',31.5,300),('rightLow',30.5,280),('rightHigh',32.5,320)]):
             r={'status':'completed-Z-observation-awaiting-image-review','controllerPositionVerified':True,'uncertainCompletion':False,'reported':{'X':1 if name.startswith('n1') else 2,'Y':1,'Z':z,'A':720,'B':720},'request':{'jvmStartMs':42,'liveConfigurationSha256':'a'*64}}
@@ -94,6 +94,20 @@ class HeightTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError,'terminal'):analyze(q)
             q=self.fixture(Path(d));q['bottomAlignmentEvidence']['N1']['image']=q['bottomAlignmentEvidence']['N2']['image']
             with self.assertRaisesRegex(ValueError,'report capture'):analyze(q)
+
+    def test_explicit_five_mm_dither_and_exact_review_interval(self):
+        with tempfile.TemporaryDirectory() as d:
+            q=self.fixture(Path(d));q['reviewedN1RawZIntervalMm']=[31.5,36.5]
+            ref=q['poses']['n1Dither']['positionEvidence'];p=Path(ref['path']);r=json.loads(p.read_bytes());r['reported']['Z']=36.5
+            data=json.dumps(r).encode();p.write_bytes(data);ref['sha256']=hashlib.sha256(data).hexdigest()
+            for i,f in enumerate(q['poses']['n1Dither']['frames']):
+                data=image_bytes(200,80+i);Path(f['image']['path']).write_bytes(data);f['image']['sha256']=hashlib.sha256(data).hexdigest()
+            self.assertLess(analyze(q)['rightTipOffsetIntervalMm'][0],0)
+            q['reviewedN1RawZIntervalMm']=[31.5,37]
+            with self.assertRaisesRegex(ValueError,'must equal'):analyze(q)
+            q['reviewedN1RawZIntervalMm']=[31.5,37.5];r['reported']['Z']=37.5
+            data=json.dumps(r).encode();p.write_bytes(data);ref['sha256']=hashlib.sha256(data).hexdigest()
+            with self.assertRaisesRegex(ValueError,'at most 5'):analyze(q)
 
     def test_wrong_polarity_and_unbracketed_row_fail(self):
         with tempfile.TemporaryDirectory() as d:

@@ -184,8 +184,11 @@ def analyze(q):
     if raw('n1Return')['Z'] != zref:
         raise ValueError('N1 return must have identical raw Z')
     dz = raw('n1Dither')['Z']-zref
-    if not 2*raw_u < dz <= 1:
-        raise ValueError('Reviewed local N1 dither must be positive and at most 1 mm')
+    n1_interval = q['reviewedN1RawZIntervalMm']
+    if len(n1_interval) != 2 or number(n1_interval[0], 'N1 interval minimum') != zref or number(n1_interval[1], 'N1 interval maximum') != raw('n1Dither')['Z']:
+        raise ValueError('Reviewed N1 interval must equal the observed reference-to-dither segment')
+    if not 2*raw_u < dz <= 5:
+        raise ValueError('Reviewed local N1 dither must be positive and at most 5 mm')
     target = hull([row('n1Reference'), row('n1Return')])
     slopes = [(a-b)/d for a,b,d in itertools.product(row('n1Dither'), target, (dz-2*raw_u, dz+2*raw_u))]
     left_slope = [min(slopes),max(slopes)]
@@ -209,7 +212,7 @@ def analyze(q):
             'jvmStartMs': session[0], 'liveConfigurationSha256': session[1],
             'assumptions': {key: q[key] for key in ('operator', 'cameraSetupId', 'sameWorldXYReview', 'n1DatumReview', 'localLinearityReview')},
             'bottomAlignmentEvidence': alignment, 'poses': groups, 'referenceEndpointRowIntervalPx': target,
-            'reviewedRightRawZIntervalMm': bracket,
+            'reviewedRightRawZIntervalMm': bracket, 'reviewedN1RawZIntervalMm': n1_interval,
             'n1PixelsPerRawZInterval': left_slope, 'rightPixelsPerRawZInterval': right_slope,
             'rightRawZAtReferenceHeightIntervalMm': matched, 'rightTipOffsetIntervalMm': delta,
             'formula': 'right offset = reference N1 height + matching right raw Z - coupled Z sum',

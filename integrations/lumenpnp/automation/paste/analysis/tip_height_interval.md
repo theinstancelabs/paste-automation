@@ -7,11 +7,11 @@ Use a fixed, stable HD side camera with unchanged lighting. Camera movement inva
 Collect at least two distinct stationary side frames per pose:
 
 - `n1Reference`: N1 at the reviewed reference height.
-- `n1Dither`: same raw XY/A/B with a separately authorized positive raw-Z dither of at most 1 mm.
+- `n1Dither`: same raw XY/A/B with a separately authorized positive raw-Z dither of at most 5 mm.
 - `n1Return`: return to precisely the reference raw Z, to include repeat jitter.
 - `rightLow` and `rightHigh`: actual needle centered at the same world XY, with separately reviewed raw-Z samples that bracket the N1 endpoint row. These two poses retain the same raw XY/A/B. The helper does not execute these poses.
 
-The input JSON has `schema: 1` and `scope: "same-world-XY-side-endpoint-height-interval"`. Supply `operator`, `cameraSetupId`, `sameWorldXYReview`, `n1DatumReview`, and `localLinearityReview` text. Set `fixedCameraAndLightingReviewed`, `sameWorldXYReviewed`, `stationaryCapturesReviewed`, and `endpointIdentityReviewed` only after actual review. Supply numerical `referenceN1HeightMm`, `coupledZSumMm`, explicit `reviewedRightRawZIntervalMm: [lower, upper]` for the analyzed local bracket, and positive uncertainty bounds: `n1DatumUncertaintyMm`, `sameWorldXYRowUncertaintyPx` (including residual parallax/roll), `localLinearityUncertaintyMm`, and `rawZUncertaintyMm` (at least 0.02 mm). These are evidence inputs, not provided calibration defaults.
+The input JSON has `schema: 1` and `scope: "same-world-XY-side-endpoint-height-interval"`. Supply `operator`, `cameraSetupId`, `sameWorldXYReview`, `n1DatumReview`, and `localLinearityReview` text. Set `fixedCameraAndLightingReviewed`, `sameWorldXYReviewed`, `stationaryCapturesReviewed`, and `endpointIdentityReviewed` only after actual review. Supply numerical `referenceN1HeightMm`, `coupledZSumMm`, explicit `reviewedN1RawZIntervalMm: [reference, dither]` equal to that exact observed segment and `reviewedRightRawZIntervalMm: [lower, upper]` for the analyzed local bracket, and positive uncertainty bounds: `n1DatumUncertaintyMm`, `sameWorldXYRowUncertaintyPx` (including residual parallax/roll), `localLinearityUncertaintyMm`, and `rawZUncertaintyMm` (at least 0.02 mm). These are evidence inputs, not provided calibration defaults.
 
 `bottomAlignmentEvidence` maps `N1` and `N2` to an `image` reference and a `positionEvidence` reference (each has absolute `path` and `sha256`). The image must be the native report's `afterImages.bottom` capture. Alignment reports must match the side sequence JVM/configuration and that head's XY/A/B. `poses` maps the five names above to:
 
@@ -39,6 +39,6 @@ The N1 dither must resolve a negative pixel-row/raw-Z slope. The right bracket m
 
 `right tip offset = reference N1 height + matching right raw Z - coupled Z sum`
 
-For a reviewed nominal sum of 63 mm and N1 reference height 31.5 mm this becomes matching right raw Z minus 31.5 mm. Reported-Z, N1 datum, and local-linearity uncertainties widen the result. The result is a conditional interval, not a statistical confidence interval or exact calibration. Insufficient pixel resolution may reject a 1 mm dither; improve the view rather than pretending the slope or bracket is resolved.
+For a reviewed nominal sum of 63 mm and N1 reference height 31.5 mm this becomes matching right raw Z minus 31.5 mm. Reported-Z, N1 datum, and local-linearity uncertainties widen the result. The result is a conditional interval, not a statistical confidence interval or exact calibration. Insufficient pixel resolution may reject a 1 mm dither. A separately physically reviewed dither up to 5 mm can improve slope resolution; its full observed reference-to-dither segment must equal the declared N1 interval. Preserve local-linearity and parallax uncertainty across the larger span; a larger dither does not authorize motion or establish linear optics. Improve the view if even that span is unresolved.
 
 Run `python3 automation/paste/analysis/tip_height_interval.py --request /absolute/request.json --output /absolute/new-result.json`. Output creation is exclusive. Synthetic tests are in `test_tip_height_interval.py`; no real height has been measured by implementing or testing this helper.

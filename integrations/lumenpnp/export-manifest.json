@@ -137,8 +137,8 @@
       "sourceRoot": "/home/lumen/lumenpnp",
       "sourcePath": "automation/paste/analysis/test_tip_height_interval.py",
       "destination": "integrations/lumenpnp/automation/paste/analysis/test_tip_height_interval.py",
-      "sha256": "843e59bb20a10be1320721249465f893137654fd39c578bd9530b25a1b1779c2",
-      "bytes": 7517
+      "sha256": "3fcf504b61fd520354974956a2dd90c987ace04ac3d6105869cfa096769a97b6",
+      "bytes": 8662
     },
     {
       "sourceRoot": "/home/lumen/lumenpnp",
@@ -151,15 +151,15 @@
       "sourceRoot": "/home/lumen/lumenpnp",
       "sourcePath": "automation/paste/analysis/tip_height_interval.md",
       "destination": "integrations/lumenpnp/automation/paste/analysis/tip_height_interval.md",
-      "sha256": "67f86c7c769c4cf646ea768a697b5d779e1486b93ce5538202719c636a35c0bc",
-      "bytes": 5041
+      "sha256": "97cff4a3779f4382a7442ac5f0f50b9f72f54549cc71b78f603f74df1ddcd3f7",
+      "bytes": 5414
     },
     {
       "sourceRoot": "/home/lumen/lumenpnp",
       "sourcePath": "automation/paste/analysis/tip_height_interval.py",
       "destination": "integrations/lumenpnp/automation/paste/analysis/tip_height_interval.py",
-      "sha256": "1be337316dd9d3598d2bfe7d6b4079ff1e56bfbece8dd09fffa3936036e9ac9c",
-      "bytes": 14011
+      "sha256": "8c2c20996e25addce594884189a5f120e46d061b387c63eb0b2835bc01f506f3",
+      "bytes": 14361
     },
     {
       "sourceRoot": "/home/lumen/lumenpnp",
@@ -837,8 +837,8 @@
       "sourceRoot": "/home/lumen/lumenpnp",
       "sourcePath": "automation/scripts/Automation_Reviewed_Command.js",
       "destination": "integrations/lumenpnp/automation/scripts/Automation_Reviewed_Command.js",
-      "sha256": "f4abad6211db21b85b03be82d5ec4265e04291b7be5f63628d80d077a77e456d",
-      "bytes": 3615
+      "sha256": "ffe20f0eab1039326101f894dbb7cc71fb6855a2abc1f3b04681ee7c8754cdae",
+      "bytes": 3698
     },
     {
       "sourceRoot": "/home/lumen/lumenpnp",
@@ -1196,6 +1196,13 @@
       "destination": "integrations/lumenpnp/automation/tests/test_z_observation_nashorn.py",
       "sha256": "af72723f6ecef226547cec8d699b1baf5384631e42d835b3ddbc484143210251",
       "bytes": 1202
+    },
+    {
+      "sourceRoot": "/home/lumen/lumenpnp",
+      "sourcePath": "automation/scripts/Capture_Paste_Bottom_Exposure.js",
+      "destination": "integrations/lumenpnp/automation/scripts/Capture_Paste_Bottom_Exposure.js",
+      "sha256": "bb9cf7341ebbefe1312c584b4c2d89020989f85e90e09215342547fa4960c8b7",
+      "bytes": 6141
     }
   ],
   "manifestSelfHash": "Excluded to avoid a recursive digest; this manifest enumerates every other exported/generated file."
