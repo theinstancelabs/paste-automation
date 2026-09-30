@@ -46,8 +46,29 @@
       "sourceRoot": "/home/lumen/lumenpnp",
       "sourcePath": "automation/paste/README.md",
       "destination": "integrations/lumenpnp/automation/paste/README.md",
-      "sha256": "653284824349a7aa270039ed45ac31b011b252f6b16e22e6828a9f7f5f7838b8",
-      "bytes": 12025
+      "sha256": "52ad13a24b713546eeb52949064efb267d6e9337a4709701702348df6e218c8a",
+      "bytes": 13316
+    },
+    {
+      "sourceRoot": "/home/lumen/lumenpnp",
+      "sourcePath": "automation/paste/analysis/deposit_metrics.md",
+      "destination": "integrations/lumenpnp/automation/paste/analysis/deposit_metrics.md",
+      "sha256": "b5102f391c69ae6b8fe929e41f872e3caf7f13a38a2a26428adea010979b4a93",
+      "bytes": 3868
+    },
+    {
+      "sourceRoot": "/home/lumen/lumenpnp",
+      "sourcePath": "automation/paste/analysis/deposit_metrics.py",
+      "destination": "integrations/lumenpnp/automation/paste/analysis/deposit_metrics.py",
+      "sha256": "41be7dd8273741a5fdeb7af216d5d33d8c2893a66e657a5154c8335fcd61ed05",
+      "bytes": 8060
+    },
+    {
+      "sourceRoot": "/home/lumen/lumenpnp",
+      "sourcePath": "automation/paste/analysis/test_deposit_metrics.py",
+      "destination": "integrations/lumenpnp/automation/paste/analysis/test_deposit_metrics.py",
+      "sha256": "cd6f234610b49c63a3c32671a43771b9228c56a84fa10d19eaa3a7ead50f77c7",
+      "bytes": 5505
     },
     {
       "sourceRoot": "/home/lumen/lumenpnp",
@@ -191,10 +212,31 @@
     },
     {
       "sourceRoot": "/home/lumen/lumenpnp",
+      "sourcePath": "automation/paste/native-execution-review.md",
+      "destination": "integrations/lumenpnp/automation/paste/native-execution-review.md",
+      "sha256": "eec2d33f744f108f77b47cfd113872c8fab90d923e6ef3e2d860530d26216370",
+      "bytes": 6159
+    },
+    {
+      "sourceRoot": "/home/lumen/lumenpnp",
       "sourcePath": "automation/paste/nominal-geometry-review.md",
       "destination": "integrations/lumenpnp/automation/paste/nominal-geometry-review.md",
       "sha256": "067cd3f5222c258756f4524191ea9d4a5709f8ddac86a660173bf51b12b25608",
       "bytes": 9371
+    },
+    {
+      "sourceRoot": "/home/lumen/lumenpnp",
+      "sourcePath": "automation/paste/pads/README.md",
+      "destination": "integrations/lumenpnp/automation/paste/pads/README.md",
+      "sha256": "acba08a8fe75eb9bd5532e91386ada5c232fac8cd7b0d249db22a6ecb9a49f3b",
+      "bytes": 2734
+    },
+    {
+      "sourceRoot": "/home/lumen/lumenpnp",
+      "sourcePath": "automation/paste/pads/extract_ftp_pads.py",
+      "destination": "integrations/lumenpnp/automation/paste/pads/extract_ftp_pads.py",
+      "sha256": "a32f86959b26767d163fb80debfa8dcce259593c3b8a982a888e7e036b528394",
+      "bytes": 12915
     },
     {
       "sourceRoot": "/home/lumen/lumenpnp",
@@ -382,8 +424,8 @@
       "sourceRoot": "/home/lumen/lumenpnp",
       "sourcePath": "automation/scripts/Run_Paste_Air.js",
       "destination": "integrations/lumenpnp/automation/scripts/Run_Paste_Air.js",
-      "sha256": "27fdfb2bdb72be3d6ca755f9ad69e31d931872b59d1465bb0d127ebaaebbcde1",
-      "bytes": 8230
+      "sha256": "e4b5bbf4c4e577553f01846eb2e6d016b244f9d3b08c2f9bc3edc97749ae4285",
+      "bytes": 8393
     },
     {
       "sourceRoot": "/home/lumen/lumenpnp",
@@ -468,6 +510,13 @@
       "destination": "integrations/lumenpnp/automation/tests/test_capture_usb_overview.py",
       "sha256": "bac6dabc325aec721e4e6b1e48e319be2fa4ab08ffaf7854f6b76d323870c052",
       "bytes": 3424
+    },
+    {
+      "sourceRoot": "/home/lumen/lumenpnp",
+      "sourcePath": "automation/tests/test_ftp_pad_geometry.py",
+      "destination": "integrations/lumenpnp/automation/tests/test_ftp_pad_geometry.py",
+      "sha256": "6d8ecb10fdd14ba85a2edb0f9bd0b23ffd0f441728dca3d780d52a26b2c52335",
+      "bytes": 5487
     },
     {
       "sourceRoot": "/home/lumen/lumenpnp",

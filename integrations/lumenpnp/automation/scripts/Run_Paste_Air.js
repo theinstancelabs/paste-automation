@@ -1,5 +1,7 @@
 // STAGED, NOT COMMISSIONED. Never executes fork G-code or opens a connection.
-// Remove this code gate only after independent native tool-exclusion validation.
+// Do not enable by changing this flag: the older UiUtils/N2 completion path can
+// wrap physical B720. Replace and independently review the native adapter first.
+// See automation/paste/native-execution-review.md for measured and API blockers.
 var PASTE_PHYSICAL_EXECUTION_ENABLED = false;
 (function(){
  var C=Java.type('org.openpnp.model.Configuration'), U=Java.type('org.openpnp.util.UiUtils'),
