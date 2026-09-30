@@ -147,14 +147,15 @@ var PASTE_WASTE_PRIME_ENABLED = true;
   if(!planner.isValidLocation(top,target))throw Error('Native selected-axis target outside limits');
   var predictedStart=projectedPoses(initial.raw),predictedTarget=projectedPoses(expected);comparePoses(predictedStart,initial.nativePoses);PasteWastePrime.compareNativeStep(predictedStart,predictedTarget,q,0.0001);r.preflightNativeTransform={start:predictedStart,target:predictedTarget};
   var fullStart=new AL(),fullEnd=new AL();Object.keys(axes).forEach(function(a){fullStart=fullStart.put(new AL(axes[a],initial.raw[a]));fullEnd=fullEnd.put(new AL(axes[a],expected[a]));});
-  var projectedMotion=new (Java.type('org.openpnp.model.Motion'))(top,fullStart,fullEnd,.05,MO.SpeedOverPrecision),commandsPreview=projectedMotion.interpolatedMoveToCommands(d,false);
+  var projectedMotion=new (Java.type('org.openpnp.model.Motion'))(top,fullStart,fullEnd,q.speedFraction,MO.SpeedOverPrecision),commandsPreview=projectedMotion.interpolatedMoveToCommands(d,false);
   if(commandsPreview.size()!==1)throw Error('B projection must be one native command');
   var preview=commandsPreview.get(0),moved=preview.getMovedAxesLocation(),feed=Number(preview.getFeedRatePerSecond()),accel=Number(preview.getAccelerationPerSecond2());
   if(moved.getControllerAxes().size()!==1||!moved.contains(axes.B)||Math.abs(Number(moved.getCoordinate(axes.B))-expected.B)>.0001)throw Error('Projected command changes other axes or wraps B');
-  if(!isFinite(feed)||feed<=0||feed>5||!isFinite(accel)||accel<=0||accel>500)throw Error('Projected native B rate outside reviewed ceiling');
+  if(!isFinite(feed)||feed<=0||feed>(q.deltaDegrees===-300?20:5)||!isFinite(accel)||accel<=0||accel>500)throw Error('Projected native B rate outside reviewed ceiling');
+  if(q.deltaDegrees===-300&&Math.abs(accel-20)>.00001)throw Error('Fast native acceleration changed');
   r.nativeCommandPreview={targetB:Number(moved.getCoordinate(axes.B)),feedUnitsPerSecond:feed,accelerationUnitsPerSecond2:accel,roundedFeedPerMinute:Math.round(feed*60),roundedAcceleration:Math.round(accel),scope:'Actual installed native Motion projection; no raw G-code submitted'};
   if(r.nativeCommandPreview.roundedFeedPerMinute<=0||r.nativeCommandPreview.roundedAcceleration<=0)throw Error('Native template would round rate to zero');
-  var previewBefore=snapshot();r.nativeFormatterPreview=PasteWastePrimeNativePreview.preview(d,preview,String(d.getCommand(top,CT.MOVE_TO_COMMAND)));PasteWastePrime.expanded(r.nativeFormatterPreview.expandedCommands,expected.B);if(JSON.stringify(r.nativeFormatterPreview.expandedCommands)!==JSON.stringify(q.expectedExpandedCommands))throw Error('Actual native formatter differs from reviewed expanded commands');var previewAfter=snapshot();PasteWastePrime.compareExact(previewAfter.raw,previewBefore.raw,'formatter unchanged live raw');PasteWastePrime.compareExact(previewAfter.driver,previewBefore.driver,'formatter unchanged live driver');comparePoses(previewAfter.nativePoses,previewBefore.nativePoses);stateGate();if(configHash()!==q.liveConfigurationSha256)throw Error('Formatter changed live configuration');
+  var previewBefore=snapshot();r.nativeFormatterPreview=PasteWastePrimeNativePreview.preview(d,preview,String(d.getCommand(top,CT.MOVE_TO_COMMAND)));PasteWastePrime.expanded(r.nativeFormatterPreview.expandedCommands,expected.B,q.deltaDegrees===-300);if(JSON.stringify(r.nativeFormatterPreview.expandedCommands)!==JSON.stringify(q.expectedExpandedCommands))throw Error('Actual native formatter differs from reviewed expanded commands');var previewAfter=snapshot();PasteWastePrime.compareExact(previewAfter.raw,previewBefore.raw,'formatter unchanged live raw');PasteWastePrime.compareExact(previewAfter.driver,previewBefore.driver,'formatter unchanged live driver');comparePoses(previewAfter.nativePoses,previewBefore.nativePoses);stateGate();if(configHash()!==q.liveConfigurationSha256)throw Error('Formatter changed live configuration');
   r.commandedControllerAxes=[move.axis];r.postmoveComparisonTolerance={linearMm:0.02,angularDegrees:0.3,meaning:'Firmware reporting precision, not permission to command other axes'};r.expectedAfterRaw=expected;r.preMoveSnapshot=preMove;r.motionSubmitted=true;save('submitting-one-native-'+move.axis+'-move');
   // Partial single-axis location leaves all other axes untouched. This per-move
   // option bypasses audited one-sided backlash overshoot, without config edits.
@@ -162,9 +163,9 @@ var PASTE_WASTE_PRIME_ENABLED = true;
   // Temporary in-memory timeout is restored on success or failure, never saved.
   var oldTimeout=Number(d.getTimeoutMilliseconds());r.originalDriverTimeoutMs=oldTimeout;
   try{
-   if(q.deltaDegrees===-100){d.setTimeoutMilliseconds(60000);if(Number(d.getTimeoutMilliseconds())!==60000)throw Error('Temporary completion timeout not applied');}
+   if(q.deltaDegrees<=-100){d.setTimeoutMilliseconds(60000);if(Number(d.getTimeoutMilliseconds())!==60000)throw Error('Temporary completion timeout not applied');}
    r.activeDriverTimeoutMs=Number(d.getTimeoutMilliseconds());
-   planner.moveTo(top,target,0.05,MO.SpeedOverPrecision);
+   planner.moveTo(top,target,q.speedFraction,MO.SpeedOverPrecision);
   }finally{d.setTimeoutMilliseconds(oldTimeout);r.driverTimeoutRestored=Number(d.getTimeoutMilliseconds())===oldTimeout;if(!r.driverTimeoutRestored)throw Error('Original driver timeout not restored');}
   r.nativeMotionCompletionReported=true;save('native-stillstand-reported');
   // Audited NullMotionPlanner has already waited for stillstand here. Do not

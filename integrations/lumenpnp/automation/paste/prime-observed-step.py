@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""One manually observed 100-degree prime continuation; no loops or retries."""
+"""One manually observed100 or300-degree prime continuation; no loops or retries."""
 import argparse
 import hashlib
 import json
@@ -27,6 +27,7 @@ def main():
     parser.add_argument('reviewed_image', type=pathlib.Path)
     parser.add_argument('--result', required=True,
                         choices=['no-visible-paste', 'emerging-not-consistent'])
+    parser.add_argument('--degrees',type=int,choices=[100,300],default=100)
     parser.add_argument('--execute', action='store_true')
     args = parser.parse_args()
     report = read(args.previous_report)
@@ -53,13 +54,13 @@ def main():
     if not 0 <= now - args.reviewed_image.stat().st_mtime_ns // 1_000_000 < 300_000:
         raise ValueError('Fresh reviewed outlet/receiver image required')
     charged = ledger['reservedDegrees']
-    if charged < 340 or (charged - 340) % 100 or charged + 100 > 2000:
-        raise ValueError('Next100-degree step outside reviewed cumulative bound')
+    if charged < 340 or (charged - 340) % 100 or charged + args.degrees > (6000 if args.degrees == 300 else 2000):
+        raise ValueError('Next increment outside reviewed cumulative bound')
     if not args.execute:
-        print(json.dumps({'dispatch': False, 'degrees': 100,
+        print(json.dumps({'dispatch': False, 'degrees': args.degrees,
                           'previousReservedDegrees': charged,
-                          'nextReservedDegrees': charged + 100,
-                          'nextB': ledger['lastVerifiedB'] - 100}))
+                          'nextReservedDegrees': charged + args.degrees,
+                          'nextB': ledger['lastVerifiedB'] - args.degrees}))
         return
     out = ROOT / 'automation/evidence' / ('paste-observed-step-' + str(uuid.uuid4()))
     out.mkdir()
@@ -70,8 +71,8 @@ def main():
         'jvmStartMs': request['jvmStartMs'],
         'liveConfigurationSha256': request['liveConfigurationSha256'],
         'syringeId': profile['syringeId'], 'originalMaximumDegrees': 300,
-        'previousReservedDegrees': charged, 'extendedMaximumDegrees': charged + 100,
-        'additionalDegrees': 100, 'previousLedgerSha256': ledger_evidence['sha256'],
+        'previousReservedDegrees': charged, 'extendedMaximumDegrees': charged + args.degrees,
+        'additionalDegrees': args.degrees, 'previousLedgerSha256': ledger_evidence['sha256'],
         'previousReportEvidence': bound(args.previous_report),
         'userAuthorizedSingleIncrement': True,
         'authorizationRecord': 'User directed: keep turning until paste extrudes; each increment requires a fresh manual image review.',
@@ -82,7 +83,7 @@ def main():
     result = subprocess.run([
         'python3', str(ROOT / 'automation/paste/continue-waste-prime.py'),
         str(args.previous_report.resolve()), str(args.reviewed_image.resolve()),
-        '--result', args.result, '--degrees', '100',
+        '--result', args.result, '--degrees', str(args.degrees),
         '--budget-amendment', str(amendment_path), '--execute',
     ], cwd=ROOT, capture_output=True, text=True)
     (out / 'continuation.stdout').write_text(result.stdout)
@@ -93,8 +94,9 @@ def main():
     print(json.dumps({'report': terminal['report'], 'status': terminal['status'],
                       'reservedDegrees': terminal['reservedDegrees']}), flush=True)
     # Viewer is a separate existing reader. Never open the USB camera or serial port.
-    # Let its 1Hz cache refresh after the terminal report before saving one frame.
-    time.sleep(1.2)
+    # The requested300-degree trial dwells12seconds after verified native completion.
+    # No motion is queued here; then capture the existing viewer frame.
+    time.sleep(12 if args.degrees == 300 else 1.2)
     token = (ROOT / '.local-viewer/token').read_text().strip()
     request_image = urllib.request.Request('http://127.0.0.1:8765/frame/webcam',
                                            headers={'Authorization': 'Bearer ' + token})

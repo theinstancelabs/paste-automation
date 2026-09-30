@@ -18,7 +18,7 @@ def wait(p,success):
    if r.get('status')==success:return r
   time.sleep(.25)
  raise RuntimeError('No verified completion; do not replay. Inspect '+str(p))
-p=argparse.ArgumentParser(description=__doc__);p.add_argument('previous_report',type=pathlib.Path);p.add_argument('reviewed_image',type=pathlib.Path);p.add_argument('--result',required=True,choices=['no-visible-paste','emerging-not-consistent']);p.add_argument('--budget-amendment',type=pathlib.Path);p.add_argument('--degrees',type=int,choices=[20,100],default=20);p.add_argument('--execute',action='store_true');a=p.parse_args()
+p=argparse.ArgumentParser(description=__doc__);p.add_argument('previous_report',type=pathlib.Path);p.add_argument('reviewed_image',type=pathlib.Path);p.add_argument('--result',required=True,choices=['no-visible-paste','emerging-not-consistent']);p.add_argument('--budget-amendment',type=pathlib.Path);p.add_argument('--degrees',type=int,choices=[20,100,300],default=20);p.add_argument('--execute',action='store_true');a=p.parse_args()
 r=read(a.previous_report);assert r['status']=='completed-waste-prime-awaiting-observation' and r['controllerPositionVerified'] and r['countsVerified'] and not r['uncertainCompletion'];q=r['request'];now=int(time.time()*1000);im=bound(a.reviewed_image);im['capturedMs']=a.reviewed_image.stat().st_mtime_ns//1000000
 assert 0<=now-im['capturedMs']<300000
 if not a.execute:print(json.dumps({'nextB':r['afterQuerySnapshot']['raw']['B']-a.degrees,'singleIncrement':a.degrees,'result':a.result,'dispatch':False}));raise SystemExit
