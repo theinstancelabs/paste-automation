@@ -1257,15 +1257,15 @@
       "sourceRoot": "/home/lumen/lumenpnp",
       "sourcePath": "automation/paste/commissioning-stroke.cjs",
       "destination": "integrations/lumenpnp/automation/paste/commissioning-stroke.cjs",
-      "sha256": "d82e0b135423b2b2abebfc394a608bd6a61a94425a9230af618cbf613a6527a5",
-      "bytes": 5779
+      "sha256": "02d487b94c5a4105bd748ef8a4bf01082d525f8d33c8817a065e05d574ee503e",
+      "bytes": 13602
     },
     {
       "sourceRoot": "/home/lumen/lumenpnp",
       "sourcePath": "automation/paste/commissioning-stroke.test.cjs",
       "destination": "integrations/lumenpnp/automation/paste/commissioning-stroke.test.cjs",
-      "sha256": "74937ae71d66e0d02ac4a1bc8fadf1862a94aab133b2676137ca056bac375e64",
-      "bytes": 3248
+      "sha256": "703d906fa1dca9b319a3afbf95b768815f09795438329695a0724593c86f54cd",
+      "bytes": 7018
     },
     {
       "sourceRoot": "/home/lumen/lumenpnp",
@@ -1299,22 +1299,22 @@
       "sourceRoot": "/home/lumen/lumenpnp",
       "sourcePath": "automation/scripts/Automation_Reviewed_Command.js",
       "destination": "integrations/lumenpnp/automation/scripts/Automation_Reviewed_Command.js",
-      "sha256": "2fed6ca16198c528589074d0d0b648707d1b269cd2293730d2dd3b928df34281",
-      "bytes": 4406
+      "sha256": "f2eecfcbe093a7073f1db575ebcd5ea2e8fbd8b59a5b9c102fc83b3c5e0791bb",
+      "bytes": 4561
     },
     {
       "sourceRoot": "/home/lumen/lumenpnp",
       "sourcePath": "automation/scripts/run_reviewed_action.py",
       "destination": "integrations/lumenpnp/automation/scripts/run_reviewed_action.py",
-      "sha256": "56d55478c353e6c498521ab215800a070d7b6e89f6abad53f2719b9469270ccc",
-      "bytes": 18321
+      "sha256": "28f694a1d844c5403c7c5883ed701317323a50786712ebef8f9ce275061f27bc",
+      "bytes": 18417
     },
     {
       "sourceRoot": "/home/lumen/lumenpnp",
       "sourcePath": "automation/tests/test_z_observation_nashorn.py",
       "destination": "integrations/lumenpnp/automation/tests/test_z_observation_nashorn.py",
-      "sha256": "972716b27cd1d2cf61a04f9be18f4f2df00146ef2d2e790f652ae3e71cf2b9f9",
-      "bytes": 1370
+      "sha256": "0101846bf1093584ebaf1edb8b40871e64cc943d0f651f65841dd964f890bc40",
+      "bytes": 1449
     },
     {
       "sourceRoot": "/home/lumen/lumenpnp",
@@ -1336,6 +1336,41 @@
       "destination": "integrations/lumenpnp/automation/paste/analysis/test_fresh_ftp_registration.py",
       "sha256": "ff9a57c4fa676dd3e764ab3830f9f075ffc78208917c4355aa1d5febb4e7224b",
       "bytes": 7178
+    },
+    {
+      "sourceRoot": "/home/lumen/lumenpnp",
+      "sourcePath": "automation/scripts/Commission_Paste_Dose_Cycle.js",
+      "destination": "integrations/lumenpnp/automation/scripts/Commission_Paste_Dose_Cycle.js",
+      "sha256": "c1be0ea1031c4d434db98c0f02223c3dc61b386b6693c5cf243c75f4779ca9fe",
+      "bytes": 31837
+    },
+    {
+      "sourceRoot": "/home/lumen/lumenpnp",
+      "sourcePath": "automation/scripts/Preview_Paste_Dose_Cycle.js",
+      "destination": "integrations/lumenpnp/automation/scripts/Preview_Paste_Dose_Cycle.js",
+      "sha256": "a95a6e8dcf33c33d3f1ecc3e9ddd6c15bc38060fb13141be44f4b555ce9a9a25",
+      "bytes": 12948
+    },
+    {
+      "sourceRoot": "/home/lumen/lumenpnp",
+      "sourcePath": "automation/scripts/build_paste_dose_cycle_request.cjs",
+      "destination": "integrations/lumenpnp/automation/scripts/build_paste_dose_cycle_request.cjs",
+      "sha256": "5c4477b51f5afa2c272b8cbe4ce5ea094b24fe9e255b0e865797c35918992c42",
+      "bytes": 7541
+    },
+    {
+      "sourceRoot": "/home/lumen/lumenpnp",
+      "sourcePath": "automation/scripts/build_paste_dose_cycle_preview_request.cjs",
+      "destination": "integrations/lumenpnp/automation/scripts/build_paste_dose_cycle_preview_request.cjs",
+      "sha256": "fa748cf4f1f4222fc4f2e0ca19caec39589800261e9239eb4b55528409e3f665",
+      "bytes": 2094
+    },
+    {
+      "sourceRoot": "/home/lumen/lumenpnp",
+      "sourcePath": "automation/operations/paste-small-dot-trials-20260930.md",
+      "destination": "integrations/lumenpnp/automation/operations/paste-small-dot-trials-20260930.md",
+      "sha256": "300e7310b045b8963926b9920181230317fd9c7a7a8181c9cb9c07052aac31a7",
+      "bytes": 2460
     }
   ],
   "manifestSelfHash": "Excluded to avoid a recursive digest; this manifest enumerates every other exported/generated file."
