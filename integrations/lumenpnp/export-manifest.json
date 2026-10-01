@@ -1371,6 +1371,27 @@
       "destination": "integrations/lumenpnp/automation/operations/paste-small-dot-trials-20260930.md",
       "sha256": "00bac859b0958e214c3ea269770206021820fd6e21668c5069055a81fd0198cf",
       "bytes": 3506
+    },
+    {
+      "sourceRoot": "/home/lumen/lumenpnp",
+      "sourcePath": "automation/paste/prepare-dose-cycle.py",
+      "destination": "integrations/lumenpnp/automation/paste/prepare-dose-cycle.py",
+      "sha256": "fdc70c95772cc8259d8c9acc61cbbc8c4d7deced93671c290b8d574925204a40",
+      "bytes": 14661
+    },
+    {
+      "sourceRoot": "/home/lumen/lumenpnp",
+      "sourcePath": "automation/paste/test_prepare_dose_cycle.py",
+      "destination": "integrations/lumenpnp/automation/paste/test_prepare_dose_cycle.py",
+      "sha256": "6fe55ff5fc4350ba852c33e43a85ccd75eecbef408a642c4ecffa6a37c505c5d",
+      "bytes": 5358
+    },
+    {
+      "sourceRoot": "/home/lumen/lumenpnp",
+      "sourcePath": "automation/paste/prepare-dose-cycle.md",
+      "destination": "integrations/lumenpnp/automation/paste/prepare-dose-cycle.md",
+      "sha256": "63a680abc97cfc6ddb8c54ec84b972f00c8b11e2e36d9eea5adcda91d3ae9417",
+      "bytes": 1439
     }
   ],
   "manifestSelfHash": "Excluded to avoid a recursive digest; this manifest enumerates every other exported/generated file."
