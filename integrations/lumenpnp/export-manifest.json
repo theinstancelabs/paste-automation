@@ -1369,8 +1369,8 @@
       "sourceRoot": "/home/lumen/lumenpnp",
       "sourcePath": "automation/operations/paste-small-dot-trials-20260930.md",
       "destination": "integrations/lumenpnp/automation/operations/paste-small-dot-trials-20260930.md",
-      "sha256": "308e2ebbae589c8f9a16b75467cfde464995d116a536dbcf385a1f92c44abd32",
-      "bytes": 46110
+      "sha256": "57595a6bcc1555cb3425840ef8bae975522ccd124ffa60d70e4fa5a4f2c5003a",
+      "bytes": 46896
     },
     {
       "sourceRoot": "/home/lumen/lumenpnp",
@@ -1805,6 +1805,13 @@
       "destination": "integrations/lumenpnp/automation/paste/test_finalize_contiguous_batch.py",
       "sha256": "efeef5c3463f1f6b617df882a916899485550e914d45381e4b7669cc877ca5f2",
       "bytes": 2076
+    },
+    {
+      "sourceRoot": "/home/lumen/lumenpnp",
+      "sourcePath": "automation/paste/ftp-commissioning-runbook.md",
+      "destination": "integrations/lumenpnp/automation/paste/ftp-commissioning-runbook.md",
+      "sha256": "4771be282f596e2f04e506752ae9b9a8481dda84bf999fa556e2543d11a505ef",
+      "bytes": 5677
     }
   ],
   "manifestSelfHash": "Excluded to avoid a recursive digest; this manifest enumerates every other exported/generated file.",
