@@ -31,7 +31,7 @@ function validate(q,now,jvm){
  ['softLowEnabled','softHighEnabled','safeLowEnabled','safeHighEnabled'].forEach(function(k){if(typeof q.nativeZConfiguration[k]!=='boolean')fail(k+' boolean required');});
  ['softLowMm','softHighMm','safeLowMm','safeHighMm'].forEach(function(k){finite(q.nativeZConfiguration[k],k);});
  if(q.nativeZConfiguration.softLowEnabled&&c.floorZmm<q.nativeZConfiguration.softLowMm||q.nativeZConfiguration.softHighEnabled&&c.startZmm>q.nativeZConfiguration.softHighMm)fail('Probe segment violates enabled native soft limits');
- if(typeof q.speedFraction!=='number'||q.speedFraction!==0.05||q.speedOverPrecision!==true)fail('Reviewed minimum native speed fraction 0.05 required');
+ if(typeof q.speedFraction!=='number'||[0.05,1].indexOf(q.speedFraction)<0||q.speedOverPrecision!==true)fail('Native speed fraction must be the legacy 0.05 or explicit full speed 1');
  return q;
 }
 function target(startZ,increment,completed){finite(startZ,'startZ');if(increment!==0.05)fail('Only 0.05 mm increments');if(typeof completed!=='number'||completed<0||Math.floor(completed)!==completed||completed>40)fail('Increment count outside 0..40');var z=Math.round((startZ-increment*(completed+1))*1e9)/1e9;if(startZ-z>(2+1e-9))fail('Probe exceeds 2 mm hard bound');return z;}

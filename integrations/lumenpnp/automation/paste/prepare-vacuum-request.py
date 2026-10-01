@@ -103,8 +103,10 @@ def summarize_baseline(path, now=None):
     return result
 
 
-def prepare_probe(barrier_path, baseline_path, review_path, operator, tip_id, now=None):
+def prepare_probe(barrier_path, baseline_path, review_path, operator, tip_id, now=None, speed_fraction=0.05):
     """Explicit reviewed contract only; current native validators remain authoritative."""
+    if type(speed_fraction) not in (int, float) or speed_fraction not in (0.05, 1.0):
+        raise ValueError('Native speed fraction must be legacy 0.05 or explicit full speed 1')
     now = time.time_ns() // 1000000 if now is None else now
     barrier, barrier_evidence = bound(barrier_path)
     if barrier.get('status') != 'completed-read-only-position-barrier':
@@ -132,7 +134,7 @@ def prepare_probe(barrier_path, baseline_path, review_path, operator, tip_id, no
     if review['contract']['expectedEmptyMean'] != observed['phases']['on']['mean']:
         raise ValueError('Reviewed empty mean must come from actual new stream')
     q = json.loads((HERE/'vacuum-probe-native.pending.json').read_text())
-    q.update(description='Prepared offline from explicit new-stream and envelope review; native validator remains authoritative.', id=str(uuid.uuid4()), createdMs=now, jvmStartMs=jvm, operator=operator, expectedLeftTipId=tip_id, liveConfigurationSha256=digest, expectedRaw=raw, expectedDriver=driver, expectedNativePoses=poses, baselineContractEvidence={**baseline_evidence, 'reviewedMs':review['reviewedMs']}, barrierEvidence=barrier_evidence, reviewEvidence=review_evidence)
+    q.update(description='Prepared offline from explicit new-stream and envelope review; native validator remains authoritative.', id=str(uuid.uuid4()), createdMs=now, jvmStartMs=jvm, operator=operator, expectedLeftTipId=tip_id, liveConfigurationSha256=digest, expectedRaw=raw, expectedDriver=driver, expectedNativePoses=poses, baselineContractEvidence={**baseline_evidence, 'reviewedMs':review['reviewedMs']}, barrierEvidence=barrier_evidence, reviewEvidence=review_evidence, speedFraction=float(speed_fraction))
     for key in ('targetSurfaceIdentity', 'reviewRecord', 'jointInterval', 'nativeZConfiguration', 'contract'):
         q[key] = review[key]
     for key in ('stationaryEvidence', 'targetEvidence', 'jointEnvelopeEvidence'):
@@ -156,13 +158,13 @@ def main():
     b.add_argument('--operator', required=True); b.add_argument('--tip-id', required=True)
     b.add_argument('--reviewed-empty-free-air-and-clearance', action='store_true')
     b.add_argument('--output', type=Path, required=True)
-    v = sub.add_parser('probe'); v.add_argument('--barrier', required=True); v.add_argument('--baseline', required=True); v.add_argument('--review', required=True); v.add_argument('--operator', required=True); v.add_argument('--tip-id', required=True); v.add_argument('--output', type=Path, required=True)
+    v = sub.add_parser('probe'); v.add_argument('--barrier', required=True); v.add_argument('--baseline', required=True); v.add_argument('--review', required=True); v.add_argument('--operator', required=True); v.add_argument('--tip-id', required=True); v.add_argument('--speed-fraction', type=float, choices=(0.05, 1.0), default=0.05, help='native motion fraction; 0.05 preserves legacy behavior, 1.0 selects explicitly authorized full speed'); v.add_argument('--output', type=Path, required=True)
     s = sub.add_parser('summarize'); s.add_argument('--report', required=True); s.add_argument('--output', type=Path, required=True)
     a = p.parse_args()
     if a.mode == 'baseline':
         result = prepare_baseline(a.report, a.image, a.operator, a.tip_id, a.reviewed_empty_free_air_and_clearance)
     elif a.mode == 'probe':
-        result = prepare_probe(a.barrier, a.baseline, a.review, a.operator, a.tip_id)
+        result = prepare_probe(a.barrier, a.baseline, a.review, a.operator, a.tip_id, speed_fraction=a.speed_fraction)
     else:
         result = summarize_baseline(a.report)
     with a.output.open('x') as f:

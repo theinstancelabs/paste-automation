@@ -38,12 +38,15 @@ function request() {
 test('requires fresh identity, exact target/evidence and jointly bounded Z contract', () => {
   const q = request();
   assert.equal(n.validate(q, 100001, 42), q);
+  const fullSpeed = request(); fullSpeed.speedFraction = 1;
+  assert.equal(n.validate(fullSpeed, 100001, 42), fullSpeed);
   for (const edit of [
     x => { x.targetSurfaceIdentity = ''; }, x => { x.operatorVerifiedProbeTarget = false; },
     x => { x.n2Quarantined = false; }, x => { x.contract.responseDirection = null; },
     x => { x.contract.maxDescentMm = 2.05; }, x => { x.contract.stepMm = 0.1; },
     x => { x.contract.floorZmm = 24.51; }, x => { x.contract.candidateMinDelta = 1; },
-    x => { x.targetEvidence.sha256 = 'bad'; }, x => { x.jointInterval.minRawZ = 24.4; }
+    x => { x.targetEvidence.sha256 = 'bad'; }, x => { x.jointInterval.minRawZ = 24.4; },
+    x => { x.speedFraction = 0.5; }
   ]) { const bad = request(); edit(bad); assert.throws(() => n.validate(bad, 100001, 42)); }
   assert.throws(() => n.validate(q, 100001, 43), /JVM/);
   assert.throws(() => n.validate(q, 400001, 42), /Stale/);
@@ -122,4 +125,6 @@ test('probe OFF and ON settling matches current twenty-sample reference recorder
  const source=require('node:fs').readFileSync(require('node:path').join(__dirname,'../scripts/Probe_Paste_Surface_By_Vacuum.js'),'utf8');
  assert.match(source,/actuate\(false\);settle\(2000\);r\.vacuumOffBaselineStarted/);
  assert.match(source,/actuate\(true\);settle\(2000\);r\.vacuumOnBaselineStarted/);
+ assert.match(source,/planner\.moveTo\(top,loc,q\.speedFraction,MO\.SpeedOverPrecision\)/);
+ assert.match(source,/feedFraction:q\.speedFraction,nominalFeedCeilingMmS:200\*q\.speedFraction/);
 });

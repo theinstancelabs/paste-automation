@@ -29,4 +29,6 @@ python3 automation/paste/prepare-vacuum-request.py probe \
   --operator OPERATOR --tip-id NT1 --output NEW_PROBE_REQUEST.json
 ```
 
+The probe request defaults to the legacy native motion fraction `0.05`. To select full native speed explicitly, add `--speed-fraction 1`. Only `0.05` and `1` are accepted. This choice changes the planner speed for each verified 0.05 mm increment; it does not change the increment size, sample policy, stop behavior, or reviewed descent floor. The chosen fraction is stored in the request and runtime report. The helper adds no physical or review attestations.
+
 Both native validators run before output. The probe reference binding requires complete20-sample OFF/ON streams,2second settling, normal OFF, same JVM/config/tip/pose, and evidence within five minutes. It recomputes the supplied summaries and binds the request mean to the actual stream. Current conservative spread≤1, fresh mean band±1.5 and pump response≥10 remain explicit native contract bounds; these are not established contact sensitivity. Existing fresh3-OFF/8-ON sampling inside the probe uses the same2second OFF/ON settling and must also pass before any Z step. A failed/stale historical report is never reused. Normal controlled-policy OFF handling remains unchanged.

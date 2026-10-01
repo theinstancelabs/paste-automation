@@ -74,5 +74,10 @@ class VacuumRequestTests(unittest.TestCase):
         q=m.prepare_probe(barrierp,bp,rp,'reviewer','NT1',NOW)
         self.assertEqual(q['contract']['expectedEmptyMean'],232)
         self.assertEqual(q['baselineContractEvidence']['sha256'],review['baselineSha256'])
+        self.assertEqual(q['speedFraction'],0.05)
+        fast=m.prepare_probe(barrierp,bp,rp,'reviewer','NT1',NOW,speed_fraction=1)
+        self.assertEqual(fast['speedFraction'],1.0)
+        with self.assertRaises(ValueError):
+            m.prepare_probe(barrierp,bp,rp,'reviewer','NT1',NOW,speed_fraction=0.5)
         baseline['finishedAt']=iso(NOW-300001);bp.write_text(json.dumps(baseline))
         with self.assertRaises(ValueError):m.prepare_probe(barrierp,bp,rp,'reviewer','NT1',NOW)
