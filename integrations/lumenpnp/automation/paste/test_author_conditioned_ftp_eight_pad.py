@@ -57,6 +57,16 @@ class AuthorInputsTests(unittest.TestCase):
   for bad in (True,6.0,4,12):
    self.q['conditioningDoseDegrees']=bad
    with self.assertRaises(ValueError):M.derive(self.q,self.load,self.q['reviewedMs'])
+ def test_final_dummy_wipe_requires_exact_reviewed_conditioner6_R3(self):
+  self.assertEqual(M.derive(self.q,self.load,self.q['reviewedMs'])[0]['conditioningFinalWipeMm'],0)
+  self.q.update(conditioningDoseDegrees=6,retractDegrees=3,conditioningFinalWipeMm=1.5)
+  with self.assertRaises(ValueError):M.derive(self.q,self.load,self.q['reviewedMs'])
+  self.q['attestations']['conditioningFinalWipeReviewed']=True
+  e,r,_,_=M.derive(self.q,self.load,self.q['reviewedMs'])
+  self.assertEqual(e['conditioningFinalWipeMm'],1.5);self.assertTrue(e['conditioningFinalWipeReviewed']);self.assertTrue(r['attestations']['conditioningFinalWipeReviewed'])
+  for bad in (-1.5,1,2,True):
+   self.q['conditioningFinalWipeMm']=bad
+   with self.assertRaises(ValueError):M.derive(self.q,self.load,self.q['reviewedMs'])
  def test_rejects_missing_attestation_stale_review_wrong_start_surface_and_pair(self):
   edits=[lambda q:q['attestations'].update(tipReviewedNoLongStrand=False),lambda q:q.update(reviewedMs=q['reviewedMs']-300001),lambda q:q['startRaw'].update(B=-999),lambda q:q.update(surfaceRawZ=58.45),lambda q:q['pairReviews'][0].update(padsAvailableReviewed=False),lambda q:q['pairReviews'][1].update(reference='R1'),lambda q:q['pairReviews'][0].update(capturedMs=q['reviewedMs']+1)]
   for edit in edits:

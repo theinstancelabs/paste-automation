@@ -182,6 +182,15 @@ class EightPadBuilderTests(unittest.TestCase):
             i=ct['inlineConditioning']['retractionStageIndex']-1
             prior_b=next(s['target'] for s in reversed(c6['stages'][:i]) if s['axis']=='B')
             self.assertEqual(c6['stages'][i]['target']-prior_b,-6);self.assertEqual(c6['stages'][i]['dwellMilliseconds'],2000)
+            fixture.exp.update(conditioningFinalWipeMm=1.5,conditioningFinalWipeReviewed=True);experiment.write_text(json.dumps(fixture.exp))
+            review.write_text(json.dumps({'reviewedBy':'reviewer','reviewedMs':now,'attestations':{'conditioningFinalWipeReviewed':True},'experimentEvidence':M.PREP.WIPE.evidence(experiment),'imageEvidence':M.PREP.WIPE.evidence(fixture.image)}))
+            profiledata['measurementEvidence']=M.PREP.WIPE.evidence(review);fixture.profile.write_text(json.dumps(profiledata));args.output=str(fixture.root/'eight-out-finalwipe')
+            with patch.object(M.subprocess,'run',side_effect=offline_run):M.build(args)
+            w=json.loads((fixture.root/'eight-out-finalwipe'/'recipe.json').read_text());wt=json.loads((fixture.root/'eight-out-finalwipe'/'targets.json').read_text());inline=wt['inlineConditioning'];i=inline['retractionStageIndex']
+            self.assertEqual(inline['liftStageIndex'],i+2);self.assertEqual(w['stages'][i+1]['axis'],'X');self.assertTrue(w['stages'][i+1]['wipeReview'])
+            self.assertEqual(w['stages'][i+1]['target'],fixture.exp['targetsXY'][1]['X']+1.5)
+            self.assertEqual(w['bAccounting']['grossChargedDegrees'],273);self.assertEqual(w['bAccounting']['netDegrees'],-99)
+            self.assertEqual(inline['prefixStageCount'],ct['inlineConditioning']['prefixStageCount']+1)
         finally:fixture.tearDown()
         self.target['pads'][1]['padId']='R1.2';self.target['compensatedSequence']['doseDegrees']=5
         with self.assertRaises(ValueError):M.validate_eight(self.target)

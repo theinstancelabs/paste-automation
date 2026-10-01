@@ -1418,8 +1418,8 @@
       "sourceRoot": "/home/lumen/lumenpnp",
       "sourcePath": "automation/paste/commissioning-batch.test.cjs",
       "destination": "integrations/lumenpnp/automation/paste/commissioning-batch.test.cjs",
-      "sha256": "1b6cf6999779dba7b3c379de181e5f09f1c8d45c2ea573c4d2288984529a2373",
-      "bytes": 62966
+      "sha256": "0934f2130b1875eb4163bd1e3a280b76ee1701c4b13fbe455a0ac057e72e1829",
+      "bytes": 65004
     },
     {
       "sourceRoot": "/home/lumen/lumenpnp",
@@ -1509,22 +1509,22 @@
       "sourceRoot": "/home/lumen/lumenpnp",
       "sourcePath": "automation/paste/prepare-retraction-coupon.py",
       "destination": "integrations/lumenpnp/automation/paste/prepare-retraction-coupon.py",
-      "sha256": "144bad5d5019fd696f265bf019d483f41a850743832dcaa048ab57bac30bb8ae",
-      "bytes": 12024
+      "sha256": "a39a645534d2e6b87c84eba1fa7fbafe8e08027ed0d951f53254a52f95b9bbcd",
+      "bytes": 13101
     },
     {
       "sourceRoot": "/home/lumen/lumenpnp",
       "sourcePath": "automation/paste/prepare-retraction-coupon.md",
       "destination": "integrations/lumenpnp/automation/paste/prepare-retraction-coupon.md",
-      "sha256": "dd05b75f6e4722f24a21dc9b264e021a4a0fb336469cf690f04ba45da137f044",
-      "bytes": 7770
+      "sha256": "a08bc1a291bcd3ba2a9973af8c30b1ed57127a329e6a39cb9873fe9ae45f4d2e",
+      "bytes": 8725
     },
     {
       "sourceRoot": "/home/lumen/lumenpnp",
       "sourcePath": "automation/paste/analysis/test_prepare_retraction_coupon.py",
       "destination": "integrations/lumenpnp/automation/paste/analysis/test_prepare_retraction_coupon.py",
-      "sha256": "329b97f15e23c6f17ebef05b2bd9b6c0d6fec2de76fc123c15242338e466855f",
-      "bytes": 27298
+      "sha256": "af63d977b1cc362dca8e2d012cce225682f3cf8df08e5fdc42887d8f10604835",
+      "bytes": 28691
     },
     {
       "sourceRoot": "/home/lumen/lumenpnp",
@@ -1558,8 +1558,8 @@
       "sourceRoot": "/home/lumen/lumenpnp",
       "sourcePath": "automation/paste/ftp-inline-conditioning.cjs",
       "destination": "integrations/lumenpnp/automation/paste/ftp-inline-conditioning.cjs",
-      "sha256": "3aa6e8eb34c1e1fc7e0464f53c3b73481b9a3fbabed2770dd35fe03b19914ac2",
-      "bytes": 7356
+      "sha256": "40779e5cd0fa4370ca227a1de4ae3761ef6c147c66d7d5755cb0805607134195",
+      "bytes": 7949
     },
     {
       "sourceRoot": "/home/lumen/lumenpnp",
@@ -1572,15 +1572,15 @@
       "sourceRoot": "/home/lumen/lumenpnp",
       "sourcePath": "automation/paste/ftp-inline-conditioning.md",
       "destination": "integrations/lumenpnp/automation/paste/ftp-inline-conditioning.md",
-      "sha256": "c8817cba888389c510e0dab7cbe3f08e3b3379683bdad927b03171987f929fea",
-      "bytes": 5226
+      "sha256": "d15cac7fe8e89b65e91004ea1eda05624e9ced86be30f0268d0fc8bef303e58a",
+      "bytes": 6181
     },
     {
       "sourceRoot": "/home/lumen/lumenpnp",
       "sourcePath": "automation/paste/prepare-conditioned-ftp-pair.py",
       "destination": "integrations/lumenpnp/automation/paste/prepare-conditioned-ftp-pair.py",
-      "sha256": "7c2401428504bfe16513f97bad81f64b25081948aeaa44c4912f1620f48371e9",
-      "bytes": 13244
+      "sha256": "c38f647b06a4a9f368704cff690d161473652c62ed3389e8f5bf5c9a87b62305",
+      "bytes": 13417
     },
     {
       "sourceRoot": "/home/lumen/lumenpnp",
@@ -1607,50 +1607,50 @@
       "sourceRoot": "/home/lumen/lumenpnp",
       "sourcePath": "automation/paste/ftp-eight-pad-group.md",
       "destination": "integrations/lumenpnp/automation/paste/ftp-eight-pad-group.md",
-      "sha256": "760bda2b81deed5aeb8ad61ad88460a980165bc0e5e063df4eb239043c400112",
-      "bytes": 5188
+      "sha256": "ee741de4460e41d0b94717ca3ddfbe3f7dce30765331df1dff2ab97458c763fd",
+      "bytes": 6143
     },
     {
       "sourceRoot": "/home/lumen/lumenpnp",
       "sourcePath": "automation/paste/prepare-conditioned-ftp-eight-pad.py",
       "destination": "integrations/lumenpnp/automation/paste/prepare-conditioned-ftp-eight-pad.py",
-      "sha256": "c97f9732ca086e4a20f0cacb8302919f9133e620cf8784bd92ac2082e5ea74ff",
-      "bytes": 16068
+      "sha256": "5f1bb58601c4e036e6de7f227bbe0e987bb258403569aa1a27df9af589e9df4d",
+      "bytes": 16254
     },
     {
       "sourceRoot": "/home/lumen/lumenpnp",
       "sourcePath": "automation/paste/test_prepare_conditioned_ftp_eight_pad.py",
       "destination": "integrations/lumenpnp/automation/paste/test_prepare_conditioned_ftp_eight_pad.py",
-      "sha256": "9e8f2e71e72ef457050da91c52c43e204ef2cd497c6c25e110e32a5a05a444ff",
-      "bytes": 16199
+      "sha256": "2f5889760854efdb3048a1c5468a16cf0e5edf62fd381138a3b633855ce98a46",
+      "bytes": 17567
     },
     {
       "sourceRoot": "/home/lumen/lumenpnp",
       "sourcePath": "automation/paste/author-conditioned-ftp-eight-pad.py",
       "destination": "integrations/lumenpnp/automation/paste/author-conditioned-ftp-eight-pad.py",
-      "sha256": "d6437fab9b46aa86b88b8cb5fe2eecaa426ec47dfb0ac6959c184326308f0473",
-      "bytes": 9989
+      "sha256": "fa4bfa4861819a84cc36e61aa05435ab48a92d008810c9b51013dfe566a559a5",
+      "bytes": 10524
     },
     {
       "sourceRoot": "/home/lumen/lumenpnp",
       "sourcePath": "automation/paste/author-conditioned-ftp-eight-pad.md",
       "destination": "integrations/lumenpnp/automation/paste/author-conditioned-ftp-eight-pad.md",
-      "sha256": "e017168fe383d7d75cb741194081dd6701eed910e809b3f37405742e3dd6b7cc",
-      "bytes": 4164
+      "sha256": "f48e2fee11383545b5ebc12fb9b623167b5ea46d5797a493fb40b3daa80ba527",
+      "bytes": 5119
     },
     {
       "sourceRoot": "/home/lumen/lumenpnp",
       "sourcePath": "automation/paste/author-conditioned-ftp-eight-pad.inputs.example.json",
       "destination": "integrations/lumenpnp/automation/paste/author-conditioned-ftp-eight-pad.inputs.example.json",
-      "sha256": "402987ff4dbac73b6fc99d04226eeccaccc61ad81555e3de1072e5214cdc033b",
-      "bytes": 3154
+      "sha256": "6ca324f8cde7fa8cd8cf27b90e85b85106fb6d008f14046df7feab89fb98ce1c",
+      "bytes": 3230
     },
     {
       "sourceRoot": "/home/lumen/lumenpnp",
       "sourcePath": "automation/paste/test_author_conditioned_ftp_eight_pad.py",
       "destination": "integrations/lumenpnp/automation/paste/test_author_conditioned_ftp_eight_pad.py",
-      "sha256": "a770e6c4488a98d5db136fc2e94c6fbd0eb5d1d87f7b9f8c5686a011575badf0",
-      "bytes": 7660
+      "sha256": "a373532ee7275512bb2f6a19aefe0fef62bb494e44378b34ee36cf1cb925e91c",
+      "bytes": 8458
     },
     {
       "sourceRoot": "/home/lumen/lumenpnp",
@@ -1691,29 +1691,29 @@
       "sourceRoot": "/home/lumen/lumenpnp",
       "sourcePath": "automation/paste/author-conditioned-ftp-pair.py",
       "destination": "integrations/lumenpnp/automation/paste/author-conditioned-ftp-pair.py",
-      "sha256": "cb85b3743bd18153d92ce7213c42f36c2696fe742f14c5b320a1b9f5f08fc3fd",
-      "bytes": 10049
+      "sha256": "35e5a40d22ccf5697b2d129d671d22660022f19a9d85493ff28314049c7e9e70",
+      "bytes": 10584
     },
     {
       "sourceRoot": "/home/lumen/lumenpnp",
       "sourcePath": "automation/paste/test_author_conditioned_ftp_pair.py",
       "destination": "integrations/lumenpnp/automation/paste/test_author_conditioned_ftp_pair.py",
-      "sha256": "82f3d716ef3d3868ced4489777a69f89fb0cca2c6ca124c7b13e1a9dd7a3c314",
-      "bytes": 7581
+      "sha256": "6fe0366e6434071b7d838908060d6f1f0b6b34aaa90c30badaa12e43ff6a5e94",
+      "bytes": 8379
     },
     {
       "sourceRoot": "/home/lumen/lumenpnp",
       "sourcePath": "automation/paste/author-conditioned-ftp-pair.md",
       "destination": "integrations/lumenpnp/automation/paste/author-conditioned-ftp-pair.md",
-      "sha256": "8367b8d286c47d92ac662732df96ba7806508b7eb9c06b19f77bf05c71687a06",
-      "bytes": 2675
+      "sha256": "28da1dffd4ac75dbfba779a4a02ec3828b3a5e702eb0ca07d7b4fee2ff17ddae",
+      "bytes": 3630
     },
     {
       "sourceRoot": "/home/lumen/lumenpnp",
       "sourcePath": "automation/paste/author-conditioned-ftp-pair.inputs.example.json",
       "destination": "integrations/lumenpnp/automation/paste/author-conditioned-ftp-pair.inputs.example.json",
-      "sha256": "27799485c788dfb631e28cf639111d545a9f26d91cca122d4f13438f7357c4a6",
-      "bytes": 2101
+      "sha256": "1a32ce8277d0d7259680f89da799e8e66c4be1583ba84df10d85455f48b51ef7",
+      "bytes": 2177
     },
     {
       "sourceRoot": "/home/lumen/lumenpnp",

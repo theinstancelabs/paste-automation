@@ -85,7 +85,8 @@ def build(args):
     if experiment.get('doseDegrees')!=target['compensatedSequence'].get('doseDegrees') or type(experiment.get('conditioningDoseDegrees')) is not int or experiment.get('conditioningDoseDegrees') not in (6,20):fail('Preparation experiment dose must match the selected FTP dose and use explicit conditioning dose6|20')
     gap=PREP.number(profile.get('estimatedGapMm'),'profile gap');unc=PREP.number(profile.get('gapUncertaintyMm'),'profile uncertainty')
     prefix,_,prep_accounting=PREP.stages_for(experiment,re,gap,unc)
-    if len(prefix)<2 or prefix[-2].get('axis')!='B' or prefix[-1].get('axis')!='Z':fail('Preparation must end with +R then lift')
+    retract_index=len(prefix)-2-(1 if experiment.get('conditioningFinalWipeMm',0) else 0)
+    if retract_index<0 or prefix[retract_index].get('axis')!='B' or prefix[-1].get('axis')!='Z':fail('Preparation must end with +R, optional reviewed wipe, then lift')
     at=dict(start)
     for s in prefix:at[s['axis']]=s['target']
     clearance=args.xy_clearance_raw_z
@@ -93,7 +94,7 @@ def build(args):
     pre_extra=[]
     if at['Z']!=clearance:pre_extra.append({'axis':'Z','target':clearance});at['Z']=clearance
     base_stages=prefix+pre_extra;all_stages=list(base_stages);out=copy.deepcopy(target)
-    out['inlineConditioning']={'schema':1,'protocol':'scrap-condition-transit-eight-pad','experiment':copy.deepcopy(experiment),'experimentEvidence':ee,'maximumTransferMilliseconds':15000,'prefixStageCount':len(prefix),'retractionStageIndex':len(prefix)-2,'liftStageIndex':len(prefix)-1}
+    out['inlineConditioning']={'schema':1,'protocol':'scrap-condition-transit-eight-pad','experiment':copy.deepcopy(experiment),'experimentEvidence':ee,'maximumTransferMilliseconds':15000,'prefixStageCount':len(prefix),'retractionStageIndex':len(prefix)-2-(1 if experiment.get('conditioningFinalWipeMm',0) else 0),'liftStageIndex':len(prefix)-1}
     c=out['compensatedSequence']
     for k in ('conditioningReportEvidence','conditioningLedgerEvidence','preparationExperimentEvidence','tipObservationEvidence','conditioningFinishedMs','maximumElapsedMilliseconds'):c.pop(k,None)
     out['pads']=copy.deepcopy(pads)

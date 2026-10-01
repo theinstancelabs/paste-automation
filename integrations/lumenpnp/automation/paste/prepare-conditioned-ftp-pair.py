@@ -98,8 +98,9 @@ def build(args):
     gap = PREP.number(profile.get('estimatedGapMm'), 'profile estimatedGapMm')
     uncertainty = PREP.number(profile.get('gapUncertaintyMm'), 'profile gapUncertaintyMm')
     prefix, prefix_poses, prep_accounting = PREP.stages_for(experiment, re, gap, uncertainty)
-    if len(prefix) < 2 or prefix[-2].get('axis') != 'B' or prefix[-1].get('axis') != 'Z':
-        fail('Preparation must end in selected +R retraction then lift')
+    retract_index=len(prefix)-2-(1 if experiment.get('conditioningFinalWipeMm',0) else 0)
+    if retract_index<0 or prefix[retract_index].get('axis') != 'B' or prefix[-1].get('axis') != 'Z':
+        fail('Preparation must end in selected +R, optional reviewed wipe, then lift')
     max_transfer = 15000
 
     # Derive transfer raw state from the authored prefix; do not invent any
@@ -128,7 +129,7 @@ def build(args):
     target_copy = copy.deepcopy(target)
     inline = {'schema':1,'protocol':'scrap-condition-transit-two-pad','experiment':copy.deepcopy(experiment),
               'experimentEvidence':ee,'maximumTransferMilliseconds':max_transfer,
-              'prefixStageCount':len(prefix),'retractionStageIndex':len(prefix)-2,'liftStageIndex':len(prefix)-1}
+              'prefixStageCount':len(prefix),'retractionStageIndex':len(prefix)-2-(1 if experiment.get('conditioningFinalWipeMm',0) else 0),'liftStageIndex':len(prefix)-1}
     target_copy['inlineConditioning'] = inline
     target_copy['compensatedSequence'] = copy.deepcopy(target.get('compensatedSequence',{}))
     for key in ('conditioningReportEvidence','conditioningLedgerEvidence','preparationExperimentEvidence',

@@ -50,6 +50,11 @@ def stages_for(experiment, review_evidence, gap, uncertainty):
     conditioning_dose = e.get('conditioningDoseDegrees')
     if type(conditioning_dose) is not int or conditioning_dose not in ((6,20) if mode == 'transfer-preparation' else (20,)):
         raise ValueError('Conditioning dose must be20, or explicitly6 for transfer preparation')
+    final_wipe = e.get('conditioningFinalWipeMm', 0)
+    if type(final_wipe) not in (int,float) or final_wipe not in (0,1.5):
+        raise ValueError('Final conditioning wipe must be0 or+X1.5 mm')
+    if final_wipe and (mode != 'transfer-preparation' or conditioning_dose != 6 or e.get('retractDegrees') != 3 or retract_dwell != 500 or e.get('conditioningFinalWipeReviewed') is not True):
+        raise ValueError('Final wipe requires reviewed transfer conditioner6/R3/500')
     before = e.get('preWipeReliefDegrees', 20)
     if type(before) is not int or before not in (2, 3, 4, 6, 20):
         raise ValueError('Pre-wipe relief must be 2, 3, 4, 6 or 20 degrees')
@@ -116,7 +121,9 @@ def stages_for(experiment, review_evidence, gap, uncertainty):
         if axis != 'B' and abs(target-at[axis]) > (5 if axis == 'Z' else 10):
             raise ValueError('Linear stage exceeds existing reviewed batch limit')
         if axis in ('X', 'Y') and at['Z'] != clear:
-            raise ValueError('Only the named initial wipe permits working-height XY')
+            exact_final = (final_wipe == 1.5 and axis == 'X' and at['Z'] == work and at['X'] == targets[1]['X'] and at['Y'] == targets[1]['Y'] and target == round(targets[1]['X']+1.5,2) and extra.get('wipeReview') is True and extra.get('wipeReviewEvidence') == review_evidence and stages[-1]['axis'] == 'B' and poses[-1]['B']-poses[-2]['B'] == e['retractDegrees'])
+            if not exact_final:
+                raise ValueError('Working-height XY requires the exact reviewed final dummy wipe')
         stages.append({'axis': axis, 'target': target, **extra})
         at[axis] = target
         poses.append(dict(at))
@@ -140,6 +147,8 @@ def stages_for(experiment, review_evidence, gap, uncertainty):
         else:
             stroke(-dose, conditioning_dwell if index == 0 else dwell)
         stroke(e['retractDegrees'], retract_dwell)
+        if index == 0 and final_wipe:
+            add('X', round(at['X']+final_wipe,2), wipeReview=True, wipeReviewEvidence=review_evidence, estimatedGapMm=gap, gapUncertaintyMm=uncertainty)
         add('Z', clear)
     if mode == 'coupon':
         for index in range(idle//20):

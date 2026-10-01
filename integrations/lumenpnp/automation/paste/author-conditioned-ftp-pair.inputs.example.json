@@ -32,7 +32,8 @@
     "bothHeadsClearanceReviewed": false,
     "clearTransitCorridorReviewed": false,
     "scrapPrimeAndWipeReviewed": false,
-    "tipReviewedNoLongStrand": false
+    "tipReviewedNoLongStrand": false,
+    "conditioningFinalWipeReviewed": false
   },
   "sources": {
     "template": {
@@ -110,5 +111,6 @@
   ],
   "dwellMilliseconds": 1000,
   "retractDegrees": 2,
-  "conditioningDoseDegrees": 20
+  "conditioningDoseDegrees": 20,
+  "conditioningFinalWipeMm": 0
 }

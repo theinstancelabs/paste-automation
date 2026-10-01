@@ -34,13 +34,18 @@ def derive(q,load,now):
  if type(conditioning) is not int or conditioning not in (6,20):fail('Conditioning dose must be integer6 or20 degrees')
  retract=q.get('retractDegrees',2)
  if type(retract) is not int or retract not in (2,3):fail('Retraction must be integer2 or3 degrees')
+ final_wipe=q.get('conditioningFinalWipeMm',0)
+ if type(final_wipe) not in (int,float) or final_wipe not in (0,1.5):fail('Final conditioning wipe must be0 or+X1.5 mm')
+ if final_wipe and (conditioning!=6 or retract!=3 or attest.get('conditioningFinalWipeReviewed') is not True):fail('Final wipe requires conditioner6/R3 and explicit complete-path review')
  clear=q.get('xyClearanceRawZ');work=q.get('surfaceRawZ')
  if not finite(clear) or not finite(work) or clear>=work:fail('Explicit work/clearance Z required')
  surface=docs['surface'].get('surface');offset=docs['tipOffset'].get('cameraMinusTipXYMm')
  if not surface or surface.get('rawZ')!=work:fail('Selected surface Z must equal immutable surface evidence')
  if not isinstance(offset,list) or len(offset)!=2 or not all(finite(v) for v in offset):fail('Immutable selected tip offset required')
- exp=copy.deepcopy(docs['scrapExperiment']);exp.update(startRaw=copy.deepcopy(raw),doseDegrees=q['doseDegrees'],retractDegrees=retract,conditioningDoseDegrees=conditioning,targetsXY=copy.deepcopy(q.get('scrapTargetsXY')))
+ exp=copy.deepcopy(docs['scrapExperiment']);exp.update(startRaw=copy.deepcopy(raw),doseDegrees=q['doseDegrees'],retractDegrees=retract,conditioningDoseDegrees=conditioning,conditioningFinalWipeMm=final_wipe,targetsXY=copy.deepcopy(q.get('scrapTargetsXY')))
  if exp.get('mode')!='transfer-preparation' or exp.get('workRawZ')!=raw['Z'] or not isinstance(exp['targetsXY'],list) or len(exp['targetsXY'])!=2:fail('Explicit transfer-preparation experiment and two scrap XY targets required')
+ if final_wipe:exp['conditioningFinalWipeReviewed']=attest['conditioningFinalWipeReviewed']
+ else:exp.pop('conditioningFinalWipeReviewed',None)
  # Full emitted prefix is checked by the existing preparer; retain its authored amounts and waits.
  target=copy.deepcopy(docs['targetBase']);target.update(schema=1,scope='ftp-two-pad-commissioning-targets',reviewedBy=q['reviewedBy'],reviewedMs=stamp,**session)
  for k in ('boardCleaned','padsAvailable','boardUnmovedSinceRegistration'):target[k]=attest[k]
