@@ -290,32 +290,33 @@ class RetractionCouponTests(unittest.TestCase):
             M.WIPE.write_exclusive(args.output,result)
             with self.assertRaises(FileExistsError): M.WIPE.write_exclusive(args.output,result)
 
-    def test_3600_preparer_hash_loads_matching_travel_review_into_request_evidence(self):
+    def test_3600_and_8400_preparer_hash_load_matching_travel_review_into_request_evidence(self):
         with tempfile.TemporaryDirectory() as d:
             args = self.fixture(d)
             recipe = M.build(args); recipe_path = Path(d)/'recipe-input.json'
             M.WIPE.write_exclusive(recipe_path, recipe)
-            travel = Path(d)/'travel.json'; travel.write_text(json.dumps({'synthetic':'review only'}))
-            travel_ev = M.WIPE.evidence(travel)
-            amendment = Path(d)/'amendment.json'
-            amendment.write_text(json.dumps({'newMaximumAbsoluteDegrees':3600,'travelReviewEvidence':travel_ev}))
-            base = json.loads(Path(args.template).read_text())
-            base['budgetAmendmentEvidence'] = dict(M.WIPE.evidence(amendment),newMaximumAbsoluteDegrees=3600,travelReviewEvidence=travel_ev)
-            Path(args.template).write_text(json.dumps(base))
             def prepare(name):
                 out = Path(d)/name
                 with contextlib.redirect_stdout(io.StringIO()):
                     M.BATCH.prepare(SimpleNamespace(template=args.template,barrier=args.barrier,image=args.image,recipe=str(recipe_path),output=str(out)))
                 return json.loads((out/'preview-request.json').read_text())
-            request = prepare('accepted')
-            self.assertIn(travel_ev,request['evidence'])
-            base['budgetAmendmentEvidence']['travelReviewEvidence'] = dict(travel_ev,sha256='b'*64)
-            Path(args.template).write_text(json.dumps(base))
-            with self.assertRaises(ValueError): prepare('mismatch')
-            base['budgetAmendmentEvidence']['travelReviewEvidence'] = travel_ev
-            Path(args.template).write_text(json.dumps(base))
-            travel.write_text(json.dumps({'synthetic':'changed after review'}))
-            with self.assertRaises(ValueError): prepare('changed-review')
+            for ceiling in (3600,8400):
+                travel = Path(d)/f'travel-{ceiling}.json'; travel.write_text(json.dumps({'synthetic':'review only','ceiling':ceiling}))
+                travel_ev = M.WIPE.evidence(travel)
+                amendment = Path(d)/f'amendment-{ceiling}.json'
+                amendment.write_text(json.dumps({'newMaximumAbsoluteDegrees':ceiling,'travelReviewEvidence':travel_ev}))
+                base = json.loads(Path(args.template).read_text())
+                base['budgetAmendmentEvidence'] = dict(M.WIPE.evidence(amendment),newMaximumAbsoluteDegrees=ceiling,travelReviewEvidence=travel_ev)
+                Path(args.template).write_text(json.dumps(base))
+                request = prepare(f'accepted-{ceiling}')
+                self.assertIn(travel_ev,request['evidence'])
+                base['budgetAmendmentEvidence']['travelReviewEvidence'] = dict(travel_ev,sha256='b'*64)
+                Path(args.template).write_text(json.dumps(base))
+                with self.assertRaises(ValueError): prepare(f'mismatch-{ceiling}')
+                base['budgetAmendmentEvidence']['travelReviewEvidence'] = travel_ev
+                Path(args.template).write_text(json.dumps(base))
+                travel.write_text(json.dumps({'synthetic':'changed after review'}))
+                with self.assertRaises(ValueError): prepare(f'changed-review-{ceiling}')
 
     def test_changed_experiment_or_ledger_and_stale_image_are_rejected(self):
         for changed in ('experiment', 'ledger', 'image'):

@@ -98,10 +98,11 @@ def prepare(args):
  elif recipe.get('targetSurface') not in (None,'scrap') or 'ftpTargetEvidence' in recipe: err('Explicit supported target surface required')
  q['evidence']=[q[k] for k in ('barrierEvidence','reviewedImageEvidence','profileEvidence','previousReportEvidence','primeLedgerEvidence','priorLedgerEvidence','carryoverEvidence')]+[{'path':str(lp),'sha256':q['previousLedgerSha256']},clear]
  amendment=q.get('budgetAmendmentEvidence')
- if amendment and amendment.get('newMaximumAbsoluteDegrees')==3600:
-  amend_ev=sha_evidence(amendment,'3600-degree amendment'); record,_,_=read(amend_ev['path'])
+ if amendment and amendment.get('newMaximumAbsoluteDegrees') in (3600,8400):
+  ceiling=amendment['newMaximumAbsoluteDegrees']
+  amend_ev=sha_evidence(amendment,f'{ceiling}-degree amendment'); record,_,_=read(amend_ev['path'])
   travel=sha_evidence(record.get('travelReviewEvidence'),'travelReviewEvidence')
-  if record.get('newMaximumAbsoluteDegrees')!=3600 or not same(amendment.get('travelReviewEvidence'),travel): err('3600-degree amendment travel review must match request envelope')
+  if record.get('newMaximumAbsoluteDegrees')!=ceiling or not same(amendment.get('travelReviewEvidence'),travel): err(f'{ceiling}-degree amendment travel review must match request envelope')
   q['evidence'].append(travel)
  node_validate(q,True)
  (out/'preview-request.json').write_text(json.dumps(q,indent=2)+'\n')
