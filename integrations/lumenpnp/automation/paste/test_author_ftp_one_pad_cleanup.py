@@ -21,6 +21,13 @@ class CleanupAuthorTests(unittest.TestCase):
   before=copy.deepcopy(self.q);r,p,t=M.derive(self.q,self.load,self.q['reviewedMs'])
   self.assertEqual(before,self.q);self.assertEqual(t['reviewedMs'],self.q['reviewedMs']);self.assertEqual(t['pads'][0]['rawPose'],dict(X=54.6,Y=264.49,Z=58.4,A=720));self.assertEqual(t['cleanupSequence']['retractDegrees'],20)
   self.assertNotIn('inlineConditioning',t);self.assertNotIn('compensatedSequence',t);self.assertEqual(r['rawZRange'],[53.45,58.4]);self.assertAlmostEqual(p['estimatedGapMm'],5.4)
+ def test_explicit100_selects_distinct_five_stage_protocol(self):
+  self.q['retractDegrees']=100
+  _,_,t=M.derive(self.q,self.load,self.q['reviewedMs'])
+  self.assertEqual(t['cleanupSequence']['protocol'],'positive-B-aspiration-series-lift-one-pad');self.assertEqual(t['cleanupSequence']['retractDegrees'],100)
+  for bad in (True,100.0,80,120,-100):
+   self.q['retractDegrees']=bad
+   with self.assertRaises(ValueError):M.derive(self.q,self.load,self.q['reviewedMs'])
  def test_missing_review_wrong_start_stale_defect_negative_amount_fail(self):
   for edit in [lambda q:q['attestations'].update(defectReviewed=False),lambda q:q.update(reviewedMs=q['reviewedMs']-300001),lambda q:q['startRaw'].update(B=-999),lambda q:q.update(defectCapturedMs=q['defectCapturedMs']-1),lambda q:q.update(retractDegrees=-20),lambda q:q.update(padId='R16.1')]:
    q=copy.deepcopy(self.q);edit(q)

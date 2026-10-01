@@ -26,7 +26,7 @@ def derive(q,load,now):
  if not C.finite(clear) or clear!=raw['Z'] or not C.finite(work) or clear>=work:fail('Barrier must already be at explicit cleanup clearance')
  if not isinstance(offset,list) or len(offset)!=2 or not all(C.finite(v) for v in offset):fail('Bound tip offset required')
  amount=q.get('retractDegrees');wait=q.get('dwellMilliseconds')
- if type(amount) is not int or amount not in (6,20) or type(wait) is not int or not 0<=wait<=2000:fail('Explicit positive6|20 and integer dwell0..2000 required')
+ if type(amount) is not int or amount not in (6,20,100) or type(wait) is not int or not 0<=wait<=2000:fail('Explicit positive6|20 or five-stage100 and integer dwell0..2000 required')
  padid=q.get('padId');registered={p['padId']:p for p in docs['registration'].get('resistorPadMachineXYTargets',[])}
  if padid not in ('R1.1','R40.1','R16.2') or padid not in registered:fail('Eligible registered defect pad required')
  xy=registered[padid]['machineXYMm'];session={k:docs['template'][k] for k in ('sessionId','jvmStartMs','liveConfigurationSha256')}
@@ -34,7 +34,7 @@ def derive(q,load,now):
  for k in ('compensatedSequence','inlineConditioning','pairReferences','padAvailabilityImage','padAvailabilityReport','boardCleaned','padsAvailable'):target.pop(k,None)
  target.update(schema=1,scope='ftp-one-pad-cleanup-targets',reviewedBy=q['reviewedBy'],reviewedMs=stamp,**session)
  target.update(boardUnmovedSinceRegistration=attest['boardUnmovedSinceRegistration'],registrationEvidence=copy.deepcopy(src['registration']),registrationRevalidationEvidence=copy.deepcopy(src['registrationRevalidation']),surfaceEvidence=copy.deepcopy(src['surface']),surface=copy.deepcopy(surface),tipOffsetEvidence=copy.deepcopy(src['tipOffset']),cameraMinusTipXYMm=copy.deepcopy(offset),provenance='commissioning-provisional',precisionCalibrated=False,flowCalibrated=False,quantizationMm=.01)
- target['cleanupSequence']={'schema':1,'protocol':'positive-B-aspiration-lift-one-pad','retractDegrees':amount,'dwellMilliseconds':wait}
+ target['cleanupSequence']={'schema':1,'protocol':'positive-B-aspiration-series-lift-one-pad' if amount==100 else 'positive-B-aspiration-lift-one-pad','retractDegrees':amount,'dwellMilliseconds':wait}
  target['pads']=[{'padId':padid,'rawPose':{'X':C.q01(xy[0]-offset[0]),'Y':C.q01(xy[1]-offset[1]),'Z':work,'A':raw['A']},'padIdentityReviewed':attest['padIdentityReviewed'],'defectReviewed':attest['defectReviewed'],'defectReportEvidence':copy.deepcopy(src['defectReport']),'defectImageEvidence':copy.deepcopy(src['defectImage']),'defectCapturedMs':q.get('defectCapturedMs')}]
  C.validate_target(target,now,docs['template'])
  C.validate_defect_observation(target['pads'][0],docs['template'],now)

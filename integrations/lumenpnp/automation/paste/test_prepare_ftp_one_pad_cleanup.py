@@ -23,6 +23,17 @@ class OnePadCleanupTests(unittest.TestCase):
    for stage in stages:
     if stage['axis']=='X' or stage['axis']=='Y':self.assertEqual(z,53.4);self.assertLessEqual(abs(stage['target']-xy[stage['axis']]),9.9+1e-9);xy[stage['axis']]=stage['target']
     if stage['axis']=='Z':self.assertLessEqual(abs(stage['target']-z),5.0);z=stage['target']
+ def test_explicit100_is_five_plus20_then_lift_and_charges100(self):
+  self.target['cleanupSequence'].update(protocol='positive-B-aspiration-series-lift-one-pad',retractDegrees=100,dwellMilliseconds=2000)
+  out,stages,bounds,heads,acct=M.build_route(self.raw,self.poses,self.target,53.4);p=out['pads'][0];indices=p['aspirationStageIndices']
+  self.assertEqual(len(indices),5);self.assertEqual(indices,list(range(indices[0],indices[0]+5)));self.assertNotIn('aspirationStageIndex',p)
+  at=self.raw['B']
+  for i in indices:
+   self.assertEqual(stages[i]['axis'],'B');self.assertEqual(stages[i]['target']-at,20);self.assertEqual(stages[i]['dwellMilliseconds'],2000);at=stages[i]['target']
+  self.assertEqual(p['liftStageIndex'],indices[-1]+1);self.assertEqual(p['liftStageIndex'],len(stages)-1)
+  self.assertEqual(acct['grossChargedDegrees'],100);self.assertEqual(acct['netDegrees'],100);self.assertEqual(acct['finalB'],-900)
+  self.target['cleanupSequence']['protocol']='positive-B-aspiration-lift-one-pad'
+  with self.assertRaises(ValueError):M.build_route(self.raw,self.poses,self.target,53.4)
  def test_target_gate_rejects_compensated_pair_and_noneligible_or_unreviewed_pad(self):
   template={'sessionId':'s','jvmStartMs':1,'liveConfigurationSha256':'a'*64};now=self.now
   t={**self.target,'schema':1,'boardId':'board','sessionId':'s','jvmStartMs':1,'liveConfigurationSha256':'a'*64,'reviewedBy':'reviewer','reviewedMs':now,'boardUnmovedSinceRegistration':True,'provenance':'commissioning-provisional','precisionCalibrated':False,'flowCalibrated':False,'quantizationMm':.01,'cleanupSequence':self.target['cleanupSequence'],'cadEvidence':self.ev,'registrationRevalidationEvidence':self.ev,'tipOffsetEvidence':self.ev,'padChecks':[{'reference':r,'reviewedAligned':True,'reportEvidence':self.ev,'imageEvidence':self.ev} for r in ('R1','R16','R40')],'defectReviewed':True}

@@ -19,7 +19,7 @@ def validate_target(t,now,template):
  if not isinstance(t.get('reviewedBy'),str) or not t['reviewedBy'].strip() or type(t.get('reviewedMs')) is not int or not 0<=now-t['reviewedMs']<=300000:fail('Fresh authored cleanup review required')
  if t.get('boardUnmovedSinceRegistration') is not True or t.get('provenance')!='commissioning-provisional' or t.get('precisionCalibrated') is not False or t.get('flowCalibrated') is not False:fail('Explicit unmoved and provisional board status required')
  c=t.get('cleanupSequence') or {}
- if c.get('schema')!=1 or c.get('protocol')!='positive-B-aspiration-lift-one-pad' or c.get('retractDegrees') not in (6,20) or type(c.get('dwellMilliseconds')) is not int or not 0<=c['dwellMilliseconds']<=2000:fail('Cleanup sequence must be positive B6|20 with authored integer dwell 0..2000')
+ if c.get('schema')!=1 or not ((c.get('protocol')=='positive-B-aspiration-lift-one-pad' and c.get('retractDegrees') in (6,20)) or (c.get('protocol')=='positive-B-aspiration-series-lift-one-pad' and c.get('retractDegrees')==100)) or type(c.get('dwellMilliseconds')) is not int or not 0<=c['dwellMilliseconds']<=2000:fail('Cleanup sequence must be positive B6|20 or explicit five-stage100 with authored integer dwell 0..2000')
  pads=t.get('pads');
  if not isinstance(pads,list) or len(pads)!=1:fail('Exactly one reviewed defect pad required')
  p=pads[0]
@@ -76,11 +76,13 @@ def build_route(raw,poses,t,clearance):
    append(axis,v)
  move('X',pose['X'],9.9);move('Y',pose['Y'],9.9);move('Z',work,5.0)
  if at['Z']!=work:fail('Route failed to approach exact reviewed work plane')
- asp=append('B',at['B']+c['retractDegrees'],gapEvidence=t['surfaceEvidence'],estimatedGapMm=gap,gapUncertaintyMm=unc,dwellMilliseconds=c['dwellMilliseconds'])
+ series=c.get('protocol')=='positive-B-aspiration-series-lift-one-pad'
+ if series and c.get('retractDegrees')!=100 or not series and (c.get('protocol')!='positive-B-aspiration-lift-one-pad' or c.get('retractDegrees') not in (6,20)):fail('Exact cleanup amount/protocol required')
+ indices=[append('B',at['B']+(20 if series else c['retractDegrees']),gapEvidence=t['surfaceEvidence'],estimatedGapMm=gap,gapUncertaintyMm=unc,dwellMilliseconds=c['dwellMilliseconds']) for _ in range(5 if series else 1)]
  lift=append('Z',clearance)
- if asp is None or lift!=asp+1 or len(stages)!=lift+1:fail('Exactly one positive-B stage immediately followed by final lift required')
+ if any(i is None for i in indices) or lift!=indices[-1]+1 or len(stages)!=lift+1:fail('Exact consecutive positive-B stages immediately followed by final lift required')
  if len(stages)>40:fail('One-pad cleanup route exceeds native 40-stage limit')
- out=copy.deepcopy(t);out['pads'][0]['aspirationStageIndex']=asp;out['pads'][0]['liftStageIndex']=lift
+ out=copy.deepcopy(t);pad=out['pads'][0];pad.pop('aspirationStageIndex',None);pad.pop('aspirationStageIndices',None);pad['aspirationStageIndices' if series else 'aspirationStageIndex']=indices if series else indices[0];pad['liftStageIndex']=lift
  bounds={a:{'min':min(v[a] for v in states),'max':max(v[a] for v in states)} for a in ('X','Y','Z','B')};heads={}
  for name in ('N1','N2'):
   lim={}
@@ -124,7 +126,7 @@ def main():
  for path,data,digest in bound_sources:
   if hashlib.sha256(data).hexdigest()!=digest or path.read_bytes()!=data:fail('Bound target evidence changed while preparing: '+str(path))
  outdir=Path(a.output).resolve();outdir.mkdir(parents=True,exist_ok=False);targetcopy=outdir/'targets.json';targetcopy.write_text(json.dumps(out,indent=2,allow_nan=False)+'\n')
- recipe={'mode':'wet','stages':stages,'rawBounds':bounds,'headClearanceBounds':heads,'xyClearanceRawZ':a.xy_clearance_raw_z,'clearanceReviewEvidence':evidence(rp),'profileEvidence':evidence(pp),'previousReportEvidence':evidence(prp),'previousLedgerPath':str(lp),'targetSurface':'ftp-one-pad-cleanup','ftpTargetEvidence':evidence(targetcopy),'computedAspirationLiftIndices':{out['pads'][0]['padId']:[out['pads'][0]['aspirationStageIndex'],out['pads'][0]['liftStageIndex']]},'bAccounting':acct,'sourceTargetEvidence':evidence(sp)}
+ recipe={'mode':'wet','stages':stages,'rawBounds':bounds,'headClearanceBounds':heads,'xyClearanceRawZ':a.xy_clearance_raw_z,'clearanceReviewEvidence':evidence(rp),'profileEvidence':evidence(pp),'previousReportEvidence':evidence(prp),'previousLedgerPath':str(lp),'targetSurface':'ftp-one-pad-cleanup','ftpTargetEvidence':evidence(targetcopy),'computedAspirationLiftIndices':{out['pads'][0]['padId']:[out['pads'][0].get('aspirationStageIndices',out['pads'][0].get('aspirationStageIndex')),out['pads'][0]['liftStageIndex']]},'bAccounting':acct,'sourceTargetEvidence':evidence(sp)}
  recipep=outdir/'recipe.json';recipep.write_text(json.dumps(recipe,indent=2,allow_nan=False)+'\n');nativeout=outdir/'native';cmd=[sys.executable,str(GENERIC),'prepare','--template',str(tp),'--barrier',str(bp),'--image',str(image),'--recipe',str(recipep),'--output',str(nativeout)]
  try:result=subprocess.run(cmd,check=True,text=True,capture_output=True)
  except subprocess.CalledProcessError as e:fail('Generic disabled validator rejected cleanup: '+(e.stderr or e.stdout).strip())
@@ -132,7 +134,7 @@ def main():
   if path.read_bytes()!=data:fail(label+' changed during generic validation')
  for path,data,digest in bound_sources:
   if hashlib.sha256(data).hexdigest()!=digest or path.read_bytes()!=data:fail('Bound target evidence changed during generic validation: '+str(path))
- print(json.dumps({'target':str(targetcopy),'recipe':str(recipep),'previewRequest':str(nativeout/'preview-request.json'),'stages':len(stages),'aspirationIndex':out['pads'][0]['aspirationStageIndex'],'liftIndex':out['pads'][0]['liftStageIndex'],'bAccounting':acct,'genericValidator':result.stdout.strip(),'enabled':False,'motionDispatched':False},indent=2))
+ print(json.dumps({'target':str(targetcopy),'recipe':str(recipep),'previewRequest':str(nativeout/'preview-request.json'),'stages':len(stages),'aspirationIndex':out['pads'][0].get('aspirationStageIndices',out['pads'][0].get('aspirationStageIndex')),'liftIndex':out['pads'][0]['liftStageIndex'],'bAccounting':acct,'genericValidator':result.stdout.strip(),'enabled':False,'motionDispatched':False},indent=2))
 if __name__=='__main__':
  try:main()
  except Exception as e:argparse.ArgumentParser().error(str(e))
