@@ -128,6 +128,62 @@ class LiveViewerHttpTest(unittest.TestCase):
         self.assertNotIn('extra', body or {})
         self.assertIn("el('message').textContent=s.message||''", live_viewer.PAGE.decode())
 
+    def test_paste_status_derives_live_stage_progress_without_exposing_report_path(self):
+        with tempfile.TemporaryDirectory() as td:
+            repository = Path(td)
+            batch_id = '12345678-1234-1234-1234-123456789abc'
+            report_dir = repository / 'automation/evidence' / ('paste-contiguous-batch-' + batch_id)
+            report_dir.mkdir(parents=True)
+            report_path = report_dir / 'report.json'
+            report_path.write_text(json.dumps({
+                'id': batch_id, 'status': 'running', 'motionSubmitted': True,
+                'request': {'previewStages': [{}, {}, {}, {}], 'ftpTargetRecord': {'pads': [
+                    {'padId': 'R1.1', 'rawPose': {'X': 10, 'Y': 20}},
+                    {'padId': 'R1.2', 'rawPose': {'X': 30, 'Y': 40}},
+                ]}},
+                'stages': [{'verified': True, 'targetRaw': {'X': 10, 'Y': 20}},
+                           {'verified': True, 'targetRaw': {'X': 30, 'Y': 40}},
+                           {'verified': False, 'targetRaw': {'X': 10, 'Y': 20}}],
+            }))
+            status_file = repository / 'run-status.json'
+            status_file.write_text(json.dumps({
+                'status': 'running', 'phase': 'dispensing', 'currentPad': None,
+                'completedPads': 0, 'totalPads': 8, 'message': 'runner active',
+                'updatedAt': '2026-10-01T20:00:00Z', 'activeReport': str(report_path),
+            }))
+            with (mock.patch.object(live_viewer, 'REPOSITORY', repository),
+                  mock.patch.object(live_viewer, 'PASTE_EVIDENCE_ROOT', repository / 'automation/evidence'),
+                  mock.patch.object(live_viewer, 'PASTE_STATUS_PATH', status_file)):
+                status, payload = self.request('GET', '/paste-status', headers=self.private_headers())
+                self.assertEqual(status, 200)
+                self.assertEqual(payload['currentPad'], 'R1.1')
+                self.assertEqual(payload['completedPads'], 0)
+                self.assertEqual(payload['totalPads'], 8)
+                self.assertEqual(payload['message'], 'Dispensing script: verified stages 2/4; current pad R1.1')
+                self.assertNotIn('activeReport', payload)
+                self.assertNotIn(str(report_path), json.dumps(payload))
+
+                report = json.loads(report_path.read_text())
+                report['stages'] = [{'verified': True} for _ in range(4)]
+                for report_status in ('completed-contiguous-air-batch-awaiting-observation',
+                                      'completed-contiguous-batch-awaiting-observation'):
+                    report['status'] = report_status
+                    report_path.write_text(json.dumps(report))
+                    status, payload = self.request('GET', '/paste-status', headers=self.private_headers())
+                    self.assertEqual(payload['status'], 'completed')
+                    self.assertEqual(payload['completedPads'], 0)
+                    self.assertIn('awaiting image inspection after completion', payload['message'])
+
+                # An active report outside the one allowed evidence path falls back to static metadata.
+                status_file.write_text(json.dumps({
+                    'status': 'running', 'phase': 'dispensing', 'currentPad': None,
+                    'completedPads': 0, 'totalPads': 8, 'message': 'static fallback',
+                    'updatedAt': '2026-10-01T20:00:00Z', 'activeReport': str(repository / 'escape.json'),
+                }))
+                status, payload = self.request('GET', '/paste-status', headers=self.private_headers())
+                self.assertEqual(payload['message'], 'static fallback')
+                self.assertIsNone(payload['currentPad'])
+
     def test_dispatches_once_and_reports_success(self):
         with mock.patch.object(live_viewer.subprocess, 'run', return_value=subprocess.CompletedProcess([], 0)) as run:
             headers = self.private_headers(True, 'duplicate-0001')

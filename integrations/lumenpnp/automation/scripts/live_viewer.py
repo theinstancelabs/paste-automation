@@ -34,7 +34,84 @@ _ASSET_MAP_LOCK = threading.Lock()
 _ASSET_MAP_SIGNATURE = None
 _ASSET_MAP = {}
 PASTE_STATUS_PATH = REPOSITORY / 'automation/paste/run-status.json'
+PASTE_EVIDENCE_ROOT = REPOSITORY / 'automation/evidence'
 PASTE_STATUSES = {'pending', 'running', 'blocked', 'completed'}
+
+
+def _trusted_active_report(path):
+    """Load only a canonical report in the approved batch evidence directory."""
+    if not isinstance(path, str):
+        return None
+    match = re.fullmatch(
+        re.escape(str(REPOSITORY)) +
+        r'/automation/evidence/paste-contiguous-batch-([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})/report\.json',
+        path)
+    if not match:
+        return None
+    try:
+        root = PASTE_EVIDENCE_ROOT.resolve(strict=True)
+        candidate = Path(path)
+        resolved = candidate.resolve(strict=True)
+        if (resolved != candidate or resolved.parent.parent != root
+                or resolved.parent.name != 'paste-contiguous-batch-' + match.group(1)
+                or resolved.name != 'report.json' or not resolved.is_file()):
+            return None
+        report = json.loads(resolved.read_text(encoding='utf-8'))
+        if not isinstance(report, dict) or report.get('id') != match.group(1):
+            return None
+        return report, resolved.stat().st_mtime
+    except (OSError, RuntimeError, ValueError, TypeError):
+        return None
+
+
+def _active_report_progress(report):
+    """Return display-safe state for a live motion report, or None for previews."""
+    if report.get('motionSubmitted') is not True:
+        return None
+    request = report.get('request')
+    stages = report.get('stages')
+    if not isinstance(request, dict) or not isinstance(stages, list):
+        return None
+    planned = request.get('previewStages')
+    total = len(planned) if isinstance(planned, list) else 0
+    verified = sum(1 for stage in stages
+                   if isinstance(stage, dict) and stage.get('verified') is True)
+    current_pad = None
+    target = next((stage for stage in reversed(stages)
+                   if isinstance(stage, dict) and isinstance(stage.get('targetRaw'), dict)), None)
+    ftp = request.get('ftpTargetRecord')
+    pads = ftp.get('pads') if isinstance(ftp, dict) else None
+    if target and isinstance(pads, list):
+        xy = target['targetRaw']
+        try:
+            x, y = float(xy['X']), float(xy['Y'])
+            matches = [p.get('padId') for p in pads if isinstance(p, dict)
+                       and isinstance(p.get('rawPose'), dict)
+                       and abs(float(p['rawPose']['X']) - x) <= 0.005
+                       and abs(float(p['rawPose']['Y']) - y) <= 0.005
+                       and isinstance(p.get('padId'), str)]
+            if len(matches) == 1:
+                current_pad = matches[0]
+        except (KeyError, TypeError, ValueError):
+            current_pad = None
+    report_status = report.get('status')
+    if (report_status in ('completed-contiguous-air-batch-awaiting-observation',
+                          'completed-contiguous-batch-awaiting-observation')
+            and total > 0 and verified == total):
+        status = 'completed'
+        message = (f'Dispensing script: verified stages {verified}/{total}; '
+                   'awaiting image inspection after completion')
+    elif (report.get('transportUncertain') is True
+          or (isinstance(report_status, str) and
+              (report_status.startswith('failed') or report_status.startswith('blocked')))):
+        status = 'blocked'
+        message = f'Dispensing script: verified stages {verified}/{total}; report requires review'
+    else:
+        status = 'running'
+        message = f'Dispensing script: verified stages {verified}/{total}'
+        if current_pad:
+            message += f'; current pad {current_pad}'
+    return {'status': status, 'currentPad': current_pad, 'message': message}
 
 
 def paste_status():
@@ -46,7 +123,7 @@ def paste_status():
         status = value.get('status')
         if status not in PASTE_STATUSES:
             raise ValueError('invalid status')
-        return {
+        result = {
             'phase': str(value.get('phase') or ''),
             'currentPad': value.get('currentPad'),
             'completedPads': value.get('completedPads', 0),
@@ -55,6 +132,15 @@ def paste_status():
             'updatedAt': str(value.get('updatedAt') or ''),
             'status': status,
         }
+        active = _trusted_active_report(value.get('activeReport'))
+        if active:
+            report, report_mtime = active
+            progress = _active_report_progress(report)
+            if progress:
+                result.update(progress)
+                from datetime import datetime, timezone
+                result['updatedAt'] = datetime.fromtimestamp(report_mtime, timezone.utc).isoformat()
+        return result
     except FileNotFoundError:
         return {'phase': 'waiting', 'currentPad': None, 'completedPads': 0,
                 'totalPads': 0, 'message': 'Paste run has not started.',

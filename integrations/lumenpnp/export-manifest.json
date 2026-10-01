@@ -998,8 +998,8 @@
       "sourceRoot": "/home/lumen/lumenpnp",
       "sourcePath": "automation/scripts/live_viewer.py",
       "destination": "integrations/lumenpnp/automation/scripts/live_viewer.py",
-      "sha256": "66b4c4aab815f555ec5eb796ad0554f27055b884b8c4b343a7e589a58f7a01ec",
-      "bytes": 25803
+      "sha256": "0a031597b194d4eb310b742156123c1ca886f1e79dfe66e0edf083729519832f",
+      "bytes": 29902
     },
     {
       "sourceRoot": "/home/lumen/lumenpnp",
@@ -1068,8 +1068,8 @@
       "sourceRoot": "/home/lumen/lumenpnp",
       "sourcePath": "automation/tests/test_live_viewer_http.py",
       "destination": "integrations/lumenpnp/automation/tests/test_live_viewer_http.py",
-      "sha256": "a91c90eec224e78a6fb7bbda2d6647115c97baeb5b84522f3f1f7fbbb2419fb9",
-      "bytes": 9655
+      "sha256": "1e2bcd626ab455984077d6f519d21cd99d9bf75ca5510021ebd08bd696c702cd",
+      "bytes": 13403
     },
     {
       "sourceRoot": "/home/lumen/lumenpnp",
