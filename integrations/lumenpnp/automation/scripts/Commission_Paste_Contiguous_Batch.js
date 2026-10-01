@@ -19,6 +19,7 @@ var PASTE_CONTIGUOUS_BATCH_ENABLED = true;
  eval(read(root+'automation/paste/ftp-pad-group.cjs'));
  eval(read(root+'automation/paste/ftp-inline-conditioning.cjs'));
  eval(read(root+'automation/paste/ftp-registration-revalidation.cjs'));
+ eval(read(root+'automation/paste/ftp-one-pad-cleanup.cjs'));
  eval(read(root+'automation/paste/ftp-two-pad.cjs'));
  eval(read(root+'automation/paste/commissioning-stroke.cjs'));
  eval(read(root+'automation/paste/waste-prime-native-preview.js'));

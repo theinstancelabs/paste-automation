@@ -12,6 +12,7 @@
  eval(read(root+'automation/paste/ftp-pad-group.cjs'));
  eval(read(root+'automation/paste/ftp-inline-conditioning.cjs'));
  eval(read(root+'automation/paste/ftp-registration-revalidation.cjs'));
+ eval(read(root+'automation/paste/ftp-one-pad-cleanup.cjs'));
  eval(read(root+'automation/paste/ftp-two-pad.cjs'));
  eval(read(root+'automation/paste/commissioning-stroke.cjs'));
  var q=JSON.parse(read(root+'automation/plans/paste-contiguous-batch-preview-request.json'));
