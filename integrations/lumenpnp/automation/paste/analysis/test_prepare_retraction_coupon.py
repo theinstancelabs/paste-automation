@@ -42,6 +42,21 @@ class RetractionCouponTests(unittest.TestCase):
         e['mode']='coupon';e['targetsXY']=experiment()['targetsXY']
         with self.assertRaises(ValueError):M.stages_for(e,dict(path='/review',sha256=H),1.1,1.0)
 
+    def test_transfer_conditioner12_has_two_parts_and_explicit_restore(self):
+        e=experiment(12,3);e.update(mode='transfer-preparation',maximumTransferElapsedMilliseconds=15000,conditioningDoseDegrees=12,conditioningDwellMilliseconds=2000,dwellMilliseconds=200,retractDwellMilliseconds=500)
+        e['targetsXY']=e['targetsXY'][:2]
+        stages,poses,base=M.stages_for(e,dict(path='/review',sha256=H),1.1,1.0)
+        self.assertEqual([s['axis'] for s in stages[-4:]],['B','B','B','Z'])
+        self.assertEqual([poses[i+1]['B']-poses[i]['B'] for i in range(len(stages)-4,len(stages)-1)],[-6,-6,3])
+        self.assertEqual([s['dwellMilliseconds'] for s in stages[-4:-1]],[0,2000,500])
+        e['conditioningRestoreDegrees']=3
+        restored,rposes,acct=M.stages_for(e,dict(path='/review',sha256=H),1.1,1.0)
+        self.assertEqual(len(restored),len(stages)+1);self.assertEqual(acct['grossCommandedDegrees'],base['grossCommandedDegrees']+3);self.assertEqual(acct['netDegrees'],base['netDegrees']-3)
+        self.assertEqual([rposes[i+1]['B']-rposes[i]['B'] for i in range(len(restored)-5,len(restored)-1)],[-3,-6,-6,3])
+        for key,value in [('conditioningRestoreDegrees',True),('conditioningRestoreDegrees',2),('conditioningDoseDegrees',6),('retractDegrees',2),('conditioningFinalWipeMm',1.5),('mode','coupon')]:
+            bad=copy.deepcopy(e);bad[key]=value
+            with self.assertRaises(ValueError):M.stages_for(bad,dict(path='/review',sha256=H),1.1,1.0)
+
     def test_transfer_final_wipe_is_exact_positive_X_after_retract_before_lift(self):
         e=experiment(12,3);e.update(mode='transfer-preparation',maximumTransferElapsedMilliseconds=15000,conditioningDoseDegrees=6,retractDwellMilliseconds=500)
         e['targetsXY']=e['targetsXY'][:2]

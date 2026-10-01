@@ -48,13 +48,16 @@ def stages_for(experiment, review_evidence, gap, uncertainty):
     if type(retract_dwell) is not int or retract_dwell not in (0, 200, 500):
         raise ValueError('Retraction dwell must be 0, 200 or 500 milliseconds')
     conditioning_dose = e.get('conditioningDoseDegrees')
-    if type(conditioning_dose) is not int or conditioning_dose not in ((6,20) if mode == 'transfer-preparation' else (20,)):
-        raise ValueError('Conditioning dose must be20, or explicitly6 for transfer preparation')
+    if type(conditioning_dose) is not int or conditioning_dose not in ((6,12,20) if mode == 'transfer-preparation' else (20,)):
+        raise ValueError('Conditioning dose must be20, or explicitly6/12 for transfer preparation')
     final_wipe = e.get('conditioningFinalWipeMm', 0)
     if type(final_wipe) not in (int,float) or final_wipe not in (0,1.5):
         raise ValueError('Final conditioning wipe must be0 or+X1.5 mm')
     if final_wipe and (mode != 'transfer-preparation' or conditioning_dose != 6 or e.get('retractDegrees') != 3 or retract_dwell != 500 or e.get('conditioningFinalWipeReviewed') is not True):
         raise ValueError('Final wipe requires reviewed transfer conditioner6/R3/500')
+    restore = e.get('conditioningRestoreDegrees', 0)
+    if type(restore) is not int or restore not in (0,3) or restore and (mode != 'transfer-preparation' or conditioning_dose != 12 or e.get('retractDegrees') != 3 or final_wipe):
+        raise ValueError('Conditioning restore3 requires transfer conditioner12/R3 with no final wipe')
     before = e.get('preWipeReliefDegrees', 20)
     if type(before) is not int or before not in (2, 3, 4, 6, 20):
         raise ValueError('Pre-wipe relief must be 2, 3, 4, 6 or 20 degrees')
@@ -67,6 +70,8 @@ def stages_for(experiment, review_evidence, gap, uncertainty):
     conditioning_dwell = e.get('conditioningDwellMilliseconds', dwell)
     if type(conditioning_dwell) is not int or conditioning_dwell not in (200, 500, 2000):
         raise ValueError('Conditioning dwell must be 200, 500 or 2000 milliseconds')
+    if conditioning_dose == 12 and (conditioning_dwell != 2000 or e.get('retractDegrees') != 3 or retract_dwell != 500):
+        raise ValueError('Conditioner12 requires 2000 ms forward wait and R3/500')
     if type(e.get('doseDegrees')) is not int or e['doseDegrees'] not in (2, 3, 4, 6, 12, 20):
         raise ValueError('Dose must be 2, 3, 4, 6, 12 or 20 degrees')
     if type(e.get('retractDegrees')) is not int or e['retractDegrees'] not in (2, 3, 4, 6):
@@ -139,11 +144,13 @@ def stages_for(experiment, review_evidence, gap, uncertainty):
         add('Z', work if index == 0 else test_work[index-1])
         if index:
             stroke(-e['retractDegrees'])
+        if index == 0 and restore:
+            stroke(-restore)
         dose = conditioning_dose if index == 0 else e['doseDegrees']
         # Twelve degrees uses two existing -6 stages, with dwell only after the second.
         if dose == 12:
             stroke(-6)
-            stroke(-6, dwell)
+            stroke(-6, conditioning_dwell if index == 0 else dwell)
         else:
             stroke(-dose, conditioning_dwell if index == 0 else dwell)
         stroke(e['retractDegrees'], retract_dwell)

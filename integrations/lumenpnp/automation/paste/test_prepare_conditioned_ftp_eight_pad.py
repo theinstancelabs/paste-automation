@@ -182,6 +182,17 @@ class EightPadBuilderTests(unittest.TestCase):
             i=ct['inlineConditioning']['retractionStageIndex']-1
             prior_b=next(s['target'] for s in reversed(c6['stages'][:i]) if s['axis']=='B')
             self.assertEqual(c6['stages'][i]['target']-prior_b,-6);self.assertEqual(c6['stages'][i]['dwellMilliseconds'],2000)
+            for restore,expected in ((0,(279,-105)),(3,(282,-108))):
+                fixture.exp.update(conditioningDoseDegrees=12,conditioningRestoreDegrees=restore);experiment.write_text(json.dumps(fixture.exp))
+                review.write_text(json.dumps({'reviewedBy':'reviewer','reviewedMs':now,'experimentEvidence':M.PREP.WIPE.evidence(experiment),'imageEvidence':M.PREP.WIPE.evidence(fixture.image)}))
+                profiledata['measurementEvidence']=M.PREP.WIPE.evidence(review);fixture.profile.write_text(json.dumps(profiledata));args.output=str(fixture.root/('eight-out-condition12-'+str(restore)))
+                with patch.object(M.subprocess,'run',side_effect=offline_run):M.build(args)
+                c12=json.loads((Path(args.output)/'recipe.json').read_text());ct12=json.loads((Path(args.output)/'targets.json').read_text())
+                self.assertEqual((c12['bAccounting']['grossChargedDegrees'],c12['bAccounting']['netDegrees']),expected)
+                self.assertEqual(len(c12['stages']),len(c6['stages'])+1+bool(restore))
+                ri=ct12['inlineConditioning']['retractionStageIndex'];self.assertEqual([v['dwellMilliseconds'] for v in c12['stages'][ri-2:ri]],[0,2000])
+                self.assertEqual(c12['stages'][ri-1]['target']-c12['stages'][ri-2]['target'],-6)
+            fixture.exp.update(conditioningDoseDegrees=6,conditioningRestoreDegrees=0)
             fixture.exp.update(conditioningFinalWipeMm=1.5,conditioningFinalWipeReviewed=True);experiment.write_text(json.dumps(fixture.exp))
             review.write_text(json.dumps({'reviewedBy':'reviewer','reviewedMs':now,'attestations':{'conditioningFinalWipeReviewed':True},'experimentEvidence':M.PREP.WIPE.evidence(experiment),'imageEvidence':M.PREP.WIPE.evidence(fixture.image)}))
             profiledata['measurementEvidence']=M.PREP.WIPE.evidence(review);fixture.profile.write_text(json.dumps(profiledata));args.output=str(fixture.root/'eight-out-finalwipe')

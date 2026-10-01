@@ -54,9 +54,19 @@ class AuthorInputsTests(unittest.TestCase):
   e,_,_,t=M.derive(self.q,self.load,self.q['reviewedMs'])
   self.assertEqual(e['conditioningDoseDegrees'],6);self.assertEqual(e['conditioningDwellMilliseconds'],2000)
   self.assertEqual(t['compensatedSequence']['doseDegrees'],12)
-  for bad in (True,6.0,4,12):
+  for bad in (True,6.0,4,18):
    self.q['conditioningDoseDegrees']=bad
    with self.assertRaises(ValueError):M.derive(self.q,self.load,self.q['reviewedMs'])
+ def test_conditioner12_and_explicit_restore3_are_bound(self):
+  self.q.update(conditioningDoseDegrees=12,retractDegrees=3)
+  e,_,_,_=M.derive(self.q,self.load,self.q['reviewedMs']);self.assertEqual(e['conditioningRestoreDegrees'],0)
+  self.q['conditioningRestoreDegrees']=3
+  e,_,_,t=M.derive(self.q,self.load,self.q['reviewedMs']);self.assertEqual(e['conditioningDoseDegrees'],12);self.assertEqual(e['conditioningRestoreDegrees'],3);self.assertEqual(t['compensatedSequence']['retractDegrees'],3)
+  for bad in (True,3.0,2,6):
+   self.q['conditioningRestoreDegrees']=bad
+   with self.assertRaises(ValueError):M.derive(self.q,self.load,self.q['reviewedMs'])
+  self.q.update(conditioningRestoreDegrees=3,conditioningDoseDegrees=6)
+  with self.assertRaises(ValueError):M.derive(self.q,self.load,self.q['reviewedMs'])
  def test_final_dummy_wipe_requires_exact_reviewed_conditioner6_R3(self):
   self.assertEqual(M.derive(self.q,self.load,self.q['reviewedMs'])[0]['conditioningFinalWipeMm'],0)
   self.q.update(conditioningDoseDegrees=6,retractDegrees=3,conditioningFinalWipeMm=1.5)

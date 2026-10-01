@@ -113,5 +113,10 @@ class RunnerTests(unittest.TestCase):
         def wait(report,ident,preview,seconds):self.assertEqual(seconds,60);return {'status':'complete'}
         M.run(self.prepared,True,self.root,self.invoke,wait)
 
+    def test_selected_pad_scope_is_allowed_and_observed_for_three_hundred_seconds(self):
+        self.q['scope']='contiguous-native-ftp-selected-pads-preview';self.save()
+        M.run(self.prepared,True,self.root,self.invoke,self.terminal)
+        self.assertEqual(len(self.calls),1)
+
 
 if __name__ == '__main__':unittest.main()
