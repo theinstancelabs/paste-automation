@@ -1,0 +1,165 @@
+{
+  "schema": 1,
+  "scope": "reviewed-eight-pad-authoring-inputs",
+  "reviewedBy": null,
+  "reviewedMs": null,
+  "reviewBasis": null,
+  "profileBasis": null,
+  "startRaw": {
+    "X": null,
+    "Y": null,
+    "Z": null,
+    "A": null,
+    "B": null
+  },
+  "doseDegrees": 6,
+  "surfaceRawZ": null,
+  "xyClearanceRawZ": null,
+  "scrapTargetsXY": [
+    {
+      "X": null,
+      "Y": null
+    },
+    {
+      "X": null,
+      "Y": null
+    }
+  ],
+  "attestations": {
+    "boardCleaned": false,
+    "padsAvailable": false,
+    "boardUnmovedSinceRegistration": false,
+    "bothHeadsClearanceReviewed": false,
+    "clearTransitCorridorReviewed": false,
+    "scrapPrimeAndWipeReviewed": false,
+    "tipReviewedNoLongStrand": false
+  },
+  "sources": {
+    "template": {
+      "path": null,
+      "sha256": null
+    },
+    "barrier": {
+      "path": null,
+      "sha256": null
+    },
+    "stationaryImage": {
+      "path": null,
+      "sha256": null
+    },
+    "tipImage": {
+      "path": null,
+      "sha256": null
+    },
+    "registration": {
+      "path": null,
+      "sha256": null
+    },
+    "registrationRevalidation": {
+      "path": null,
+      "sha256": null
+    },
+    "targetBase": {
+      "path": null,
+      "sha256": null
+    },
+    "scrapExperiment": {
+      "path": null,
+      "sha256": null
+    },
+    "scrapProfile": {
+      "path": null,
+      "sha256": null
+    },
+    "surface": {
+      "path": null,
+      "sha256": null
+    },
+    "tipOffset": {
+      "path": null,
+      "sha256": null
+    },
+    "previousReport": {
+      "path": null,
+      "sha256": null
+    },
+    "ledger": {
+      "path": null,
+      "sha256": null
+    }
+  },
+  "pairReviews": [
+    {
+      "reference": null,
+      "padIds": [
+        null,
+        null
+      ],
+      "padIdentityReviewed": false,
+      "padsAvailableReviewed": false,
+      "reportEvidence": {
+        "path": null,
+        "sha256": null
+      },
+      "imageEvidence": {
+        "path": null,
+        "sha256": null
+      },
+      "capturedMs": null
+    },
+    {
+      "reference": null,
+      "padIds": [
+        null,
+        null
+      ],
+      "padIdentityReviewed": false,
+      "padsAvailableReviewed": false,
+      "reportEvidence": {
+        "path": null,
+        "sha256": null
+      },
+      "imageEvidence": {
+        "path": null,
+        "sha256": null
+      },
+      "capturedMs": null
+    },
+    {
+      "reference": null,
+      "padIds": [
+        null,
+        null
+      ],
+      "padIdentityReviewed": false,
+      "padsAvailableReviewed": false,
+      "reportEvidence": {
+        "path": null,
+        "sha256": null
+      },
+      "imageEvidence": {
+        "path": null,
+        "sha256": null
+      },
+      "capturedMs": null
+    },
+    {
+      "reference": null,
+      "padIds": [
+        null,
+        null
+      ],
+      "padIdentityReviewed": false,
+      "padsAvailableReviewed": false,
+      "reportEvidence": {
+        "path": null,
+        "sha256": null
+      },
+      "imageEvidence": {
+        "path": null,
+        "sha256": null
+      },
+      "capturedMs": null
+    }
+  ]
+}

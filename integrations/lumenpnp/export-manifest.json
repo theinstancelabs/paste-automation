@@ -1623,6 +1623,34 @@
       "destination": "integrations/lumenpnp/automation/paste/test_prepare_conditioned_ftp_eight_pad.py",
       "sha256": "3f9ac3493f7a458bdaef70ec963031101ec44557d18254277a8fd6fd8f2bd18e",
       "bytes": 10154
+    },
+    {
+      "sourceRoot": "/home/lumen/lumenpnp",
+      "sourcePath": "automation/paste/author-conditioned-ftp-eight-pad.py",
+      "destination": "integrations/lumenpnp/automation/paste/author-conditioned-ftp-eight-pad.py",
+      "sha256": "61e7bf13b84ff01ae93d92b07fe440f71a5db491399c9d4012774adc03beb47b",
+      "bytes": 9301
+    },
+    {
+      "sourceRoot": "/home/lumen/lumenpnp",
+      "sourcePath": "automation/paste/author-conditioned-ftp-eight-pad.md",
+      "destination": "integrations/lumenpnp/automation/paste/author-conditioned-ftp-eight-pad.md",
+      "sha256": "f35d3586d8d114a793c7902de3adecc9039d8779829bc5fe8e1dde7934c32d85",
+      "bytes": 2530
+    },
+    {
+      "sourceRoot": "/home/lumen/lumenpnp",
+      "sourcePath": "automation/paste/author-conditioned-ftp-eight-pad.inputs.example.json",
+      "destination": "integrations/lumenpnp/automation/paste/author-conditioned-ftp-eight-pad.inputs.example.json",
+      "sha256": "26c561da33f88d16cfd521939e35d27fefda13ff76fed2807ed8c761cd190bb6",
+      "bytes": 3070
+    },
+    {
+      "sourceRoot": "/home/lumen/lumenpnp",
+      "sourcePath": "automation/paste/test_author_conditioned_ftp_eight_pad.py",
+      "destination": "integrations/lumenpnp/automation/paste/test_author_conditioned_ftp_eight_pad.py",
+      "sha256": "1b2c112b650dc05629bc12075e173fabe4165c3753aa1ff274375dd597759465",
+      "bytes": 4876
     }
   ],
   "manifestSelfHash": "Excluded to avoid a recursive digest; this manifest enumerates every other exported/generated file.",
