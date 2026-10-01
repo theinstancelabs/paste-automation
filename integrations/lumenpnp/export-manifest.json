@@ -410,8 +410,8 @@
       "sourceRoot": "/home/lumen/lumenpnp",
       "sourcePath": "automation/paste/nominal-geometry-review.md",
       "destination": "integrations/lumenpnp/automation/paste/nominal-geometry-review.md",
-      "sha256": "4b3d701bff9c4659b8c273aa51f7e45e6aa9ac5956c4f758a31b43bd88964e23",
-      "bytes": 9584
+      "sha256": "be76d96f3df09968bd9333d6619dadce25b9f3cdd51f049c90a1a030b2de5522",
+      "bytes": 14123
     },
     {
       "sourceRoot": "/home/lumen/lumenpnp",
@@ -1369,8 +1369,8 @@
       "sourceRoot": "/home/lumen/lumenpnp",
       "sourcePath": "automation/operations/paste-small-dot-trials-20260930.md",
       "destination": "integrations/lumenpnp/automation/operations/paste-small-dot-trials-20260930.md",
-      "sha256": "fdbf90165c9b994ce9158758411e16cc3dd8ae441e06862b228465ae6b14c518",
-      "bytes": 16979
+      "sha256": "4dfc61a2b331dbe70e5d11c583560817a7d0bfa5cba136de6811d2f7dc2945ee",
+      "bytes": 18624
     },
     {
       "sourceRoot": "/home/lumen/lumenpnp",
@@ -1455,6 +1455,13 @@
       "destination": "integrations/lumenpnp/automation/scripts/capture-paste-overview-still.py",
       "sha256": "556f69e35aad9b162bcb76666c3d79819c9777ead6ea748f41c4b00e1decf610",
       "bytes": 1701
+    },
+    {
+      "sourceRoot": "/home/lumen/lumenpnp",
+      "sourcePath": "automation/paste/analysis/ftp_paste_volume.py",
+      "destination": "integrations/lumenpnp/automation/paste/analysis/ftp_paste_volume.py",
+      "sha256": "db200c4bf2f4f1ec72f107c95443c85858e98e4a9d2de517e1200379e46d7809",
+      "bytes": 5428
     }
   ],
   "manifestSelfHash": "Excluded to avoid a recursive digest; this manifest enumerates every other exported/generated file.",

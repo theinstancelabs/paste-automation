@@ -56,3 +56,25 @@ Parent's `extract-cad-parameters.py` was read independently: ratios/formulas are
 - `/home/lumen/lumenpnp/pnp/cad/assembly.FCStd`: `cffa43d966aa77699f244a7c3b87232640d43b7a99fc28db05af4e4328f5ef6b`
 - `/home/lumen/lumenpnp/pnp/cad/FDM/z-gantry.FCStd`: `61ce3ddfd9690137870c09b4a134fba2039626b1b6c5a99d6be7e5559a96e065`
 - `/home/lumen/lumenpnp/pnp/cad/FDM/z-gantry-backplate-right.FCStd`: `8cde0539656bfd319c737e1b52441f331fd1a90884cd8053fd7126fbaabc1019`
+
+## Industrial dispensing reference and FTP volume scenarios — 2026-09-30
+
+Research requested by the operator; these are engineering trial values, not validated acceptance limits or a motor recipe. Mycronic's MY700 programming guidance starts pad volumes from a 125 µm stencil equivalent, then adjusts for the land pattern and checks test prints. Its piezo jetting hardware controls volume and position; those machine settings cannot be copied to this syringe plunger. [Mycronic MYNews 2025-1, printed page 18](https://www.mycronic.com/globalassets/global-blocks/product-areas/pcb-assembly/_pdf/p-001-0252-mynews-2025-1-_lr_final.pdf). Industrial 3D solder-paste inspection measures deposit volume and can report insufficient deposits back to the printer. Our top camera measures footprint, not volume. [Mycronic PI Pico](https://www.mycronic.com/product-areas/pcb-assembly/smt/solder-paste-inspection/PI-Pico/).
+
+The canonical FTP CAD, SHA-256 `77818159f9508bcbf09c5d3d45fbc654585f26679af353f9308027d3e344e453`, contains 80 resistor pads, each 0.8 × 0.95 mm with 0.2 mm corner radius. Actual rounded area is 0.725663706 mm². The pad pair has 1.65 mm center spacing and 0.85 mm copper edge separation along the pair axis; this is not a clearance guarantee against every neighboring feature. No paste-aperture reduction is present in the reviewed CAD.
+
+| Assumed stencil thickness | Full-aperture paste volume per pad | Equivalent ideal hemisphere diameter |
+| --- | --- | --- |
+| 100 µm | 72.6 nL | 0.652 mm |
+| 125 µm | 90.7 nL | 0.702 mm |
+| 150 µm | 108.8 nL | 0.746 mm |
+
+Calculation: volume = rounded aperture area × thickness, assuming complete fill and 100% transfer; 1 mm³ = 1000 nL. The 100/150 µm scenarios bracket the published 125 µm starting point by engineering choice; they are not manufacturer-prescribed bounds for this resistor. A hemisphere is only a comparison: the same 0.8 mm footprint can hold different volumes at different heights. A mound need not cover the entire pad before placement/reflow. Do not multiply paste volume by 88.5% to infer final solder volume: the material percentage is by mass, not volume.
+
+Repeat the calculation offline with `python3 automation/paste/analysis/ftp_paste_volume.py --output /absolute/new-output.json`. It binds the CAD and extractor hashes, refuses output overwrite, permits no motion, and does not calculate motor degrees. Physical syringe compression, trapped air, residual pressure, cutoff and transfer invalidate a direct nominal screw-displacement-to-deposit assumption.
+
+The actual MULTiCORE GC 10 T4 data sheet specifies 20–38 µm powder and 88.5% metal, and describes stencil printing; it does not validate our needle recipe. [Harima GC 10 TDS, June 2022](https://www.harima.co.jp/en/products/electronics/multicore/assets/tds/multicore_gc-10_en.pdf). For dimensional context, Nordson lists a comparable 22-gauge straight tip as 0.41 mm ID/0.72 mm OD; our exact part remains unverified. [Nordson general-purpose tips](https://www.nordson.com/en/Products/EFD-Products/General-Purpose-Dispense-Tips).
+
+The industrial contact-dispensing reference is Nordson's 794-TC auger manual, pages 9–10 and 16: initial flat-tip gap approximately 25% of OD, then tune actual transfer; tip buildup calls for gap correction/wiping, poor cutoff for brief reversal, and premature withdrawal for additional dwell. A comparable 0.72 mm OD implies a nominal 0.18 mm starting gap, not an established machine Z. These operational principles apply as hypotheses; the auger and our syringe plunger have different pressure dynamics. [Nordson 794-TC manual](https://nc-p-001.sitecorecontenthub.cloud/api/public/content/dbab16e2499e4d1cb967fe4100e252fc?v=47ff4657).
+
+Next physical acceptance work: establish the clean metal tip endpoint and substrate gap; remove strings/ooze; compare repeated deposits and the first deposit after an idle interval; record centering, footprint, height or independently measured volume, and matching deposits on the two resistor pads. Reject missing dots, inter-pad strings/bridges and uncontrolled spill. The conditioned 20° sequence produced three compact approximately 0.8 mm dots once; the subsequent 6° sequence was inconsistent. Neither is volume-calibrated or reflow-qualified. Qualification ultimately needs placed-component/reflow inspection and electrical checks; insufficient paste can give open/bad joints and excess bridging can short. [Nexperia AN10365, section 5](https://assets.nexperia.com/documents/application-note/AN10365.pdf).
