@@ -1565,8 +1565,8 @@
       "sourceRoot": "/home/lumen/lumenpnp",
       "sourcePath": "automation/paste/ftp-registration-revalidation.cjs",
       "destination": "integrations/lumenpnp/automation/paste/ftp-registration-revalidation.cjs",
-      "sha256": "64a493042fcf1cdee9eccc9c36b59500cae5473ffeede76ea52536af25daeff7",
-      "bytes": 4022
+      "sha256": "a47b10d02f4aa668516a8de07c42cba3babcb3d8c1031c018d418f6fa0455dc9",
+      "bytes": 6984
     },
     {
       "sourceRoot": "/home/lumen/lumenpnp",
@@ -1763,6 +1763,13 @@
       "destination": "integrations/lumenpnp/automation/paste/author-ftp-one-pad-cleanup.inputs.example.json",
       "sha256": "f2530d5979d60081d875c3f5681d85d3bd9906612a2181f3cb10fa6043fe436f",
       "bytes": 1661
+    },
+    {
+      "sourceRoot": "/home/lumen/lumenpnp",
+      "sourcePath": "automation/paste/ftp-registration-revalidation.test.cjs",
+      "destination": "integrations/lumenpnp/automation/paste/ftp-registration-revalidation.test.cjs",
+      "sha256": "bc1abbdf7bf544ba2787fa6286d5ca730939528c209776819e504a4ae5fee24b",
+      "bytes": 3760
     }
   ],
   "manifestSelfHash": "Excluded to avoid a recursive digest; this manifest enumerates every other exported/generated file.",
