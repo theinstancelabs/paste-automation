@@ -57,3 +57,16 @@ The observed no-B wipe `a0345e39-e4bf-43a8-9760-3945284a3ef7` finished at 15:26:
 `author-no-b-scrap-wipe.py --inputs REVIEWED.json --output NEW_DIRECTORY` saves this class of explicitly reviewed scrap-only route through the existing disabled air pipeline. It requires a current barrier at clearance, source hashes, fresh image and explicit tip/path review, provisional gap bounds, and one X/Y wipe of at most 2 mm; it generates no B stage and performs no camera, vacuum, homing or dispatch action. See `author-no-b-scrap-wipe.md` for exact inputs. Use the emitted preview request’s parent directory with the existing prepared runner for separately reviewed preview/execution.
 
 The +100 trial `03beac0c` completed at 15:38:43.195 UTC with B=−2769 and total charged history 7489. After-image `155ffa17` at 15:39:42.869 still showed the R40 loop bridge; the blob was more lobed, without useful removal. No additional aspiration is planned. The historical crop review also identified variable/small early R30–R38 deposits, R34.1 off-center paste, and first-deposit edge/tail residue on R7.1, R11.1, R15.1 and R23.1. These findings prevent a uniform-deposition or physical-acceptance claim. Scrap repeatability work continues independently; the board is not declared finished.
+
+## Two dose6 scrap repeats after board deposition
+
+These ordinary scrap coupons are separate from the FTP dose12 recipe recorded above. Both used prime60 (three −20 stages; 2000 ms after the last), pre-wipe relief +20/1000 ms and the reviewed initial scrap wipe; conditioner −6/2000 ms then +3/500 ms and lift; three test deposits each with restore −3, dose −6/2000 ms, retract +3/500 ms and lift; final relief +20 then +20/2000 ms at clearance. There was no initial dummy restore or final dummy wipe. B speed remained 0.05 and XYZ speed 1.0. Raw work Z58.45 and clearance53.45 were this session’s provisional geometry, not measured gap calibration or reusable setup values.
+
+| Trial | Wet report | Actual controller elapsed | Accounting | Parent image review |
+| --- | --- | --- | --- | --- |
+| Coupon3 | `2561fbf8` | 48.460 s (16:16:00.898–16:16:49.358 UTC) | 31 stages; gross165, net−21 | After `c7170d7b`: three compact/roundish, separate dots, about 70–85 pixels (~0.8–0.9 mm at approximately 91 pixels/mm); irregular dummy excluded. |
+| Coupon4, exact parameter repeat | `b184d0e7` | 48.464 s (16:21:40.747–16:22:29.211 UTC) | 31 stages; gross165, net−21 | After `64d095ba`: three compact separate roundish dots, about 55–70 pixels, slightly smaller than coupon3; no obvious long string. |
+
+The two rows showed six visible transfers, with size variation between repeats. These are coarse 2D footprint observations, not deposited-volume, reflow or production-repeatability qualification. Bare-mask coupon transfer does not establish that dose6 is optimal on FTP copper. The canonical `prepare-retraction-coupon.py` can reproduce this command structure using explicit conditioner6, dose6, retract3 and the stated waits, with fresh reviewed targets, source hashes, profile and ledger evidence; it does not create physical attestations.
+
+After coupon4, charged history was 8278 degrees of 8400 and B was −2982; no charge was refunded. Manual R1/R16/R40 rework remained pending. This subsection does not replace the historical FTP coverage review or claim a fresh whole-board gallery.
