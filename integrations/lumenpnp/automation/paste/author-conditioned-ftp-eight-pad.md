@@ -10,4 +10,6 @@ Each of four `pairReviews` identifies a unique resistor, the ordered `.1`/`.2` p
 
 The authoring helper derives pad XY from the accepted registration minus the explicitly selected tip offset, quantized to 0.01 mm, and writes experiment, complete-route clearance review, profile and target records. It then calls `prepare-conditioned-ftp-eight-pad.py`, which in turn runs the existing disabled generic validation. Its output includes `prepared/native/preview-request.json`. It does not run the native preview, finalize a runtime request or dispatch. An actual request still requires those existing parent-controlled steps and physical review; this helper makes no volume or height-calibration claim.
 
-Optional input `dwellMilliseconds` accepts exactly integer 200 or 1000, defaulting to 200 when omitted. It selects only the eight FTP forward-dose waits. The supplied conditioning experiment and its waits are retained.
+Optional input `dwellMilliseconds` accepts exactly integer 200, 1000 or 2000, defaulting to 200 when omitted. It selects only the eight FTP forward-dose waits. The supplied conditioning experiment and its waits are retained.
+
+Dose 20 remains one existing −20 B stage per pad. The 80-stage cap is unchanged; dose 12 remains outside this group scope. This admission does not establish deposited volume or physical qualification.

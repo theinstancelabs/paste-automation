@@ -130,6 +130,18 @@ class EightPadBuilderTests(unittest.TestCase):
                 self.assertEqual(recipe6['stages'][pad['doseStageIndices'][0]]['dwellMilliseconds'],1000)
                 self.assertEqual(recipe6['stages'][pad['retractStageIndex']]['dwellMilliseconds'],500)
                 self.assertEqual(recipe6['stages'][pad['restoreStageIndex']]['dwellMilliseconds'],0)
+            target['compensatedSequence'].update(doseDegrees=20,dwellMilliseconds=2000)
+            fixture.json('eight-target.json',target);fixture.exp['doseDegrees']=20;experiment.write_text(json.dumps(fixture.exp))
+            review.write_text(json.dumps({'reviewedBy':'reviewer','reviewedMs':now,'experimentEvidence':M.PREP.WIPE.evidence(experiment),'imageEvidence':M.PREP.WIPE.evidence(fixture.image)}))
+            profiledata['measurementEvidence']=M.PREP.WIPE.evidence(review);fixture.profile.write_text(json.dumps(profiledata));args.output=str(fixture.root/'eight-out-dose20')
+            with patch.object(M.subprocess,'run',side_effect=offline_run):M.build(args)
+            recipe20=json.loads((fixture.root/'eight-out-dose20'/'recipe.json').read_text());out20=json.loads((fixture.root/'eight-out-dose20'/'targets.json').read_text())
+            self.assertEqual(len(recipe20['stages']),len(recipe6['stages']))
+            self.assertEqual(recipe20['bAccounting']['grossChargedDegrees'],334)
+            self.assertEqual(recipe20['bAccounting']['netDegrees'],-178)
+            for pad in out20['pads']:
+                self.assertEqual(len(pad['doseStageIndices']),1)
+                self.assertEqual(recipe20['stages'][pad['doseStageIndices'][0]]['dwellMilliseconds'],2000)
         finally:fixture.tearDown()
         self.target['pads'][1]['padId']='R1.2';self.target['compensatedSequence']['doseDegrees']=5
         with self.assertRaises(ValueError):M.validate_eight(self.target)

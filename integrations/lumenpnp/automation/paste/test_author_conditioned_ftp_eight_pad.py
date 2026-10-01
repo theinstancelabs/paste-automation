@@ -21,14 +21,22 @@ class AuthorInputsTests(unittest.TestCase):
  def test_derives_only_explicit_selection_preserves_inputs_and_pair_order(self):
   before=copy.deepcopy(self.q);e,r,p,t=M.derive(self.q,self.load,self.q['reviewedMs'])
   self.assertEqual(self.q,before);self.assertEqual(e['startRaw'],self.raw);self.assertEqual(e['primeDegrees'],60);self.assertEqual(t['reviewedMs'],self.q['reviewedMs']);self.assertEqual(r['reviewedMs'],self.q['reviewedMs']);self.assertEqual([x['padId'] for x in t['pads']][:2],['R1.2','R1.1']);self.assertEqual(t['pads'][0]['rawPose'],{'X':55.6,'Y':266.49,'Z':58.3,'A':720});self.assertEqual(p['estimatedGapMm'],.4);self.assertEqual(t['compensatedSequence']['doseDegrees'],6)
- def test_explicit_forward_dwell_defaults200_and_accepts_only200_or1000(self):
+ def test_explicit_forward_dwell_defaults200_and_accepts_only200_1000_or2000(self):
   original=copy.deepcopy(self.q)
   self.assertEqual(M.derive(self.q,self.load,self.q['reviewedMs'])[3]['compensatedSequence']['dwellMilliseconds'],200)
-  for wait in (200,1000):
+  for wait in (200,1000,2000):
    q=copy.deepcopy(original);q['dwellMilliseconds']=wait;e,_,_,t=M.derive(q,self.load,q['reviewedMs']);self.assertEqual(t['compensatedSequence']['dwellMilliseconds'],wait);self.assertEqual(e['conditioningDwellMilliseconds'],2000)
-  for wait in (True,200.0,500,0,2000):
+  for wait in (True,200.0,500,0,2001):
    q=copy.deepcopy(original);q['dwellMilliseconds']=wait
    with self.assertRaises(ValueError):M.derive(q,self.load,q['reviewedMs'])
+ def test_twenty_degree_option_retains_conditioner(self):
+  self.q['doseDegrees']=20;self.q['dwellMilliseconds']=2000
+  e,_,_,t=M.derive(self.q,self.load,self.q['reviewedMs'])
+  self.assertEqual(t['compensatedSequence']['doseDegrees'],20)
+  self.assertEqual(t['compensatedSequence']['dwellMilliseconds'],2000)
+  self.assertEqual(e['conditioningDoseDegrees'],20)
+  self.q['doseDegrees']=12
+  with self.assertRaises(ValueError):M.derive(self.q,self.load,self.q['reviewedMs'])
  def test_rejects_missing_attestation_stale_review_wrong_start_surface_and_pair(self):
   edits=[lambda q:q['attestations'].update(tipReviewedNoLongStrand=False),lambda q:q.update(reviewedMs=q['reviewedMs']-300001),lambda q:q['startRaw'].update(B=-999),lambda q:q.update(surfaceRawZ=58.45),lambda q:q['pairReviews'][0].update(padsAvailableReviewed=False),lambda q:q['pairReviews'][1].update(reference='R1'),lambda q:q['pairReviews'][0].update(capturedMs=q['reviewedMs']+1)]
   for edit in edits:
