@@ -18,7 +18,8 @@ class PressureSequenceTests(unittest.TestCase):
             'sacrificial': [{'X': 303 + i, 'Y': 201} for i in range(3)],
             'tests': [{'X': 303 + i, 'Y': 202} for i in range(3)],
         }
-        stages, gross, final_raw = module.build_stages(raw, targets, {'path': '/review.json', 'sha256': 'a' * 64}, .5, .2)
+        stages, gross, final_raw = module.build_stages(raw, targets, {'path': '/review.json', 'sha256': 'a' * 64}, .4, .3)
+        self.assertEqual(module.gap_at_work_height(.4, 58.45), .4)
         b = []
         current = raw['B']
         for stage in stages:
@@ -44,7 +45,7 @@ class PressureSequenceTests(unittest.TestCase):
         }
         targets['tests'][2] = dict(targets['tests'][1])
         with self.assertRaisesRegex(module.InputError, 'distinct'):
-            module.build_stages(raw, targets, {'path': '/review.json', 'sha256': 'a' * 64}, .5, .2)
+            module.build_stages(raw, targets, {'path': '/review.json', 'sha256': 'a' * 64}, .4, .3)
 
 
 if __name__ == '__main__':

@@ -50,7 +50,9 @@ def explicit_attestations(args):
  return out
 def route_gross(pair_count,conditioning_gross, dose=12,retract=2,idle_relief=40):
  require(type(pair_count)is int and 1<=pair_count<=3,'Pair count must be one to three')
- require((dose,retract,idle_relief)==(12,2,40),'Selected route is fixed at 12-degree dose, R2 and 40-degree final relief')
+ require(type(dose)is int and dose in (2,4,6,12),'Selected dose must be 2, 4, 6 or 12 degrees')
+ require(type(retract)is int and retract in (2,6),'Selected retract must be R2 or R6')
+ require(idle_relief==40,'Selected route requires the existing 40-degree final relief')
  selected=pair_count*2*(dose+2*retract)
  return {'conditioningGrossDegrees':conditioning_gross,'selectedPadsGrossDegrees':selected,'idleReliefGrossDegrees':idle_relief,'grossDegrees':conditioning_gross+selected+idle_relief}
 def validate_report_map(refs,report_map):
@@ -58,7 +60,7 @@ def validate_report_map(refs,report_map):
  require(isinstance(report_map,dict) and all(k in report_map for k in required),'Report map must explicitly include selected pad IDs and all current controls; no historical fallback is allowed')
  return required
 def conditioning_prefix(experiment,raw,profile,stationary_evidence,prime_x,prime_y,dummy_x,dummy_y):
- exp={**experiment,'startRaw':raw,'doseDegrees':12,'retractDegrees':2,'conditioningDoseDegrees':20,'conditioningRestoreDegrees':0,'conditioningFinalWipeMm':0,'conditioningDwellMilliseconds':2000,'dwellMilliseconds':2000,'retractDwellMilliseconds':500,'workRawZ':raw['Z'],'clearanceRawZ':53.45,'targetsXY':[{'X':round(prime_x+1.5,2),'Y':prime_y},{'X':dummy_x,'Y':dummy_y}]}
+ exp={**experiment,'startRaw':raw,'doseDegrees':12,'retractDegrees':experiment.get('retractDegrees',2),'conditioningDoseDegrees':20,'conditioningRestoreDegrees':0,'conditioningFinalWipeMm':0,'conditioningDwellMilliseconds':2000,'dwellMilliseconds':2000,'retractDwellMilliseconds':500,'workRawZ':raw['Z'],'clearanceRawZ':53.45,'targetsXY':[{'X':round(prime_x+1.5,2),'Y':prime_y},{'X':dummy_x,'Y':dummy_y}]}
  prefix,poses,accounting=_PREP.stages_for(exp,stationary_evidence,profile.get('estimatedGapMm'),profile.get('gapUncertaintyMm'))
  return exp,prefix,poses,accounting
 def validate_camera_report(report,template,now_ms,require_fresh):
@@ -76,9 +78,13 @@ def make_parser():
  for name in ('template','barrier','stationary-image','tip-image','registration','target-base','profile-base','tip-offset','previous-report','ledger','scrap-experiment','surface','reports'):
   p.add_argument('--'+name,required=True,help='explicit source path')
  p.add_argument('--registration-revalidation',help='optional fresh-board-unmoved revalidation evidence JSON')
+ p.add_argument('--application-restart-evidence',help='explicit continuity proof when resuming across an application restart')
  p.add_argument('--refs',required=True,help='one to three refs, e.g. R28,R27,R26')
  p.add_argument('--prime-x',required=True,type=float);p.add_argument('--prime-y',required=True,type=float)
  p.add_argument('--dummy-x',required=True,type=float);p.add_argument('--dummy-y',required=True,type=float)
+ p.add_argument('--dose-degrees',type=int,choices=(2,4,6,12),default=12,help='Per-pad FTP dose; default preserves the existing 12-degree recipe')
+ p.add_argument('--retract-degrees',type=int,choices=(2,6),default=2,help='Per-pad restore/retract amount; default preserves R2')
+ p.add_argument('--dwell-milliseconds',type=int,choices=(200,1000,2000),default=2000,help='Per-pad dose dwell; default preserves 2000 ms')
  p.add_argument('--reviewer',required=True);p.add_argument('--review',required=True,help='substantive review basis, at least 60 characters')
  p.add_argument('--reviewed-pad',action='append',default=[],help='explicitly reviewed selected pad; repeat once per selected pad')
  p.add_argument('--surface-reviewed-pad',action='append',default=[],help='explicit same-surface review for a selected pad; repeat once per selected pad')
@@ -92,6 +98,10 @@ def build_inputs(args,now_ms=None):
  require(len(set(args.surface_reviewed_pad))==len(args.surface_reviewed_pad) and set(args.surface_reviewed_pad)==set(pads),'--surface-reviewed-pad must name each selected pad exactly once')
  require(len(set(args.reviewed_control))==len(args.reviewed_control) and set(args.reviewed_control)==set(CONTROLS),'--reviewed-control must name each control pad exactly once')
  attest=explicit_attestations(args)
+ dose=getattr(args,'dose_degrees',12);retract=getattr(args,'retract_degrees',2);dwell=getattr(args,'dwell_milliseconds',2000)
+ require(type(dose)is int and dose in (2,4,6,12),'Selected dose must be 2, 4, 6 or 12 degrees')
+ require(type(retract)is int and retract in (2,6),'Selected retract must be R2 or R6')
+ require(type(dwell)is int and dwell in (200,1000,2000),'Selected dwell must be 200, 1000 or 2000 ms')
  reviewer=args.reviewer.strip();review=args.review.strip()
  require(len(reviewer)>=2 and len(review)>=60,'Reviewer and substantive --review text are required')
  raw_paths={k:Path(getattr(args,k.replace('-','_'))).resolve(strict=True) for k in ('template','barrier','stationary_image','tip_image','registration','target_base','profile_base','tip_offset','previous_report','ledger','scrap_experiment','surface','reports')}
@@ -125,7 +135,7 @@ def build_inputs(args,now_ms=None):
  inputs={
   'schema':1,'scope':'reviewed-selected-pads-authoring-inputs','reviewedBy':reviewer,'reviewedMs':now_ms,'reviewBasis':review,
   'profileBasis':'Shared provisional surface review for this group; no precision contact calibration is claimed.',
-  'startRaw':raw,'doseDegrees':12,'dwellMilliseconds':2000,'retractDegrees':2,'conditioningDoseDegrees':20,
+  'startRaw':raw,'doseDegrees':dose,'dwellMilliseconds':dwell,'retractDegrees':retract,'conditioningDoseDegrees':20,
   'conditioningRestoreDegrees':0,'conditioningFinalWipeMm':0,'xyClearanceRawZ':53.45,
   'conditioningRawZRange':[53.45,max(58.45,work_z)],
   'scrapTargetsXY':[{'X':round(args.prime_x+1.5,2),'Y':args.prime_y},{'X':args.dummy_x,'Y':args.dummy_y}],
@@ -142,27 +152,24 @@ def build_inputs(args,now_ms=None):
     'availabilityCapturedMs':finished_ms,'surfaceEvidence':evidence(raw_paths['surface'])})
  source_paths={k:raw_paths[k] for k in ('template','barrier','stationary_image','tip_image','registration','profile_base','tip_offset','previous_report','ledger','scrap_experiment')}
  if args.registration_revalidation:source_paths['registration_revalidation']=Path(args.registration_revalidation).resolve(strict=True)
- names={'stationary_image':'stationaryImage','tip_image':'tipImage','target_base':'targetBase','profile_base':'profileBase','tip_offset':'tipOffset','previous_report':'previousReport','scrap_experiment':'scrapExperiment','registration_revalidation':'registrationRevalidation'}
+ if getattr(args,'application_restart_evidence',None):source_paths['application_restart_evidence']=Path(args.application_restart_evidence).resolve(strict=True)
+ names={'stationary_image':'stationaryImage','tip_image':'tipImage','target_base':'targetBase','profile_base':'profileBase','tip_offset':'tipOffset','previous_report':'previousReport','scrap_experiment':'scrapExperiment','registration_revalidation':'registrationRevalidation','application_restart_evidence':'applicationRestartEvidence'}
  inputs['sources']={names.get(k,k):evidence(v) for k,v in source_paths.items()}
  # Recompute conditioner prefix gross with the same checked-in route generator.
- prof=profile_base;prepared_exp,prefix,_,accounting=conditioning_prefix(experiment,raw,prof,evidence(raw_paths['stationary_image']),args.prime_x,args.prime_y,args.dummy_x,args.dummy_y)
- budget=route_gross(len(refs),accounting['grossCommandedDegrees'])
+ conditioning_experiment=dict(experiment,retractDegrees=retract)
+ prof=profile_base;prepared_exp,prefix,_,accounting=conditioning_prefix(conditioning_experiment,raw,prof,evidence(raw_paths['stationary_image']),args.prime_x,args.prime_y,args.dummy_x,args.dummy_y)
+ budget=route_gross(len(refs),accounting['grossCommandedDegrees'],dose,retract)
  require(budget['grossDegrees']<=240,'Selected-pair route exceeds existing 240-degree per-batch gross cap')
  output.mkdir(parents=True)
  target_path.write_text(json.dumps(target,indent=2,allow_nan=False)+'\n')
  inputs['sources']['targetBase']=evidence(target_path)
  input_path=output/'reviewed-inputs.json';input_path.write_text(json.dumps(inputs,indent=2,allow_nan=False)+'\n')
  return {'output':output,'input':input_path,'inputs':inputs,'budget':budget,'prefixStages':len(prefix)}
-def route_gross(pair_count,conditioning_gross,dose=12,retract=2,idle_relief=40):
- require(type(pair_count)is int and 1<=pair_count<=3,'Select one to three pairs')
- require((dose,retract,idle_relief)==(12,2,40),'Fixed route is 12-degree dose, R2 and 40-degree final relief')
- selected_pads=pair_count*2;selected_gross=selected_pads*(dose+2*retract)
- return {'conditioningGrossDegrees':conditioning_gross,'selectedPadsGrossDegrees':selected_gross,'idleReliefGrossDegrees':idle_relief,'grossDegrees':conditioning_gross+selected_gross+idle_relief}
 def main(argv=None):
  p=make_parser();a=p.parse_args(argv);result=build_inputs(a);authored=result['output']/'authored'
  subprocess.run([sys.executable,str(AUTHOR_PATH),'--inputs',str(result['input']),'--output',str(authored)],check=True,cwd=ROOT)
  print(json.dumps({'authoringInput':str(result['input']),'authoredOutput':str(authored),'previewRequest':str(authored/'prepared/native/preview-request.json'),
-  'prefixStages':result['prefixStages'],'recipe':{'doseDegrees':12,'retractDegrees':2,'conditioningDoseDegrees':20,'conditioningDwellMilliseconds':2000,'retractDwellMilliseconds':500,'pairs':len([x for x in result['inputs']['selectedPads']])/2},
+  'prefixStages':result['prefixStages'],'recipe':{'doseDegrees':result['inputs']['doseDegrees'],'dwellMilliseconds':result['inputs']['dwellMilliseconds'],'retractDegrees':result['inputs']['retractDegrees'],'conditioningDoseDegrees':20,'conditioningDwellMilliseconds':2000,'conditioningRetractDegrees':result['inputs']['retractDegrees'],'retractDwellMilliseconds':500,'pairs':len([x for x in result['inputs']['selectedPads']])/2},
   'budget':result['budget'],'enabled':False,'motionDispatched':False},indent=2))
 if __name__=='__main__':
  try:main()

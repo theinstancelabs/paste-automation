@@ -102,11 +102,11 @@ def prepare(args):
     'evidence':[],'previousReportEvidence':prev,'nativePreviewEvidence':None,'profileEvidence':profile_ev,'barrierEvidence':evidence(bp2),'reviewedImageEvidence':{'path':str(image),'sha256':imgsha},'previousLedgerSha256':hashlib.sha256(lb).hexdigest(),'syringeId':base['syringeId'],'primeLedgerSha256':base['primeLedgerSha256'],'carryoverSha256':base['carryoverSha256'],'budgetAmendmentEvidence':base.get('budgetAmendmentEvidence'),
     'primeLedgerEvidence':sha_evidence(base.get('primeLedgerEvidence'),'template primeLedgerEvidence'),'priorLedgerEvidence':sha_evidence(base.get('priorLedgerEvidence'),'template priorLedgerEvidence'),'carryoverEvidence':sha_evidence(base.get('carryoverEvidence'),'template carryoverEvidence')}
  restart_ev=None
- if args.application_restart_evidence:
+ if getattr(args,'application_restart_evidence',None):
   restart_ev,restart_summary=restart_binding(args.application_restart_evidence,base.get('sessionId'),barrier.get('liveConfigurationSha256'),reqb.get('jvmStartMs'))
   q['applicationRestartEvidence']={**restart_ev,**restart_summary}
  amendment=q.get('budgetAmendmentEvidence')
- if amendment:
+ if amendment and amendment.get('anchorReportEvidence'):
   amendment_record,_,_=read(amendment['path']); anchor_report,_,_=read(amendment_record['anchorReportEvidence']['path']); anchor_jvm=anchor_report.get('request',{}).get('jvmStartMs')
   if anchor_jvm!=q['jvmStartMs'] and (not q.get('applicationRestartEvidence') or anchor_jvm not in q['applicationRestartEvidence']['allowedJvmStartMs']): err('A prior-JVM amendment anchor requires explicit application-restart evidence')
  if recipe.get('targetSurface')=='scrap-sequence-comparison':

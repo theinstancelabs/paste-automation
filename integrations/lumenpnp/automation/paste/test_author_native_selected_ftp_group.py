@@ -41,6 +41,42 @@ class SelectedNativeGroupTests(unittest.TestCase):
   doc=json.loads(result['input'].read_text());self.assertEqual(len(doc['selectedPads']),6)
   self.assertEqual(doc['xyClearanceRawZ'],53.45);self.assertEqual(doc['conditioningRawZRange'],[53.45,58.45])
   self.assertEqual(set(doc['sources']),{'template','barrier','stationaryImage','tipImage','registration','targetBase','profileBase','tipOffset','previousReport','ledger','scrapExperiment'})
+ def test_explicit_short_dose_and_r6_are_bound_through_prefix_and_budget(self):
+  selected=M.selected_pad_ids(['R28','R27'])
+  args=self.args(dose_degrees=4,retract_degrees=6,dwell_milliseconds=200,refs='R28,R27',reviewed_pad=selected,surface_reviewed_pad=selected)
+  result=M.build_inputs(args,self.now);doc=json.loads(result['input'].read_text())
+  self.assertEqual((doc['doseDegrees'],doc['retractDegrees'],doc['dwellMilliseconds']),(4,6,200))
+  self.assertEqual(result['budget']['conditioningGrossDegrees'],106)
+  self.assertEqual(result['budget']['selectedPadsGrossDegrees'],64)
+  self.assertEqual(result['budget']['grossDegrees'],210)
+  self.assertEqual(doc['startRaw'],self.raw)
+  experiment=dict(json.loads(self.experiment.read_text()),retractDegrees=doc['retractDegrees'])
+  _,prefix,_,_=M.conditioning_prefix(experiment,self.raw,self.profile and json.loads(self.profile.read_text()),M.evidence(self.stationary),300.0,210.0,302.5,211.0)
+  at=self.raw['B'];b_deltas=[]
+  for stage in prefix:
+   if stage['axis']=='B':b_deltas.append(stage['target']-at);at=stage['target']
+  self.assertIn(6,b_deltas)
+  self.assertEqual(experiment['retractDegrees'],6)
+  with self.assertRaisesRegex(ValueError,'240-degree'):
+   M.build_inputs(self.args(output=str(self.root/'over-cap'),dose_degrees=4,retract_degrees=6,dwell_milliseconds=200),self.now)
+ def test_one_second_per_pad_dwell_is_accepted_and_hash_bound(self):
+  selected=M.selected_pad_ids(['R28'])
+  result=M.build_inputs(self.args(refs='R28',reviewed_pad=selected,surface_reviewed_pad=selected,
+    dose_degrees=4,retract_degrees=6,dwell_milliseconds=1000),self.now)
+  doc=json.loads(result['input'].read_text())
+  self.assertEqual(doc['dwellMilliseconds'],1000)
+ def test_application_restart_proof_is_hash_bound_in_reviewed_sources(self):
+  proof=self.json('application-restart-continuity.json',{'sessionId':'unit-session','liveConfigurationSha256':'a'*64,'transitions':[{'oldJvmStartMs':16,'newJvmStartMs':17}]})
+  doc=M.build_inputs(self.args(application_restart_evidence=str(proof)),self.now)['inputs']
+  self.assertEqual(doc['sources']['applicationRestartEvidence'],M.evidence(proof))
+ def test_route_budget_matches_existing_selected_pad_math_and_allows_safe_three_pair_recipe(self):
+  self.assertEqual(M.route_gross(3,106,dose=2,retract=6),{'conditioningGrossDegrees':106,'selectedPadsGrossDegrees':84,'idleReliefGrossDegrees':40,'grossDegrees':230})
+  self.assertEqual(M.route_gross(3,106,dose=4,retract=6)['grossDegrees'],242)
+  parser=M.make_parser()
+  self.assertEqual(parser.parse_args(['--dose-degrees','6','--retract-degrees','6','--dwell-milliseconds','1000',
+   '--output','x','--template','t','--barrier','b','--stationary-image','s','--tip-image','i','--registration','r','--target-base','tb',
+   '--profile-base','p','--tip-offset','o','--previous-report','pr','--ledger','l','--scrap-experiment','e','--surface','sf','--reports','rp',
+   '--refs','R1','--prime-x','1','--prime-y','2','--dummy-x','3','--dummy-y','4','--reviewer','xx','--review','a'*60]).dwell_milliseconds,1000)
  def test_no_historical_control_fallback_and_report_provenance(self):
   bad=dict(self.report_map);bad.pop('R16.1');self.reports=self.json('reports-missing-control.json',bad)
   with self.assertRaisesRegex(ValueError,'all current controls|all controls'):M.build_inputs(self.args(),self.now)
