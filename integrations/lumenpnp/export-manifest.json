@@ -1257,8 +1257,8 @@
       "sourceRoot": "/home/lumen/lumenpnp",
       "sourcePath": "automation/paste/commissioning-stroke.cjs",
       "destination": "integrations/lumenpnp/automation/paste/commissioning-stroke.cjs",
-      "sha256": "9aebcb72389fdff64eea74cab37b8c5eb0f55a072413647d1a2cd535e8c473f4",
-      "bytes": 19050
+      "sha256": "6125b06ac1b82868cadf36fa95d3f11003af8827b153a68f6260645a5754a10b",
+      "bytes": 28276
     },
     {
       "sourceRoot": "/home/lumen/lumenpnp",
@@ -1299,15 +1299,15 @@
       "sourceRoot": "/home/lumen/lumenpnp",
       "sourcePath": "automation/scripts/Automation_Reviewed_Command.js",
       "destination": "integrations/lumenpnp/automation/scripts/Automation_Reviewed_Command.js",
-      "sha256": "6dfa61332b0774429afb258d99751ff49fb3269da2e8bd6cc22290e818c3f065",
-      "bytes": 4622
+      "sha256": "e95601af0a495a08b25b0978956dd1fd8024d366cb86330a2b3bdadafcd7a69f",
+      "bytes": 4813
     },
     {
       "sourceRoot": "/home/lumen/lumenpnp",
       "sourcePath": "automation/scripts/run_reviewed_action.py",
       "destination": "integrations/lumenpnp/automation/scripts/run_reviewed_action.py",
-      "sha256": "58ec13df70dd4a6915d2a3b6bdf458662cc693479d5815949e51a23272de95db",
-      "bytes": 18474
+      "sha256": "a3de80067477ce850547c309dd603c66c3195057d9f6491096342226d54bc613",
+      "bytes": 18594
     },
     {
       "sourceRoot": "/home/lumen/lumenpnp",
@@ -1369,8 +1369,8 @@
       "sourceRoot": "/home/lumen/lumenpnp",
       "sourcePath": "automation/operations/paste-small-dot-trials-20260930.md",
       "destination": "integrations/lumenpnp/automation/operations/paste-small-dot-trials-20260930.md",
-      "sha256": "b710f852dca28b86a2f26e59b8b692be87d1e692b8da624fcc0d49e86ce30586",
-      "bytes": 11655
+      "sha256": "9a420478d84824d9d04457a3936171ab95c50a9f496074b5b570492f8e71e8be",
+      "bytes": 13582
     },
     {
       "sourceRoot": "/home/lumen/lumenpnp",
@@ -1413,7 +1413,45 @@
       "destination": "integrations/lumenpnp/automation/scripts/Set_Paste_B_Current.js",
       "sha256": "20ddebfe6333f1dcf097269e4b1f06436cc21d7de98b0b563c9e6d6f2eff434d",
       "bytes": 16327
+    },
+    {
+      "sourceRoot": "/home/lumen/lumenpnp",
+      "sourcePath": "automation/paste/commissioning-batch.test.cjs",
+      "destination": "integrations/lumenpnp/automation/paste/commissioning-batch.test.cjs",
+      "sha256": "e7680bd27ac7a9ce3e85007e50d71d99b5fa1316c31d2c529113d5c403ab95c3",
+      "bytes": 6745
+    },
+    {
+      "sourceRoot": "/home/lumen/lumenpnp",
+      "sourcePath": "automation/scripts/Commission_Paste_Contiguous_Batch.js",
+      "destination": "integrations/lumenpnp/automation/scripts/Commission_Paste_Contiguous_Batch.js",
+      "sha256": "679ceb188916d5d0d7541c9e8c52f58eed9823afe7600510a781b4204443d0a0",
+      "bytes": 35981
+    },
+    {
+      "sourceRoot": "/home/lumen/lumenpnp",
+      "sourcePath": "automation/scripts/Preview_Paste_Contiguous_Batch.js",
+      "destination": "integrations/lumenpnp/automation/scripts/Preview_Paste_Contiguous_Batch.js",
+      "sha256": "b49b05e9f76d5dc35fd63519a41e671d5ab8fe95bc66efb9808bc93a378733d2",
+      "bytes": 13151
+    },
+    {
+      "sourceRoot": "/home/lumen/lumenpnp",
+      "sourcePath": "automation/plans/paste-contiguous-batch-PREPARE-ONLY.md",
+      "destination": "integrations/lumenpnp/automation/plans/paste-contiguous-batch-PREPARE-ONLY.md",
+      "sha256": "ecea0bb3df6f2fa302974922b3c9c8dab0352ecbe6dd221d602c8daaba32da12",
+      "bytes": 3699
+    },
+    {
+      "sourceRoot": "/home/lumen/lumenpnp",
+      "sourcePath": "automation/paste/prepare-contiguous-batch.py",
+      "destination": "integrations/lumenpnp/automation/paste/prepare-contiguous-batch.py",
+      "sha256": "f5b4bcaddb98df074974fe107fc7836420055152f2ef396f04c42bc49ab4fdfe",
+      "bytes": 12831
     }
   ],
-  "manifestSelfHash": "Excluded to avoid a recursive digest; this manifest enumerates every other exported/generated file."
+  "manifestSelfHash": "Excluded to avoid a recursive digest; this manifest enumerates every other exported/generated file.",
+  "explicitSourceDocumentExceptions": [
+    "automation/plans/paste-contiguous-batch-PREPARE-ONLY.md"
+  ]
 }
