@@ -1299,15 +1299,15 @@
       "sourceRoot": "/home/lumen/lumenpnp",
       "sourcePath": "automation/scripts/Automation_Reviewed_Command.js",
       "destination": "integrations/lumenpnp/automation/scripts/Automation_Reviewed_Command.js",
-      "sha256": "f2eecfcbe093a7073f1db575ebcd5ea2e8fbd8b59a5b9c102fc83b3c5e0791bb",
-      "bytes": 4561
+      "sha256": "6dfa61332b0774429afb258d99751ff49fb3269da2e8bd6cc22290e818c3f065",
+      "bytes": 4622
     },
     {
       "sourceRoot": "/home/lumen/lumenpnp",
       "sourcePath": "automation/scripts/run_reviewed_action.py",
       "destination": "integrations/lumenpnp/automation/scripts/run_reviewed_action.py",
-      "sha256": "28f694a1d844c5403c7c5883ed701317323a50786712ebef8f9ce275061f27bc",
-      "bytes": 18417
+      "sha256": "58ec13df70dd4a6915d2a3b6bdf458662cc693479d5815949e51a23272de95db",
+      "bytes": 18474
     },
     {
       "sourceRoot": "/home/lumen/lumenpnp",
@@ -1392,6 +1392,27 @@
       "destination": "integrations/lumenpnp/automation/paste/prepare-dose-cycle.md",
       "sha256": "63a680abc97cfc6ddb8c54ec84b972f00c8b11e2e36d9eea5adcda91d3ae9417",
       "bytes": 1439
+    },
+    {
+      "sourceRoot": "/home/lumen/lumenpnp",
+      "sourcePath": "automation/paste/b-current.cjs",
+      "destination": "integrations/lumenpnp/automation/paste/b-current.cjs",
+      "sha256": "61577485b19981267da75114c1b10a403d2b93087600f85a06409787b5360274",
+      "bytes": 4018
+    },
+    {
+      "sourceRoot": "/home/lumen/lumenpnp",
+      "sourcePath": "automation/paste/b-current.test.cjs",
+      "destination": "integrations/lumenpnp/automation/paste/b-current.test.cjs",
+      "sha256": "a27500c30359287f7f8319af685ce8a2650ca962a72ed49dcbc86e56c8a83b4e",
+      "bytes": 2396
+    },
+    {
+      "sourceRoot": "/home/lumen/lumenpnp",
+      "sourcePath": "automation/scripts/Set_Paste_B_Current.js",
+      "destination": "integrations/lumenpnp/automation/scripts/Set_Paste_B_Current.js",
+      "sha256": "20ddebfe6333f1dcf097269e4b1f06436cc21d7de98b0b563c9e6d6f2eff434d",
+      "bytes": 16327
     }
   ],
   "manifestSelfHash": "Excluded to avoid a recursive digest; this manifest enumerates every other exported/generated file."
