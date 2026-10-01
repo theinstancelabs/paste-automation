@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "exportDate": "2026-09-30",
+  "exportDate": "2026-10-01",
   "baseCommit": "c497bfbef2f7347538966c129bf7ac7bdc2c1a0f",
   "canonicalSourceRoot": "/home/lumen/lumenpnp",
   "purpose": "Source-only reviewable mirror; no deployment, machine operation, or private machine evidence included.",
@@ -1257,15 +1257,15 @@
       "sourceRoot": "/home/lumen/lumenpnp",
       "sourcePath": "automation/paste/commissioning-stroke.cjs",
       "destination": "integrations/lumenpnp/automation/paste/commissioning-stroke.cjs",
-      "sha256": "daf440ca40d2103fab704c2cdbeb049b8994b25c92050f9b67e47d2217d71a43",
-      "bytes": 35121
+      "sha256": "902b82caca1aab63098d55b2154c3106ba820d50b4a17669b83026d9b7350ae1",
+      "bytes": 35133
     },
     {
       "sourceRoot": "/home/lumen/lumenpnp",
       "sourcePath": "automation/paste/commissioning-stroke.test.cjs",
       "destination": "integrations/lumenpnp/automation/paste/commissioning-stroke.test.cjs",
-      "sha256": "332ae87272ddc861f7cf300fa40cb6395c9931debff7df3add3f9bb9f2b5ba5a",
-      "bytes": 20799
+      "sha256": "2008947546cbd1118af7442f70201e3cc523b3bc42fef2b31c8ad328993c4933",
+      "bytes": 20895
     },
     {
       "sourceRoot": "/home/lumen/lumenpnp",
@@ -1418,8 +1418,8 @@
       "sourceRoot": "/home/lumen/lumenpnp",
       "sourcePath": "automation/paste/commissioning-batch.test.cjs",
       "destination": "integrations/lumenpnp/automation/paste/commissioning-batch.test.cjs",
-      "sha256": "fa89dadce776cba786ba6c9e6cd4b917d5f3876040dd712d97ccd057f303b535",
-      "bytes": 68313
+      "sha256": "1b867af431f1e7634d83f069b707ad13adefa67bf15a6f87afb79db51017a488",
+      "bytes": 68470
     },
     {
       "sourceRoot": "/home/lumen/lumenpnp",
@@ -1439,15 +1439,15 @@
       "sourceRoot": "/home/lumen/lumenpnp",
       "sourcePath": "automation/plans/paste-contiguous-batch-PREPARE-ONLY.md",
       "destination": "integrations/lumenpnp/automation/plans/paste-contiguous-batch-PREPARE-ONLY.md",
-      "sha256": "c5a22f4093c27772a1a2ea594c561cc7fb0659602e38e241943b3daf87b4ebfb",
-      "bytes": 10060
+      "sha256": "b3cab7387cc249ab422f1443251c36488dce0fd187b7c51ffbf17670e672cc18",
+      "bytes": 10083
     },
     {
       "sourceRoot": "/home/lumen/lumenpnp",
       "sourcePath": "automation/paste/prepare-contiguous-batch.py",
       "destination": "integrations/lumenpnp/automation/paste/prepare-contiguous-batch.py",
-      "sha256": "ae936082d52a59eb3f291a2236065d5379e0589af0dbca13a354c9ca4c5b59fb",
-      "bytes": 15678
+      "sha256": "95b9feaa5df2fbeead514d270a699ddace9e2682a3b60eab82b098537889ab51",
+      "bytes": 15684
     },
     {
       "sourceRoot": "/home/lumen/lumenpnp",
@@ -1523,8 +1523,8 @@
       "sourceRoot": "/home/lumen/lumenpnp",
       "sourcePath": "automation/paste/analysis/test_prepare_retraction_coupon.py",
       "destination": "integrations/lumenpnp/automation/paste/analysis/test_prepare_retraction_coupon.py",
-      "sha256": "aa8be7a2fc2d9ead5cc57af5d21c0fe6fb11fd1c699d0da2a146c02076d294b6",
-      "bytes": 31363
+      "sha256": "d7e555f9f8b8206037f24a7e44b0ef1f1ccb672510dbcd309ca106aab96cfa2c",
+      "bytes": 31375
     },
     {
       "sourceRoot": "/home/lumen/lumenpnp",

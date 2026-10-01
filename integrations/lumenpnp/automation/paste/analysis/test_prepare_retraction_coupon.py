@@ -384,7 +384,7 @@ class RetractionCouponTests(unittest.TestCase):
             M.WIPE.write_exclusive(args.output,result)
             with self.assertRaises(FileExistsError): M.WIPE.write_exclusive(args.output,result)
 
-    def test_3600_and_8400_preparer_hash_load_matching_travel_review_into_request_evidence(self):
+    def test_3600_8400_and_11800_preparer_hash_load_matching_travel_review_into_request_evidence(self):
         with tempfile.TemporaryDirectory() as d:
             args = self.fixture(d)
             recipe = M.build(args); recipe_path = Path(d)/'recipe-input.json'
@@ -394,7 +394,7 @@ class RetractionCouponTests(unittest.TestCase):
                 with contextlib.redirect_stdout(io.StringIO()):
                     M.BATCH.prepare(SimpleNamespace(template=args.template,barrier=args.barrier,image=args.image,recipe=str(recipe_path),output=str(out)))
                 return json.loads((out/'preview-request.json').read_text())
-            for ceiling in (3600,8400):
+            for ceiling in (3600,8400,11800):
                 travel = Path(d)/f'travel-{ceiling}.json'; travel.write_text(json.dumps({'synthetic':'review only','ceiling':ceiling}))
                 travel_ev = M.WIPE.evidence(travel)
                 amendment = Path(d)/f'amendment-{ceiling}.json'

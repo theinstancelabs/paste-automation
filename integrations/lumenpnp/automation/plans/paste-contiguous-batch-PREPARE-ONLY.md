@@ -84,7 +84,7 @@ completed. Only the exact hash-bound reconciliation terminal permits a subsequen
 new batch. The fault batch ID remains barred from replay. This exception is confined
 to batch continuation; it does not generalize single-stroke or cycle recovery.
 
-A 3600- or 8400-degree ceiling is a separate fixed-ceiling amendment option. It retains the
+A 3600-, 8400-, or 11800-degree ceiling is a separate fixed-ceiling amendment option. It retains the
 original 120-degree anchor, immutable carryover, complete charged history and all
 existing step/rate limits. The amendment JSON must contain `travelReviewEvidence:
 {path,sha256}`; the request's amendment envelope must carry the same absolute path
@@ -92,7 +92,7 @@ and hash, and that exact pair must appear in `q.evidence`. For this ceiling only
 the offline preparer hash-loads the amendment and its travel review, checks the
 matching envelope, and adds the review to request evidence. The native batch, single-stroke and
 dose-cycle state gates explicitly hash-load that review before reservation/query
-and their existing subsequent state checks. The 8400-degree proposal must bind a
+and their existing subsequent state checks. Each ceiling of 8400 degrees or higher must bind a
 separate hash-bound review, amendment record, and exact current-ledger/report
 baseline; it does not replace or rewrite the earlier 3600-degree review. This
 neither authors a mechanical review nor changes a live amendment,
