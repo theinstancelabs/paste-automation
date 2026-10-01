@@ -28,6 +28,9 @@ class OnePadCleanupTests(unittest.TestCase):
   t={**self.target,'schema':1,'boardId':'board','sessionId':'s','jvmStartMs':1,'liveConfigurationSha256':'a'*64,'reviewedBy':'reviewer','reviewedMs':now,'boardUnmovedSinceRegistration':True,'provenance':'commissioning-provisional','precisionCalibrated':False,'flowCalibrated':False,'quantizationMm':.01,'cleanupSequence':self.target['cleanupSequence'],'cadEvidence':self.ev,'registrationRevalidationEvidence':self.ev,'tipOffsetEvidence':self.ev,'padChecks':[{'reference':r,'reviewedAligned':True,'reportEvidence':self.ev,'imageEvidence':self.ev} for r in ('R1','R16','R40')],'defectReviewed':True}
   pad={**self.target['pads'][0],'padIdentityReviewed':True,'defectReviewed':True,'defectCapturedMs':now,'defectReportEvidence':self.ev,'defectImageEvidence':self.ev};t['pads']=[pad]
   self.assertEqual(M.validate_target(t,now,template)[0]['padId'],'R1.1')
+  t['pads'][0]['padId']='R16.2'
+  self.assertEqual(M.validate_target(t,now,template)[0]['padId'],'R16.2')
+  with self.assertRaises(ValueError):M.validate_target(t,now+300001,template)
   for edit in (lambda x:x.update(compensatedSequence={}),lambda x:x['pads'][0].update(padId='R40.2'),lambda x:x['pads'][0].update(defectReviewed=False),lambda x:x['cleanupSequence'].update(dwellMilliseconds=2001),lambda x:x['cleanupSequence'].update(retractDegrees=4)):
    q=json.loads(json.dumps(t));edit(q)
    with self.assertRaises(ValueError):M.validate_target(q,now,template)

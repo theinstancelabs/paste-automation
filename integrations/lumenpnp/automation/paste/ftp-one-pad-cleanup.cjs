@@ -10,7 +10,7 @@ function validate(q,now){
  var t=q.ftpTargetRecord,c=t&&t.cleanupSequence;if(now===undefined)now=q.createdMs;
  if(!isCleanup(q)||q.mode!=='wet'||!t||t.scope!=='ftp-one-pad-cleanup-targets'||t.compensatedSequence!==undefined||t.inlineConditioning!==undefined||!c||c.schema!==1||c.protocol!=='positive-B-aspiration-lift-one-pad'||[6,20].indexOf(c.retractDegrees)<0||!finite(c.dwellMilliseconds)||Math.floor(c.dwellMilliseconds)!==c.dwellMilliseconds||c.dwellMilliseconds<0||c.dwellMilliseconds>2000)fail('Explicit bounded positive-B cleanup protocol required');
  if(!Array.isArray(t.pads)||t.pads.length!==1)fail('Cleanup requires exactly one reviewed defect pad');var p=t.pads[0];
- if(['R1.1','R40.1'].indexOf(p.padId)<0||p.padIdentityReviewed!==true||p.defectReviewed!==true)fail('Only explicitly reviewed R1.1 or R40.1 defect is in cleanup scope');ev(p.defectReportEvidence);ev(p.defectImageEvidence);
+ if(['R1.1','R40.1','R16.2'].indexOf(p.padId)<0||p.padIdentityReviewed!==true||p.defectReviewed!==true)fail('Only explicitly reviewed R1.1, R40.1 or R16.2 defect is in cleanup scope');ev(p.defectReportEvidence);ev(p.defectImageEvidence);
  if(!finite(p.defectCapturedMs)||Math.floor(p.defectCapturedMs)!==p.defectCapturedMs||!finite(now)||p.defectCapturedMs>t.reviewedMs||p.defectCapturedMs>now||now-p.defectCapturedMs>300000)fail('Fresh defect image before authored cleanup review required');return t;
 }
 function coverage(q,t){

@@ -23,7 +23,7 @@ def validate_target(t,now,template):
  pads=t.get('pads');
  if not isinstance(pads,list) or len(pads)!=1:fail('Exactly one reviewed defect pad required')
  p=pads[0]
- if p.get('padId') not in ('R1.1','R40.1') or p.get('padIdentityReviewed') is not True or p.get('defectReviewed') is not True:fail('Only reviewed R1.1 or R40.1 identity/defect can be selected')
+ if p.get('padId') not in ('R1.1','R40.1','R16.2') or p.get('padIdentityReviewed') is not True or p.get('defectReviewed') is not True:fail('Only reviewed R1.1, R40.1 or R16.2 identity/defect can be selected')
  for k in ('defectReportEvidence','defectImageEvidence'):checked(p.get(k),k)
  if type(p.get('defectCapturedMs')) is not int or not 0<=now-p['defectCapturedMs']<=300000 or p['defectCapturedMs']>t['reviewedMs']:fail('Fresh defect observation before target review required')
  for k in ('cadEvidence','registrationEvidence','registrationRevalidationEvidence','tipOffsetEvidence','surfaceEvidence'):checked(t.get(k),k)

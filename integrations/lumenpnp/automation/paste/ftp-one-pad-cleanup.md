@@ -1,6 +1,6 @@
 # One-pad registered paste cleanup trial
 
-The optional `contiguous-native-ftp-one-pad-cleanup` scope admits one reviewed attempt on either R1.1 or R40.1. It is distinct from scrap commissioning and dispensing. It retains the existing same-session registration/revalidation, tip offset, board surface, both-head clearance, driver/count, native preview, charged history and no-replay gates. It does not use N1 vacuum or pickup APIs.
+The optional `contiguous-native-ftp-one-pad-cleanup` scope admits one reviewed attempt on R1.1, R40.1 or R16.2. It is distinct from scrap commissioning and dispensing. It retains the existing same-session registration/revalidation, tip offset, board surface, both-head clearance, driver/count, native preview, charged history and no-replay gates. It does not use N1 vacuum or pickup APIs.
 
 The target record uses `scope: "ftp-one-pad-cleanup-targets"` and one pad, with explicit `padIdentityReviewed` and `defectReviewed`, fresh `defectReportEvidence` and `defectImageEvidence`, and integer `defectCapturedMs` equal to the camera report finish time. The report/image must match the current session and be at most five minutes old. Old clean/available-pad flags do not substitute for this defect review. All CAD, held-out pad checks, board-unmoved, surface and selected tip evidence remain required.
 
@@ -9,3 +9,5 @@ The target record uses `scope: "ftp-one-pad-cleanup-targets"` and one pad, with 
 Recipe target surface is `ftp-one-pad-cleanup`, with the usual `-preview` request scope for detached native preview. The separate offline helper writes disabled preparation artifacts only. The parent reviews the defect geometry and same above-board work height before a trial, then inspects a fresh image after one attempt. Positive B is a commanded retraction; it does not establish aspiration or removal. Paste may remain, string, or still ooze. No deeper approach, repeat loop or physical-success claim is implied.
 
 `prepare-ftp-one-pad-cleanup.py` takes `--template`, `--barrier`, `--image`, `--profile`, `--clearance-review`, `--target-record`, `--previous-report`, `--ledger`, `--output` and `--xy-clearance-raw-z`. The supplied barrier must already be at the chosen clearance; the provisional profile binds that starting pose and board ID. The helper computes only route/index/accounting fields and rechecks input bytes after the disabled generic validator. It does not approach the start pose, obtain evidence, finalize or dispatch.
+
+R16.2 was added after a parent-observed approximately 2 mm string during the final lift of an eight-pad trial. That historical observation identifies eligibility only: each cleanup request still needs a fresh, hash-bound defect image and explicit identity/defect review. No cleanup success is claimed.
