@@ -1910,6 +1910,20 @@
       "destination": "integrations/lumenpnp/automation/paste/test_prepare_startup_quarantine_request.py",
       "sha256": "19d97b95769cb2b42d36b246f245778126403e533990f086abcd9c603431619f",
       "bytes": 3021
+    },
+    {
+      "sourceRoot": "/home/lumen/lumenpnp",
+      "sourcePath": "automation/paste/author-native-selected-ftp-group.py",
+      "destination": "integrations/lumenpnp/automation/paste/author-native-selected-ftp-group.py",
+      "sha256": "2831caa3938a651c693b0a155ffd40db11a1f727a0c1663ea83462e8daf63e72",
+      "bytes": 15454
+    },
+    {
+      "sourceRoot": "/home/lumen/lumenpnp",
+      "sourcePath": "automation/paste/test_author_native_selected_ftp_group.py",
+      "destination": "integrations/lumenpnp/automation/paste/test_author_native_selected_ftp_group.py",
+      "sha256": "d2551223378c770d1dd468cf1ad731d0f2d9650cbebdc61e804fb09e12d89da4",
+      "bytes": 6823
     }
   ],
   "manifestSelfHash": "Excluded to avoid a recursive digest; this manifest enumerates every other exported/generated file.",
