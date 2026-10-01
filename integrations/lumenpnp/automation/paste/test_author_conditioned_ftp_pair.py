@@ -47,6 +47,15 @@ class AuthorInputsTests(unittest.TestCase):
   for bad in (True,3.0,1,4,6):
    self.q['retractDegrees']=bad
    with self.assertRaises(ValueError):M.derive(self.q,self.load,self.q['reviewedMs'])
+ def test_conditioning6_is_explicit_and_does_not_change_pad_dose(self):
+  self.assertEqual(M.derive(self.q,self.load,self.q['reviewedMs'])[0]['conditioningDoseDegrees'],20)
+  self.q['conditioningDoseDegrees']=6;self.q['doseDegrees']=12;self.q['retractDegrees']=3
+  e,_,_,t=M.derive(self.q,self.load,self.q['reviewedMs'])
+  self.assertEqual(e['conditioningDoseDegrees'],6);self.assertEqual(e['conditioningDwellMilliseconds'],2000)
+  self.assertEqual(t['compensatedSequence']['doseDegrees'],12)
+  for bad in (True,6.0,4,12):
+   self.q['conditioningDoseDegrees']=bad
+   with self.assertRaises(ValueError):M.derive(self.q,self.load,self.q['reviewedMs'])
  def test_rejects_missing_attestation_stale_review_wrong_start_surface_and_pair(self):
   edits=[lambda q:q['attestations'].update(tipReviewedNoLongStrand=False),lambda q:q.update(reviewedMs=q['reviewedMs']-300001),lambda q:q['startRaw'].update(B=-999),lambda q:q.update(surfaceRawZ=58.45),lambda q:q['pairReviews'][0].update(padsAvailableReviewed=False),lambda q:q['pairReviews'].append(copy.deepcopy(q['pairReviews'][0])),lambda q:q['pairReviews'][0].update(capturedMs=q['reviewedMs']+1)]
   for edit in edits:

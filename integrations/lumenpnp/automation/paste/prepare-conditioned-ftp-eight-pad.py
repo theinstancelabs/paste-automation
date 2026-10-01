@@ -82,7 +82,7 @@ def build(args):
     if review.get('reviewedBy') is None or type(review.get('reviewedMs')) is not int or not captured<=review['reviewedMs']<=now:fail('Fresh authored complete-route review required')
     if not PREP.BATCH.same(experiment.get('startRaw'),start) or experiment.get('mode')!='transfer-preparation':fail('Transfer preparation must start at exact fresh barrier')
     if experiment.get('retractDegrees')!=target['compensatedSequence'].get('retractDegrees'):fail('Conditioner retraction must match FTP restore/retract selection')
-    if experiment.get('doseDegrees')!=target['compensatedSequence'].get('doseDegrees') or experiment.get('conditioningDoseDegrees')!=20:fail('Preparation experiment dose must match the selected FTP dose and retain conditioning dose20')
+    if experiment.get('doseDegrees')!=target['compensatedSequence'].get('doseDegrees') or type(experiment.get('conditioningDoseDegrees')) is not int or experiment.get('conditioningDoseDegrees') not in (6,20):fail('Preparation experiment dose must match the selected FTP dose and use explicit conditioning dose6|20')
     gap=PREP.number(profile.get('estimatedGapMm'),'profile gap');unc=PREP.number(profile.get('gapUncertaintyMm'),'profile uncertainty')
     prefix,_,prep_accounting=PREP.stages_for(experiment,re,gap,unc)
     if len(prefix)<2 or prefix[-2].get('axis')!='B' or prefix[-1].get('axis')!='Z':fail('Preparation must end with +R then lift')

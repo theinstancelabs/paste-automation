@@ -172,6 +172,16 @@ class EightPadBuilderTests(unittest.TestCase):
                 prior_b=next(s['target'] for s in reversed(r3['stages'][:i]) if s['axis']=='B')
                 self.assertEqual(r3['stages'][i]['target']-prior_b,-3)
                 self.assertEqual(r3['stages'][j]['target']-r3['stages'][j-1]['target'],3)
+            fixture.exp['conditioningDoseDegrees']=6;experiment.write_text(json.dumps(fixture.exp))
+            review.write_text(json.dumps({'reviewedBy':'reviewer','reviewedMs':now,'experimentEvidence':M.PREP.WIPE.evidence(experiment),'imageEvidence':M.PREP.WIPE.evidence(fixture.image)}))
+            profiledata['measurementEvidence']=M.PREP.WIPE.evidence(review);fixture.profile.write_text(json.dumps(profiledata));args.output=str(fixture.root/'eight-out-condition6')
+            with patch.object(M.subprocess,'run',side_effect=offline_run):M.build(args)
+            c6=json.loads((fixture.root/'eight-out-condition6'/'recipe.json').read_text());ct=json.loads((fixture.root/'eight-out-condition6'/'targets.json').read_text())
+            self.assertEqual(c6['bAccounting']['grossChargedDegrees'],273);self.assertEqual(c6['bAccounting']['netDegrees'],-99)
+            self.assertEqual(len(c6['stages']),len(r3['stages']))
+            i=ct['inlineConditioning']['retractionStageIndex']-1
+            prior_b=next(s['target'] for s in reversed(c6['stages'][:i]) if s['axis']=='B')
+            self.assertEqual(c6['stages'][i]['target']-prior_b,-6);self.assertEqual(c6['stages'][i]['dwellMilliseconds'],2000)
         finally:fixture.tearDown()
         self.target['pads'][1]['padId']='R1.2';self.target['compensatedSequence']['doseDegrees']=5
         with self.assertRaises(ValueError):M.validate_eight(self.target)

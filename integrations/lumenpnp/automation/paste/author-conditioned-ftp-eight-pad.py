@@ -30,6 +30,8 @@ def derive(q,load,now):
  if q.get('doseDegrees') not in (4,6,12,20) or type(q['doseDegrees']) is not int:fail('Dose must be integer4,6,12 or20')
  dwell=q.get('dwellMilliseconds',200)
  if type(dwell) is not int or dwell not in (200,1000,2000):fail('Forward dwell must be integer200,1000 or2000 ms')
+ conditioning=q.get('conditioningDoseDegrees',20)
+ if type(conditioning) is not int or conditioning not in (6,20):fail('Conditioning dose must be integer6 or20 degrees')
  retract=q.get('retractDegrees',2)
  if type(retract) is not int or retract not in (2,3):fail('Retraction must be integer2 or3 degrees')
  clear=q.get('xyClearanceRawZ');work=q.get('surfaceRawZ')
@@ -37,7 +39,7 @@ def derive(q,load,now):
  surface=docs['surface'].get('surface');offset=docs['tipOffset'].get('cameraMinusTipXYMm')
  if not surface or surface.get('rawZ')!=work:fail('Selected surface Z must equal immutable surface evidence')
  if not isinstance(offset,list) or len(offset)!=2 or not all(finite(v) for v in offset):fail('Immutable selected tip offset required')
- exp=copy.deepcopy(docs['scrapExperiment']);exp.update(startRaw=copy.deepcopy(raw),doseDegrees=q['doseDegrees'],retractDegrees=retract,targetsXY=copy.deepcopy(q.get('scrapTargetsXY')))
+ exp=copy.deepcopy(docs['scrapExperiment']);exp.update(startRaw=copy.deepcopy(raw),doseDegrees=q['doseDegrees'],retractDegrees=retract,conditioningDoseDegrees=conditioning,targetsXY=copy.deepcopy(q.get('scrapTargetsXY')))
  if exp.get('mode')!='transfer-preparation' or exp.get('workRawZ')!=raw['Z'] or not isinstance(exp['targetsXY'],list) or len(exp['targetsXY'])!=2:fail('Explicit transfer-preparation experiment and two scrap XY targets required')
  # Full emitted prefix is checked by the existing preparer; retain its authored amounts and waits.
  target=copy.deepcopy(docs['targetBase']);target.update(schema=1,scope='ftp-eight-pad-commissioning-targets',reviewedBy=q['reviewedBy'],reviewedMs=stamp,**session)

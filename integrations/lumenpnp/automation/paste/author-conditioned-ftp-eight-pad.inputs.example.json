@@ -163,5 +163,6 @@
     }
   ],
   "dwellMilliseconds": 200,
-  "retractDegrees": 2
+  "retractDegrees": 2,
+  "conditioningDoseDegrees": 20
 }

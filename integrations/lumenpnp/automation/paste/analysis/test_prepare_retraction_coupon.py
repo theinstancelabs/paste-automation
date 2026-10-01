@@ -31,6 +31,17 @@ def experiment(dose=6, retract=3):
 
 
 class RetractionCouponTests(unittest.TestCase):
+    def test_transfer_conditioning6_only_changes_explicit_dummy_dose(self):
+        e=experiment(12,3);e.update(mode='transfer-preparation',maximumTransferElapsedMilliseconds=15000)
+        e['targetsXY']=e['targetsXY'][:2]
+        a,_,ac=M.stages_for(e,dict(path='/review',sha256=H),1.1,1.0)
+        e['conditioningDoseDegrees']=6
+        b,_,bc=M.stages_for(e,dict(path='/review',sha256=H),1.1,1.0)
+        self.assertEqual(len(a),len(b));self.assertEqual(ac['grossCommandedDegrees']-bc['grossCommandedDegrees'],14)
+        self.assertEqual(b[-2]['target']-b[-3]['target'],3);self.assertEqual(b[-3]['dwellMilliseconds'],2000)
+        e['mode']='coupon';e['targetsXY']=experiment()['targetsXY']
+        with self.assertRaises(ValueError):M.stages_for(e,dict(path='/review',sha256=H),1.1,1.0)
+
     def test_order_gross_and_fixed_speed_inputs(self):
         for dose, retract, expected in ((6, 3, 139), (20, 3, 181), (6, 6, 160), (20, 6, 202)):
             e = experiment(dose, retract)

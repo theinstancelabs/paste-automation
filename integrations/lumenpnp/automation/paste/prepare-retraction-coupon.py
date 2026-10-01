@@ -47,10 +47,9 @@ def stages_for(experiment, review_evidence, gap, uncertainty):
     retract_dwell = e.get('retractDwellMilliseconds', 0)
     if type(retract_dwell) is not int or retract_dwell not in (0, 200, 500):
         raise ValueError('Retraction dwell must be 0, 200 or 500 milliseconds')
-    fixed = {'conditioningDoseDegrees': 20}
-    for key, expected in fixed.items():
-        if type(e.get(key)) is not int or e[key] != expected:
-            raise ValueError('Fixed experiment parameter changed: ' + key)
+    conditioning_dose = e.get('conditioningDoseDegrees')
+    if type(conditioning_dose) is not int or conditioning_dose not in ((6,20) if mode == 'transfer-preparation' else (20,)):
+        raise ValueError('Conditioning dose must be20, or explicitly6 for transfer preparation')
     before = e.get('preWipeReliefDegrees', 20)
     if type(before) is not int or before not in (2, 3, 4, 6, 20):
         raise ValueError('Pre-wipe relief must be 2, 3, 4, 6 or 20 degrees')
@@ -133,7 +132,7 @@ def stages_for(experiment, review_evidence, gap, uncertainty):
         add('Z', work if index == 0 else test_work[index-1])
         if index:
             stroke(-e['retractDegrees'])
-        dose = 20 if index == 0 else e['doseDegrees']
+        dose = conditioning_dose if index == 0 else e['doseDegrees']
         # Twelve degrees uses two existing -6 stages, with dwell only after the second.
         if dose == 12:
             stroke(-6)
