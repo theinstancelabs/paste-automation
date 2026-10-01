@@ -39,8 +39,21 @@ class RetractionCouponTests(unittest.TestCase):
         b,_,bc=M.stages_for(e,dict(path='/review',sha256=H),1.1,1.0)
         self.assertEqual(len(a),len(b));self.assertEqual(ac['grossCommandedDegrees']-bc['grossCommandedDegrees'],14)
         self.assertEqual(b[-2]['target']-b[-3]['target'],3);self.assertEqual(b[-3]['dwellMilliseconds'],2000)
-        e['mode']='coupon';e['targetsXY']=experiment()['targetsXY']
-        with self.assertRaises(ValueError):M.stages_for(e,dict(path='/review',sha256=H),1.1,1.0)
+
+    def test_normal_coupon_explicit_conditioner6_matches_saved_three_dose3_sequence(self):
+        e=experiment(3,3);e.update(primeDegrees=60,idleReliefDegrees=40,retractDwellMilliseconds=500)
+        e['targetsXY']=[dict(X=x,Y=200) for x in (98,104,108,112,116)]
+        default,_,normal=M.stages_for(e,dict(path='/review',sha256=H),.4,.3)
+        self.assertEqual(e['conditioningDoseDegrees'],20);self.assertEqual(normal['grossCommandedDegrees'],170);self.assertEqual(normal['netDegrees'],-26)
+        e['conditioningDoseDegrees']=6
+        stages,poses,acct=M.stages_for(e,dict(path='/review',sha256=H),.4,.3)
+        self.assertEqual(len(stages),31);self.assertEqual(len(default),31)
+        self.assertEqual(acct['grossCommandedDegrees'],156);self.assertEqual(acct['netDegrees'],-12)
+        bs=[(poses[i+1]['B']-poses[i]['B'],s['dwellMilliseconds']) for i,s in enumerate(stages) if s['axis']=='B']
+        self.assertEqual(bs,[(-20,0),(-20,0),(-20,2000),(20,1000),(-6,2000),(3,500)]+[(-3,0),(-3,2000),(3,500)]*3+[(20,0),(20,2000)])
+        for fields in [dict(conditioningDoseDegrees=12),dict(conditioningRestoreDegrees=3),dict(conditioningFinalWipeMm=1.5,conditioningFinalWipeReviewed=True)]:
+            bad=copy.deepcopy(e);bad.update(fields)
+            with self.assertRaises(ValueError):M.stages_for(bad,dict(path='/review',sha256=H),.4,.3)
 
     def test_transfer_conditioner12_has_two_parts_and_explicit_restore(self):
         e=experiment(12,3);e.update(mode='transfer-preparation',maximumTransferElapsedMilliseconds=15000,conditioningDoseDegrees=12,conditioningDwellMilliseconds=2000,dwellMilliseconds=200,retractDwellMilliseconds=500)

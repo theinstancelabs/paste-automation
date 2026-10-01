@@ -48,8 +48,8 @@ def stages_for(experiment, review_evidence, gap, uncertainty):
     if type(retract_dwell) is not int or retract_dwell not in (0, 200, 500):
         raise ValueError('Retraction dwell must be 0, 200 or 500 milliseconds')
     conditioning_dose = e.get('conditioningDoseDegrees')
-    if type(conditioning_dose) is not int or conditioning_dose not in ((6,12,20) if mode == 'transfer-preparation' else (20,)):
-        raise ValueError('Conditioning dose must be20, or explicitly6/12 for transfer preparation')
+    if type(conditioning_dose) is not int or conditioning_dose not in ((6,12,20) if mode == 'transfer-preparation' else (6,20)):
+        raise ValueError('Conditioning dose must be6 or20;12 is transfer-preparation only')
     final_wipe = e.get('conditioningFinalWipeMm', 0)
     if type(final_wipe) not in (int,float) or final_wipe not in (0,1.5):
         raise ValueError('Final conditioning wipe must be0 or+X1.5 mm')
