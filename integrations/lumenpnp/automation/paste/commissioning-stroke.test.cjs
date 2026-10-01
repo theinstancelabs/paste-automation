@@ -47,3 +47,34 @@ test('reviewed 240 and 2400 ceilings stay bounded with immutable anchor and indi
   assert.throws(()=>P.reserve(done,over,carry,f.context),/budget exhausted/);
  }
 });
+
+function amendedCycle(b,envelope,id='d2345678-1234-1234-1234-123456789abc'){
+ const c=cycle(),raw={...c.expectedRaw,B:b},dose={...raw,B:b-4},retract={...raw,B:b-2},lift={...retract,Z:raw.Z-5};
+ return {...c,id,doseDegrees:4,retractDegrees:2,expectedRaw:raw,expectedDriver:{...raw},liftTargetRaw:lift,budgetAmendmentEvidence:envelope,previewStages:[{...c.previewStages[0],startRaw:raw,targetRaw:dose},{...c.previewStages[1],startRaw:dose,targetRaw:retract},{...c.previewStages[2],startRaw:retract,targetRaw:lift}]};
+}
+function extendAnchor(anchor,gross){
+ const l=JSON.parse(JSON.stringify(anchor));let i=0;
+ while(l.totalAbsoluteDegrees<gross){const d=[20,6,4,2].find(n=>n<=gross-l.totalAbsoluteDegrees),start=l.lastVerifiedB;l.entries.push({requestId:`extra-${i++}`,startB:start,targetB:start-d,deltaDegrees:-d,absoluteDegrees:d,status:'verified'});l.lastVerifiedB-=d;l.totalAbsoluteDegrees+=d;}
+ return l;
+}
+test('cycle amendment reserves both phases through reviewed 240 or 2400 ceiling without refund/replay',()=>{
+ for(const ceiling of [240,2400]){
+  const f=amendmentFixture();f.record.newMaximumAbsoluteDegrees=ceiling;f.envelope.newMaximumAbsoluteDegrees=ceiling;
+  const l=extendAnchor(f.anchor,ceiling-6),c=amendedCycle(l.lastVerifiedB,f.envelope),reserved=P.reserveCycle(l,c,carry,f.context);
+  assert.equal(reserved.totalAbsoluteDegrees,ceiling);assert.deepEqual(reserved.entries.slice(0,f.anchor.entries.length),f.anchor.entries);assert.deepEqual(reserved.entries.slice(-2).map(e=>e.absoluteDegrees),[4,2]);assert.equal(carry.maximumAbsoluteDegrees,120);
+  const faulted=P.finishCycle(reserved,c,false);assert.equal(faulted.totalAbsoluteDegrees,ceiling);assert.throws(()=>P.reserveCycle(faulted,c,carry,f.context),/identity\/status/);
+  const dose=P.markCycleStep(reserved,c,0,c.expectedRaw.B-4),retract=P.markCycleStep(dose,c,1,c.expectedRaw.B-2),done=P.finishCycle(retract,c,true);
+  assert.throws(()=>P.reserveCycle(done,amendedCycle(done.lastVerifiedB,f.envelope,c.id),carry,f.context),/replay/);
+  assert.throws(()=>P.reserveCycle(done,amendedCycle(done.lastVerifiedB,f.envelope,'e2345678-1234-1234-1234-123456789abc'),carry,f.context),/ceiling/);
+  const onlyDoseFits=extendAnchor(f.anchor,ceiling-4);assert.throws(()=>P.reserveCycle(onlyDoseFits,amendedCycle(onlyDoseFits.lastVerifiedB,f.envelope),carry,f.context),/ceiling/);
+ }
+});
+test('cycle at gross 464 needs loaded 2400 amendment and retains anchor/time/parameter gates',()=>{
+ const f=amendmentFixture(),l=extendAnchor(f.anchor,464);f.record.newMaximumAbsoluteDegrees=2400;f.envelope.newMaximumAbsoluteDegrees=2400;
+ const c=amendedCycle(l.lastVerifiedB,f.envelope);assert.equal(P.reserveCycle(l,c,carry,f.context).totalAbsoluteDegrees,470);
+ assert.throws(()=>P.reserveCycle(l,c,carry),/not loaded/);assert.throws(()=>P.reserveCycle(l,{...c,budgetAmendmentEvidence:null},carry),/sum\/chain/);
+ const changed=JSON.parse(JSON.stringify(l));changed.entries[0].targetB++;assert.throws(()=>P.reserveCycle(changed,c,carry,f.context),/prefix/);
+ const stale={...f.record,reviewedAt:'1969-12-30T00:00:00.000Z'};assert.throws(()=>P.reserveCycle(l,{...c,budgetAmendmentEvidence:{...f.envelope,reviewedAt:stale.reviewedAt}},carry,{...f.context,record:stale}),/stale/);
+ assert.throws(()=>P.reserveCycle(l,{...c,doseDegrees:40},carry,f.context),/bounds/);
+ const small={...f.record,newMaximumAbsoluteDegrees:240};assert.throws(()=>P.reserveCycle(l,{...c,budgetAmendmentEvidence:{...f.envelope,newMaximumAbsoluteDegrees:240}},carry,{...f.context,record:small}),/ceiling/);
+});

@@ -1,6 +1,6 @@
 # September 30 paste commissioning observations
 
-Physical flow was observed at the right needle and on the raised blue scrap after the current restart's 960 degrees of negative B travel. The previous syringe ledger retains 10,940 degrees plus unknown manual displacement; a controller restart does not reset syringe consumption. Motor current remains the observed 200 mA. No firmware flash was performed.
+Physical flow was observed at the right needle and on the raised blue scrap after the current restart's 960 degrees of negative B travel. The previous syringe ledger retains 10,940 degrees plus unknown manual displacement; a controller restart does not reset syringe consumption. Motor current was the observed 200 mA at this stage; the later reviewed 400 mA comparison is recorded below. No firmware flash was performed.
 
 A separate 2-degree negative dose at raw X298.48, Y305.3, Z57.75 followed by a 2-degree positive retraction left a blob and a long connected tail on the scrap. This trial is rejected for resistor-pad use. The long software preparation interval between the dose and retraction confounds dose-versus-volume inference. Two-dimensional images do not establish delivered volume.
 
@@ -27,4 +27,13 @@ The next controlled comparison eliminates B reversal: a 20-degree forward take-u
 The forward-only comparison transferred a roughly0.8–1.0mm isolated dot after20degrees; both6degree points remained empty. Next trial therefore used three20degree forward-only doses on observed clear pads, retaining rawZ57.5 and fullspeed immediate5mm lifts. All completed with exact controller verification, gross180degrees andB-344; physical image review pending. A separately reviewed240degree maximum retains the original120degree ledger as immutable history and original carryover unchanged. The first extended request rejected a six-digit timestamp beforequery, reservation or motion. A new immutable millisecond-format record corrected the Nashorn parse incompatibility; no dose was replayed.
 
 
-Further scrap trials: forward-only20/20/20 at rawZ57.5 deposited on only the first target; repeated20/20/20 with12seconds hold deposited on only the second target. Firmware position completion does not prove motor rotation or paste transfer. Signed commissioning gross240degrees,B=-404; original prime and manual-unknown carryover preserved. Board untouched. Current remains200mA pending reviewed400mA comparison. Returned through established clear corridor to X277.85,Y305.3,Z56.75 at full native travel speed.
+Further scrap trials: forward-only20/20/20 at rawZ57.5 deposited on only the first target; repeated20/20/20 with12seconds hold deposited on only the second target. Firmware position completion does not prove motor rotation or paste transfer. Signed commissioning gross240degrees,B=-404; original prime and manual-unknown carryover preserved. Board untouched. Current was200mA at this stage, before the reviewed400mA comparison recorded below. Returned through established clear corridor to X277.85,Y305.3,Z56.75 at full native travel speed.
+
+
+## Corrected target mapping and amended cycle budget
+
+The later rectangular-pad “missed transfer” conclusions based on raw Y300.03 are superseded: that target mapping used the wrong image-Y sign. Inspection at camera X326.47, Y236.03 showed paste at the commanded locations. Those observations do not establish failed extrusion. The measured image-shift Jacobian places the intended clean rectangular pads near raw Y311, not Y300; the camera-to-needle offset remains provisional until repeated small-dot verification.
+
+The reviewed stationary B-current comparison changed the observed setting from 200 to 400 mA. Current is now 400 mA. A hanging paste string can contaminate subsequent targets; a fresh wipe/needle-clearance check is required before interpreting a new dot trial.
+
+The dose-cycle builder and runtime now accept the same reviewed 240/2400-degree budget amendment as individual strokes, retaining the immutable 120-degree anchor and unchanged syringe carryover. Both dose and retract are charged together before the first controller query; faults retain the reservation and cannot be replayed. A conditioning cycle of 6-degree dose, 200 ms dwell, 2-degree retract, and 5 mm lift completed with native verification (`7b6f54d8-7e50-49fe-a89b-11f06d7d9d12`). Physical dot acceptance and repeatability remain pending; this completion does not establish a calibrated dispensing recipe.
