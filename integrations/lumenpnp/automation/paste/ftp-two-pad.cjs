@@ -6,12 +6,12 @@ var fail=function(s){throw Error(s);},hash=/^[a-f0-9]{64}$/;
 function number(v,label){if(typeof v!=='number'||!isFinite(v))fail(label+' must be finite');return v;}
 function evidence(e){if(!e||typeof e.path!=='string'||e.path.charAt(0)!=='/'||!hash.test(e.sha256))fail('FTP evidence path/hash required');return e;}
 function same(a,b){if(a===b)return true;if(!a||!b||typeof a!=='object'||typeof b!=='object'||Array.isArray(a)!==Array.isArray(b))return false;var ak=Object.keys(a).sort(),bk=Object.keys(b).sort();return JSON.stringify(ak)===JSON.stringify(bk)&&ak.every(function(k){return same(a[k],b[k]);});}
-function close(a,b,label){if(Math.abs(number(a,label)-number(b,label))>0.001)fail(label+' differs from registered target');}
+function close(a,b,label){if(Math.abs(number(a,label)-Math.round(number(b,label)*100)/100)>1e-9)fail(label+' differs from registered target');}
 function scope(preview){return 'contiguous-native-ftp-two-pad'+(preview?'-preview':'');}
 function isFtp(q){return q&&(q.scope===scope(false)||q.scope===scope(true));}
 function validate(q,now){
  var t=q.ftpTargetRecord;if(!t||t.schema!==1||t.scope!=='ftp-two-pad-commissioning-targets'||typeof t.boardId!=='string'||!t.boardId.trim())fail('Explicit FTP board identity/target record required');
- evidence(q.ftpTargetEvidence);
+ evidence(q.ftpTargetEvidence);if(t.quantizationMm!==0.01)fail('FTP targets must explicitly use the 0.01 mm report grid');
  if(t.sessionId!==q.sessionId||t.jvmStartMs!==q.jvmStartMs||t.liveConfigurationSha256!==q.liveConfigurationSha256)fail('FTP session/configuration mismatch');
  if(typeof t.reviewedBy!=='string'||!t.reviewedBy.trim()||Math.floor(number(t.reviewedMs,'FTP review time'))!==t.reviewedMs||t.reviewedMs>now||now-t.reviewedMs>300000)fail('Fresh explicitly authored FTP review required');
  if(t.boardCleaned!==true||t.padsAvailable!==true||t.boardUnmovedSinceRegistration!==true||t.provenance!=='commissioning-provisional'||t.precisionCalibrated!==false||t.flowCalibrated!==false)fail('Explicit cleaned/unmoved/available FTP attestations and provisional status required');
@@ -23,6 +23,7 @@ function validate(q,now){
  if(!Array.isArray(t.pads)||t.pads.length!==2)fail('Exactly two FTP pads required');
  var ids={},ref=null,indices={};t.pads.forEach(function(p){var m=/^(R(?:[1-9]|[1-3][0-9]|40))\.([12])$/.exec(p.padId);if(!m||ids[p.padId]||ref&&m[1]!==ref)fail('Two unique pads of the same resistor required');ids[p.padId]=true;ref=m[1];
   if(!p.rawPose)fail('FTP pad pose required');['X','Y','Z','A'].forEach(function(k){number(p.rawPose[k],'pad '+k);});
+  if(['X','Y','Z'].some(function(k){return Math.abs(p.rawPose[k]-Math.round(p.rawPose[k]*100)/100)>1e-9;}))fail('FTP raw target must be on the 0.01 mm report grid');
   if(p.rawPose.Z!==s.rawZ||p.rawPose.A!==q.expectedRaw.A)fail('FTP target Z/A differs');
   if(q.mode==='wet'){var i=number(p.doseStageIndex,'dose stage');if(Math.floor(i)!==i||i<0||i>=q.previewStages.length||indices[i])fail('Unique FTP dose stage indices required');indices[i]=p;}
   else if(p.doseStageIndex!==null)fail('Air FTP record must not map a B dose stage');

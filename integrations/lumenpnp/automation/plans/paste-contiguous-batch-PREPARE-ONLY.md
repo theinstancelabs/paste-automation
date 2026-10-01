@@ -55,8 +55,9 @@ CAD/session/configuration, and contain its 80 camera pad targets. Its three
 fiducial reports/images and the distant-pad reports/images are hash-verified;
 reports must be successful and reviewed within one hour. Distant camera checks
 must be within 0.1 mm of the registered pad center. The two raw head targets must
-match registered camera XY minus the explicitly selected offset within 0.001 mm
-(rounding allowance only). Their Z/A and negative-B stage poses match exactly.
+equal `round((registered camera XY - selected offset) * 100) / 100`
+within floating-point epsilon. The record explicitly states `quantizationMm: 0.01`;
+all target XYZ coordinates use that two-decimal M114/native-cache grid. Their Z/A and negative-B stage poses match exactly.
 Exactly two total B stages, both negative and assigned one per pad, are accepted
 on wet FTP. Positive B relief is also excluded from this branch; perform
 cleanup separately on scrap. No dispense-height XY/wipe is accepted on FTP.
@@ -73,3 +74,12 @@ promoted to a machine setting. Source hashes are rechecked before task preflight
 No physical FTP result follows from this extension or its offline tests. The
 parent must review the explicit two-pad record and detached preview before the
 first wet demo-board trial, then inspect both deposits before further work.
+
+The one reviewed pre-dose rounding fault has a separate, exact-ID reconciliation
+path. Its read-only audit, model-only latch release, and ledger-only reconciliation
+are distinct actions. Both unsubmitted dose entries remain `faulted`, and their
+40-degree gross reservation is retained. A zero-motion reconciliation entry records
+zero executed B stages and leaves actual B unchanged; it does not mark either dose
+completed. Only the exact hash-bound reconciliation terminal permits a subsequent
+new batch. The fault batch ID remains barred from replay. This exception is confined
+to batch continuation; it does not generalize single-stroke or cycle recovery.
