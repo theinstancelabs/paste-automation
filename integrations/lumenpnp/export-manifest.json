@@ -522,22 +522,22 @@
       "sourceRoot": "/home/lumen/lumenpnp",
       "sourcePath": "automation/paste/reset-home.cjs",
       "destination": "integrations/lumenpnp/automation/paste/reset-home.cjs",
-      "sha256": "c27920ea131e2d635d49da73fc56d5b67981a3f3a1c9fcef05a6cb3a86a29c7b",
-      "bytes": 8110
+      "sha256": "e11ea359e691d570178a6fc7bb35a166dc3407c6c1b612a161076bb6d672e08c",
+      "bytes": 8170
     },
     {
       "sourceRoot": "/home/lumen/lumenpnp",
       "sourcePath": "automation/paste/reset-home.test.cjs",
       "destination": "integrations/lumenpnp/automation/paste/reset-home.test.cjs",
-      "sha256": "bacfdaa199b5430859548d26230203b68d309bdf03360696c88c8e5e14f4f6e7",
-      "bytes": 8241
+      "sha256": "5b8fbfed88a11fb095ef4f07cca2c1de3f476bf181d4fd9c76162e5de5aecb86",
+      "bytes": 8436
     },
     {
       "sourceRoot": "/home/lumen/lumenpnp",
       "sourcePath": "automation/paste/reset-recovery.md",
       "destination": "integrations/lumenpnp/automation/paste/reset-recovery.md",
-      "sha256": "481c5473db9c4799ca23cdea0f89320a09ebe2d1da078b59fb46c3c77a4af76e",
-      "bytes": 3463
+      "sha256": "238f16a519d70c0e081b2a17da9b424419d67c8d18407347e17186c9a232780e",
+      "bytes": 5124
     },
     {
       "sourceRoot": "/home/lumen/lumenpnp",
@@ -1236,8 +1236,8 @@
       "sourceRoot": "/home/lumen/lumenpnp",
       "sourcePath": "automation/scripts/Restore_Paste_Startup_Quarantine.js",
       "destination": "integrations/lumenpnp/automation/scripts/Restore_Paste_Startup_Quarantine.js",
-      "sha256": "4a033dfb789bbcac4c75c1e2c9b03327c1e022f959972892b43b452bdae1240a",
-      "bytes": 2382
+      "sha256": "d6849aadd7598118400e2071954a791dade9320c7ff8e3939e385f21d20f39ca",
+      "bytes": 4986
     },
     {
       "sourceRoot": "/home/lumen/lumenpnp",
@@ -1896,6 +1896,20 @@
       "destination": "integrations/lumenpnp/automation/paste/test_author_native_ftp_group.py",
       "sha256": "b84a66c73fa80e47d12fd6c00e8e24291ec8614edb26a75cc57aa1c631826963",
       "bytes": 2826
+    },
+    {
+      "sourceRoot": "/home/lumen/lumenpnp",
+      "sourcePath": "automation/paste/prepare-startup-quarantine-request.py",
+      "destination": "integrations/lumenpnp/automation/paste/prepare-startup-quarantine-request.py",
+      "sha256": "957314747c0bc82b4f380e0d5204e03e60c9875593814666c631306dd1d64792",
+      "bytes": 4420
+    },
+    {
+      "sourceRoot": "/home/lumen/lumenpnp",
+      "sourcePath": "automation/paste/test_prepare_startup_quarantine_request.py",
+      "destination": "integrations/lumenpnp/automation/paste/test_prepare_startup_quarantine_request.py",
+      "sha256": "19d97b95769cb2b42d36b246f245778126403e533990f086abcd9c603431619f",
+      "bytes": 3021
     }
   ],
   "manifestSelfHash": "Excluded to avoid a recursive digest; this manifest enumerates every other exported/generated file.",

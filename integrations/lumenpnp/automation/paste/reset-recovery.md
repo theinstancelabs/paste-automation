@@ -1,4 +1,10 @@
-# Controller power-cycle recovery
+# Controller and application restart recovery
+
+A controller power cycle and an OpenPnP application/JVM restart are distinct events; record which occurred and do not describe an application restart as a power cycle. The startup N2 exclusion restore is a model-only operation: `Restore_Paste_Startup_Quarantine.js` consumes a fresh request authored by `prepare-startup-quarantine-request.py`, hash-bound to a pure-model snapshot from the current JVM and the exact live configuration. It accepts the snapshot's explicit enabled state only while unhomed and idle, with the known driver disconnected and N2 already excluded. It backs up disk/live configuration, unsets only N2's manual nozzle-tip-change location, and neither saves configuration nor connects or moves the machine. This does not establish physical position or homing. For example, after a fresh snapshot, prepare a new request with `python3 automation/paste/prepare-startup-quarantine-request.py --source-report .local-machine-backups/paste-live-model-state-<timestamp>/report.json --operator 'Operator name' --review-basis 'Reviewed fresh startup snapshot; authorize only unsetting N2 manual nozzle-tip-change location.' --output automation/plans/paste-startup-quarantine-request.json`.
+
+For a home after an application restart without a controller power cycle, use `mode: "fresh-startup-home"` and `homeReason: "user-requested-home-after-application-restart"`. The request still needs the current JVM/configuration and fresh source, full-route clearance, no-held-part review, and same-frame A/B checks required by the native home workflow. Do not use this reason to imply that power was removed.
+
+## Controller power-cycle recovery
 
 A power cycle invalidates homing and all prior motion, probe and recovery requests even if OpenPnP still displays enabled/homed coordinates. Old controller coordinates are cached values, not physical position evidence. Never replay the interrupted probe or its earlier release action.
 
