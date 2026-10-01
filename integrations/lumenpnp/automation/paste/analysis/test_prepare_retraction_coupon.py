@@ -73,7 +73,10 @@ class RetractionCouponTests(unittest.TestCase):
                 e=experiment();e[key]=value
                 with self.assertRaises(ValueError):M.stages_for(e,dict(path='/review',sha256=H),1.1,1)
         e=experiment();e.update(mode='transfer-preparation',maximumTransferElapsedMilliseconds=120000,retractDwellMilliseconds=500,targetsXY=e['targetsXY'][:2])
-        with self.assertRaises(ValueError):M.stages_for(e,dict(path='/review',sha256=H),1.1,1)
+        stages,poses,a=M.stages_for(e,dict(path='/review',sha256=H),1.1,1)
+        self.assertEqual(stages[-2]['dwellMilliseconds'],500)
+        self.assertEqual(stages[-1],dict(axis='Z',target=53.25))
+        self.assertEqual(a['grossCommandedDegrees'],83)
         with tempfile.TemporaryDirectory() as d:
             args=self.fixture(d);e=experiment(4,2);e.update(primeDegrees=60,preWipeReliefDegrees=2,idleReliefDegrees=40,
                 dwellMilliseconds=200,conditioningDwellMilliseconds=2000,retractDwellMilliseconds=500)
@@ -126,15 +129,19 @@ class RetractionCouponTests(unittest.TestCase):
                      lambda v:v.update(mode='unknown'),lambda v:v.update(testWorkRawZ=[58]*3)):
             bad=copy.deepcopy(e);edit(bad)
             with self.assertRaises(ValueError):M.stages_for(bad,dict(path='/review',sha256=H),1.1,1)
-        with tempfile.TemporaryDirectory() as d:
-            args=self.fixture(d);Path(args.experiment).write_text(json.dumps(e))
-            review=json.loads(Path(args.review).read_text());review['experimentEvidence']=M.WIPE.evidence(args.experiment)
-            Path(args.review).write_text(json.dumps(review))
-            profile=json.loads(Path(args.profile).read_text());profile['measurementEvidence']=M.WIPE.evidence(args.review)
-            Path(args.profile).write_text(json.dumps(profile))
-            recipe=M.build(args)
-            self.assertEqual(recipe['bAccounting']['grossCommandedDegrees'],82)
-            self.assertEqual(recipe['stages'][-1]['axis'],'Z')
+        for wait in (0,200,500):
+            with tempfile.TemporaryDirectory() as d:
+                e['retractDwellMilliseconds']=wait;e['idleReliefDegrees']=40
+                args=self.fixture(d);Path(args.experiment).write_text(json.dumps(e))
+                review=json.loads(Path(args.review).read_text());review['experimentEvidence']=M.WIPE.evidence(args.experiment)
+                Path(args.review).write_text(json.dumps(review))
+                profile=json.loads(Path(args.profile).read_text());profile['measurementEvidence']=M.WIPE.evidence(args.review)
+                Path(args.profile).write_text(json.dumps(profile))
+                recipe=M.build(args)
+                self.assertEqual(recipe['bAccounting']['grossCommandedDegrees'],82)
+                self.assertEqual(recipe['bAccounting']['netDegrees'],-38)
+                self.assertEqual(recipe['stages'][-2]['dwellMilliseconds'],wait)
+                self.assertEqual(recipe['stages'][-1]['axis'],'Z')
 
     def test_low_doses_and_selected_retraction_restore_accounting(self):
         for dose in (2, 3, 4, 6, 12, 20):

@@ -98,21 +98,21 @@ test('batch-only three-degree relief and restoration reserve gross, verify order
  assert.equal(B.allowedSteps.includes(3),false);assert.equal(B.allowedSteps.includes(-3),false);
 });
 
-function compensatedFixture(dose=4,retract=2){
+function compensatedFixture(dose=4,retract=2,wait=0,idle=20){
  const q=ftpRequest(),t=q.ftpTargetRecord,e=name=>({path:'/ftp/'+name,sha256:hash});
  q.expectedRaw.Z=45;q.expectedDriver.Z=45;q.receivingProfile.rawPose.Z=45;q.rawBounds.B={min:-350,max:-150};q.previewStages=[];let at={...q.expectedRaw};
  function add(axis,value,dwell=0){const target={...at,[axis]:value};q.previewStages.push({axis,startRaw:at,targetRaw:target,speedFraction:axis==='B'?.05:1,expandedCommands:['synthetic'],...ev(),...(axis==='B'?{gapEvidence:t.surfaceEvidence,estimatedGapMm:.65+50-at.Z,gapUncertaintyMm:.4,dwellMilliseconds:dwell}:{})});at=target;return q.previewStages.length-1;}
- t.pads.forEach((p,n)=>{delete p.doseStageIndex;if(n)add('X',101);add('Z',50);p.restoreStageIndex=add('B',at.B-retract);p.doseStageIndices=dose===12?[add('B',at.B-6),add('B',at.B-6,200)]:[add('B',at.B-dose,200)];p.retractStageIndex=add('B',at.B+retract);p.liftStageIndex=add('Z',45);});
- const finalIdleStageIndex=add('B',at.B+20,2000);q.finalTargetRaw=at;
- const c=t.compensatedSequence={schema:1,protocol:'restore-dose-retract-lift-two-pad',doseDegrees:dose,retractDegrees:retract,dwellMilliseconds:200,maximumElapsedMilliseconds:1000,conditioningFinishedMs:800,finalIdleStageIndex,conditioningReportEvidence:e('conditioning.json'),conditioningLedgerEvidence:e('conditioning-ledger-copy.json'),preparationExperimentEvidence:e('preparation.json'),tipObservationEvidence:e('tip-review.json')};q.previousReportEvidence=c.conditioningReportEvidence;
+ t.pads.forEach((p,n)=>{delete p.doseStageIndex;if(n)add('X',101);add('Z',50);p.restoreStageIndex=add('B',at.B-retract);p.doseStageIndices=dose===12?[add('B',at.B-6),add('B',at.B-6,200)]:[add('B',at.B-dose,200)];p.retractStageIndex=add('B',at.B+retract,wait);p.liftStageIndex=add('Z',45);});
+ const idleIndices=[];for(let i=0;i<idle/20;i++)idleIndices.push(add('B',at.B+20,i===idle/20-1?2000:0));const finalIdleStageIndex=idleIndices[0];q.finalTargetRaw=at;
+ const c=t.compensatedSequence={schema:1,protocol:'restore-dose-retract-lift-two-pad',doseDegrees:dose,retractDegrees:retract,dwellMilliseconds:200,maximumElapsedMilliseconds:1000,conditioningFinishedMs:800,finalIdleStageIndex,conditioningReportEvidence:e('conditioning.json'),conditioningLedgerEvidence:e('conditioning-ledger-copy.json'),preparationExperimentEvidence:e('preparation.json'),tipObservationEvidence:e('tip-review.json')};q.previousReportEvidence=c.conditioningReportEvidence;if(wait){c.retractDwellMilliseconds=wait;c.conditioningFinishedMs=200;}if(idle===40){c.idleReliefDegrees=40;c.finalIdleStageIndices=idleIndices;delete c.finalIdleStageIndex;}
  const f=ftpSources(q),rid='32345678-1234-1234-1234-123456789abc';
  let pos={...q.expectedRaw,Z:50,B:-240-retract+20};const ss=[];
  function prior(axis,target,dwell=0){const next={...pos,[axis]:target};ss.push({axis,startRaw:pos,targetRaw:next,dwellMilliseconds:dwell});pos=next;}
- prior('B',-240-retract,200);prior('B',-240);prior('Z',45);
+ prior('B',-240-retract,200);prior('B',-240,wait);prior('Z',45);
  const rq={id:rid,scope:'contiguous-native-scrap-batch',mode:'wet',sessionId,syringeId:q.syringeId,jvmStartMs:1,liveConfigurationSha256:hash,clearanceReviewEvidence:e('preparation-review.json'),previewStages:ss,finalTargetRaw:pos};
- f.files[c.conditioningReportEvidence.path]={id:rid,request:rq,status:'completed-contiguous-batch-awaiting-observation',controllerPositionVerified:true,uncertainCompletion:false,finishedAt:new Date(800).toISOString(),completedLedgerSha256:hash,afterQuerySnapshot:{raw:pos},stages:ss.map((s,i)=>({...s,index:i,verified:true,finishedAt:new Date(800).toISOString()}))};
+ f.files[c.conditioningReportEvidence.path]={id:rid,request:rq,status:'completed-contiguous-batch-awaiting-observation',controllerPositionVerified:true,uncertainCompletion:false,finishedAt:new Date(800).toISOString(),completedLedgerSha256:hash,afterQuerySnapshot:{raw:pos},stages:ss.map((s,i)=>({...s,index:i,verified:true,finishedAt:new Date(wait?(i===0?100:i===1?200:800):800).toISOString(),...(wait&&i===1?{dwell:{requestedMilliseconds:wait,actualElapsedMilliseconds:wait,stopObserved:false,endedAt:new Date(200+wait).toISOString()}}:{})}))};
  f.files[c.conditioningLedgerEvidence.path]={status:'verified',sessionId,syringeId:q.syringeId,lastVerifiedB:-240,entries:[{status:'verified',batchId:rid,stageIndex:1,targetB:-240,deltaDegrees:retract}]};
- f.files[c.preparationExperimentEvidence.path]={schema:1,scope:'reviewed-scrap-retraction-coupon',mode:'transfer-preparation',retractDegrees:retract,maximumTransferElapsedMilliseconds:1000,conditioningDoseDegrees:20,workRawZ:50,clearanceRawZ:45,dwellMilliseconds:200};
+ f.files[c.preparationExperimentEvidence.path]={schema:1,scope:'reviewed-scrap-retraction-coupon',mode:'transfer-preparation',retractDegrees:retract,maximumTransferElapsedMilliseconds:1000,conditioningDoseDegrees:20,workRawZ:50,clearanceRawZ:45,dwellMilliseconds:200,...(wait?{retractDwellMilliseconds:wait}:{})};
  f.files[rq.clearanceReviewEvidence.path]={experimentEvidence:c.preparationExperimentEvidence};
  f.files[c.tipObservationEvidence.path]={reviewedBy:'synthetic',reviewedMs:900,capturedMs:850,noLongStrand:true,conditioningReportEvidence:c.conditioningReportEvidence,imageEvidence:e('tip.png')};
  return {q,t,c,f};
@@ -130,4 +130,19 @@ test('compensated FTP rejects uncertain preparation, extra idle, stale B, unveri
  const edits=[x=>x.f.files[x.c.conditioningReportEvidence.path].uncertainCompletion=true,x=>x.f.files[x.c.conditioningReportEvidence.path].controllerPositionVerified=false,x=>x.f.files[x.c.conditioningReportEvidence.path].stages[1].verified=false,x=>x.f.files[x.c.conditioningReportEvidence.path].afterQuerySnapshot.raw.B++,x=>x.f.files[x.c.conditioningReportEvidence.path].finishedAt=new Date(799).toISOString(),x=>x.f.files[x.c.conditioningLedgerEvidence.path].entries[0].deltaDegrees=20,x=>x.f.files[x.c.preparationExperimentEvidence.path].mode='coupon',x=>x.f.files[x.c.preparationExperimentEvidence.path].maximumTransferElapsedMilliseconds=2000,x=>x.f.files['/ftp/preparation-review.json'].experimentEvidence=ev(),x=>x.f.files[x.c.tipObservationEvidence.path].noLongStrand=false,x=>x.f.files[x.c.tipObservationEvidence.path].reviewedMs=799,x=>x.f.files[x.c.tipObservationEvidence.path].capturedMs=799];
  for(const edit of edits){const x=compensatedFixture();edit(x);assert.throws(()=>FTP.verifySources(x.q,x.f.read));}
  const x=compensatedFixture(),r=x.f.files[x.c.conditioningReportEvidence.path],ss=r.request.previewStages,at=ss.at(-1).targetRaw,extra={axis:'B',startRaw:at,targetRaw:{...at,B:at.B+20}};ss.push(extra);r.stages.push({...extra,index:3,verified:true});assert.throws(()=>FTP.verifySources(x.q,x.f.read),/must end/);
+});
+
+test('compensated FTP binds retraction wait and double idle while conserving entry B and charging every stage',()=>{
+ for(const wait of [0,200,500])for(const idle of [20,40]){
+  const {q,t,c,f}=compensatedFixture(4,2,wait,idle);B.validateBatch(q,1000,1);FTP.verifySources(q,f.read);
+  const bs=q.previewStages.filter(s=>s.axis==='B');assert.deepEqual(bs.map(s=>[s.targetRaw.B-s.startRaw.B,s.dwellMilliseconds]),[[-2,0],[-4,200],[2,wait],[-2,0],[-4,200],[2,wait],...(idle===40?[[20,0],[20,2000]]:[[20,2000]])]);
+  assert.equal(q.finalTargetRaw.B,q.expectedRaw.B-8+idle);let l=B.reserveBatch(ledger(),q,carry());assert.equal(l.totalAbsoluteDegrees,16+idle);const failed=B.finishBatch(l,q,false);assert.equal(failed.totalAbsoluteDegrees,16+idle);assert.throws(()=>B.reserveBatch(failed,q,carry()));
+  q.previewStages.forEach((s,i)=>{if(s.axis==='B')l=B.markBatchStep(l,q,i,s.targetRaw.B);});assert.equal(B.finishBatch(l,q,true).lastVerifiedB,q.finalTargetRaw.B);
+ }
+});
+test('compensated FTP rejects undeclared waits, malformed idle groups and mismatched actual conditioning wait',()=>{
+ const edits=[x=>x.c.retractDwellMilliseconds=1000,x=>x.c.retractDwellMilliseconds=true,x=>x.c.idleReliefDegrees=60,x=>x.c.finalIdleStageIndex=x.c.finalIdleStageIndices[0],x=>x.c.finalIdleStageIndices.pop(),x=>x.c.finalIdleStageIndices.reverse(),x=>x.q.previewStages[x.c.finalIdleStageIndices[0]].dwellMilliseconds=2000,x=>x.q.previewStages[x.c.finalIdleStageIndices[1]].dwellMilliseconds=0,x=>x.q.previewStages[x.t.pads[0].retractStageIndex].dwellMilliseconds=0,x=>x.q.previewStages[x.t.pads[0].restoreStageIndex].dwellMilliseconds=500];
+ for(const edit of edits){const x=compensatedFixture(4,2,500,40);edit(x);assert.throws(()=>B.validateBatch(x.q,1000,1));}
+ const sourceEdits=[x=>delete x.f.files[x.c.preparationExperimentEvidence.path].retractDwellMilliseconds,x=>x.f.files[x.c.conditioningReportEvidence.path].request.previewStages[1].dwellMilliseconds=200,x=>delete x.f.files[x.c.conditioningReportEvidence.path].stages[1].dwell,x=>x.f.files[x.c.conditioningReportEvidence.path].stages[1].dwell.actualElapsedMilliseconds=499,x=>x.f.files[x.c.conditioningReportEvidence.path].stages[1].dwell.stopObserved=true,x=>x.f.files[x.c.conditioningReportEvidence.path].stages[1].dwell.endedAt=new Date(699).toISOString(),x=>x.f.files[x.c.tipObservationEvidence.path].capturedMs=700];
+ for(const edit of sourceEdits){const x=compensatedFixture(4,2,500,40);edit(x);assert.throws(()=>FTP.verifySources(x.q,x.f.read));}
 });

@@ -47,8 +47,6 @@ def stages_for(experiment, review_evidence, gap, uncertainty):
     retract_dwell = e.get('retractDwellMilliseconds', 0)
     if type(retract_dwell) is not int or retract_dwell not in (0, 200, 500):
         raise ValueError('Retraction dwell must be 0, 200 or 500 milliseconds')
-    if mode == 'transfer-preparation' and retract_dwell != 0:
-        raise ValueError('Existing FTP transfer preparation requires zero retraction dwell')
     fixed = {'conditioningDoseDegrees': 20}
     for key, expected in fixed.items():
         if type(e.get(key)) is not int or e[key] != expected:
