@@ -53,20 +53,7 @@ test('FTP rejects any added positive B stage, including relief at clearance',()=
 
 test('FTP explicitly quantizes registered-minus-offset targets onto M114 0.01 mm grid',()=>{const q=ftpRequest(),f=ftpSources(q);f.files[q.ftpTargetRecord.registrationEvidence.path].resistorPadMachineXYTargets[0].machineXYMm[0]=105.004;FTP.verifySources(q,f.read);q.ftpTargetRecord.pads[0].rawPose.X=100.004;assert.throws(()=>B.validateBatch(q,1000,1),/0.01 mm/);q.ftpTargetRecord.pads[0].rawPose.X=100;delete q.ftpTargetRecord.quantizationMm;assert.throws(()=>B.validateBatch(q,1000,1),/0.01 mm/);});
 
-function stoppedBatchFixture(){
- const l=ledger();function append(d){const at=l.lastVerifiedB;l.entries.push({requestId:'synthetic-'+l.entries.length,startB:at,targetB:at+d,deltaDegrees:d,absoluteDegrees:Math.abs(d),status:'verified'});l.lastVerifiedB+=d;l.totalAbsoluteDegrees+=Math.abs(d);}
- [-20,-20,-20,-20,-2,20,6,6,6].forEach(append);const anchor=clone(l);
- [...Array(61).fill(-20),-6,-4,-4,...Array(19).fill(20),4,4].forEach(append);
- assert.equal(l.totalAbsoluteDegrees,1742);assert.equal(l.lastVerifiedB,-1130);
- const faultId='b67374aa-8c39-413d-abca-a2eee9f92768';[3,8].forEach((stageIndex,i)=>l.entries.push({requestId:faultId+':'+stageIndex,batchId:faultId,stageIndex,startB:-1130-i*20,targetB:-1150-i*20,deltaDegrees:-20,absoluteDegrees:20,status:'faulted'}));l.totalAbsoluteDegrees+=40;l.status='faulted';
- const audit={faultId,faultSha256:'9728056a1a3e8598e03ed75e35c1053d57af5b11d5e7cc377fc74f555361358c',ledgerSha256:'cd47fafbe31512a904fc43420b84033fc8abd36d0fc1eb2131a19e13dd2ce2a8',status:'audit-complete-awaiting-separate-reviewed-latch-clear',confirmedNoBStageSubmitted:true,verifiedNoBCountChange:true,positionVerified:true,motionIssued:false,uncertainCompletion:false,counts:{B:-5017},reported:{B:-1130}};
- return {l,audit,anchor,faultId};
-}
-test('exact no-B reconciliation preserves every fault entry and all charged gross; rejects replay and contrary evidence',()=>{
- const {l,audit}=stoppedBatchFixture(),next=B.reconcileUnexecutedBatch(l,audit);assert.deepEqual(next.entries.slice(0,-1),l.entries);assert.equal(l.status,'faulted');assert.equal(next.status,'verified');assert.equal(next.totalAbsoluteDegrees,1782);assert.equal(next.lastVerifiedB,-1130);assert.equal(next.entries.at(-1).absoluteDegrees,0);assert.throws(()=>B.reconcileUnexecutedBatch(next,audit));
- for(const edit of [a=>a.confirmedNoBStageSubmitted=false,a=>a.counts.B++,a=>a.reported.B--,a=>a.motionIssued=true]){const a=clone(audit);edit(a);assert.throws(()=>B.reconcileUnexecutedBatch(l,a));}
- const changed=clone(l);changed.entries.at(-1).status='verified';assert.throws(()=>B.reconcileUnexecutedBatch(changed,audit));const refund=clone(l);refund.totalAbsoluteDegrees-=40;assert.throws(()=>B.reconcileUnexecutedBatch(refund,audit));
-});
+function stoppedBatchFixture(){const anchor=ledger();[-20,-20,-20,-20,-2,20,6,6,6].forEach(d=>{const startB=anchor.lastVerifiedB;anchor.entries.push({requestId:'fixture-anchor-'+anchor.entries.length,startB,targetB:startB+d,deltaDegrees:d,absoluteDegrees:Math.abs(d),status:'verified'});anchor.lastVerifiedB+=d;anchor.totalAbsoluteDegrees+=Math.abs(d);});return {anchor};}
 test('11800-degree batch amendment preserves the immutable 120-degree anchor and requires matching review evidence',()=>{
  const anchor=ledger();let b=-240;for(const d of [-20,-20,-20,-20,-2,20,6,6,6]){const start=b;b+=d;anchor.entries.push({requestId:`anchor-${anchor.entries.length}`,startB:start,targetB:b,deltaDegrees:d,absoluteDegrees:Math.abs(d),status:'verified'});anchor.totalAbsoluteDegrees+=Math.abs(d);}anchor.lastVerifiedB=b;
  const anchorHash='b'.repeat(64),travel={path:'/11800-review.json',sha256:'9'.repeat(64)},ar={id:anchor.entries.at(-1).requestId,status:'completed-commissioning-stroke-awaiting-observation',uncertainCompletion:false,completedLedgerSha256:anchorHash,finishedAt:'1970-01-01T00:00:00.000Z',request:{id:anchor.entries.at(-1).requestId,sessionId,jvmStartMs:1,liveConfigurationSha256:hash}};
@@ -76,15 +63,6 @@ test('11800-degree batch amendment preserves the immutable 120-degree anchor and
  const reserved=B.reserveBatch(anchor,q,carry(),context);assert.equal(reserved.totalAbsoluteDegrees,126);assert.deepEqual(reserved.entries.slice(0,anchor.entries.length),anchor.entries);assert.equal(carry().maximumAbsoluteDegrees,120);
  const missing=request();Object.assign(missing,q,{evidence:q.evidence.filter(x=>x.path!==travel.path)});assert.throws(()=>B.reserveBatch(anchor,missing,carry(),context),/travel review/);
  const changed=clone(anchor);changed.entries[0].targetB++;assert.throws(()=>B.reserveBatch(anchor,q,carry(),{...context,anchorLedger:changed}),/prefix/);
-});
-test('reconciliation terminal binds the preserved ledger and next batch charges forward without fault replay',()=>{
- const {l,audit,anchor,faultId}=stoppedBatchFixture(),next=B.reconcileUnexecutedBatch(l,audit),rid=next.entries.at(-1).requestId;
- const terminal={id:rid,request:{id:rid},status:'completed-pre-dose-batch-reconciliation-no-motion',uncertainCompletion:false,completedLedgerSha256:hash,finishedAt:new Date(600).toISOString(),confirmedNoBStageSubmitted:true,motionIssued:false,lastVerifiedB:-1130,reservedGrossDegrees:1782};B.validatePreviousReport(terminal,next,hash,900);assert.throws(()=>B.validatePreviousReport({...terminal,confirmedNoBStageSubmitted:false},next,hash,900));
- const q=request();q.expectedRaw.B=-1130;q.expectedDriver.B=-1130;q.rawBounds.B={min:-1200,max:-1000};q.previewStages[0].startRaw={...q.expectedRaw};q.previewStages[0].targetRaw={...q.expectedRaw,B:-1136};q.finalTargetRaw={...q.previewStages[0].targetRaw};
- const ar={id:anchor.entries.at(-1).requestId,request:{id:anchor.entries.at(-1).requestId,sessionId,jvmStartMs:1,liveConfigurationSha256:hash},status:'completed-commissioning-stroke-awaiting-observation',uncertainCompletion:false,completedLedgerSha256:hash,finishedAt:new Date(0).toISOString()};
- const record={schema:1,sessionId,syringeId:'synthetic',originalCarryoverSha256:hash,anchorLedgerSha256:hash,anchorGrossDegrees:120,anchorB:-284,newMaximumAbsoluteDegrees:2400,reviewedAt:new Date(500).toISOString(),reviewedBy:'synthetic',reason:'Continue exact independently audited no-B reconciliation',anchorLedgerEvidence:ev(),anchorReportEvidence:ev()};q.budgetAmendmentEvidence={...record,...ev()};const context={record,anchorLedger:anchor,anchorReport:ar};
- const reserved=B.reserveBatch(next,q,carry(),context);assert.equal(reserved.totalAbsoluteDegrees,1788);assert.equal(reserved.lastVerifiedB,-1130);assert.deepEqual(reserved.entries.slice(0,next.entries.length),next.entries);assert.equal(B.finishBatch(B.markBatchStep(reserved,q,0,-1136),q,true).lastVerifiedB,-1136);
- assert.throws(()=>B.reserveBatch(next,{...q,id:faultId},carry(),context),/replay/);const changed=clone(next);changed.entries.at(-1).chargedUnexecutedDegrees=0;assert.throws(()=>B.reserveBatch(changed,q,carry(),context),/reconciliation/);
 });
 
 test('batch-only three-degree relief and restoration reserve gross, verify ordered positions, and cannot replay',()=>{

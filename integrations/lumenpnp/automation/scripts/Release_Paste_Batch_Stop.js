@@ -1,16 +1,17 @@
-// STAGED MODEL-ONLY release of one independently audited rounding stop.
+// STAGED MODEL-ONLY release of one independently audited partial batch stop.
 // No query, motion, completion, serial operation, config save or survey replay.
 (function(){
  var C=Java.type('org.openpnp.model.Configuration'),F=Java.type('java.io.File'),Fs=Java.type('java.nio.file.Files'),UTF=Java.type('java.nio.charset.StandardCharsets').UTF_8,
  MD=Java.type('java.security.MessageDigest'),AL=Java.type('org.openpnp.model.AxesLocation'),MM=Java.type('org.openpnp.model.LengthUnit').Millimeters;
- var root='/home/lumen/lumenpnp/',id='b67374aa-8c39-413d-abca-a2eee9f92768',faultHash='9728056a1a3e8598e03ed75e35c1053d57af5b11d5e7cc377fc74f555361358c',auditHash='74506ab2f3f7163c35664478b0f394d80bda3e27da1aabef44aec984f96e409f';
+ var root='/home/lumen/lumenpnp/',id='9d2592a4-0b68-41a7-ba1a-4fa1e7b40bc9',faultHash='5bf33a41606c386994847603586cb50bcd2209556d5b49f5137b705495430f08',auditHash='3d8c903c3afd58ba86f39bfb609452fdc0685c2f5b5b22a1f3e331b39d001adc';
  function bytes(s){return new java.lang.String(s).getBytes(UTF);}
  function hash(b){var a=MD.getInstance('SHA-256').digest(b),s='';for(var i=0;i<a.length;i++)s+=('0'+((a[i]&255).toString(16))).slice(-2);return s;}
  function verified(path,expected){var b=Fs.readAllBytes(new F(path).toPath());if(hash(b)!==expected)throw Error('Reviewed artifact changed: '+path);return JSON.parse(String(new java.lang.String(b,UTF)));}
  function field(c,n){var f=Java.type(c).class.getDeclaredField(n);f.setAccessible(true);return f;}
  function close(a,b,label){if(typeof a!=='number'||typeof b!=='number'||!isFinite(a)||!isFinite(b)||Math.abs(a-b)>0.0001)throw Error(label+' changed');}
  var fault=verified(root+'automation/evidence/paste-contiguous-batch-'+id+'/report.json',faultHash),audit=verified(root+'automation/evidence/paste-batch-stop-audit-'+id+'/report.json',auditHash);
- if(audit.faultId!==id||audit.faultSha256!==faultHash||audit.status!=='audit-complete-awaiting-separate-reviewed-latch-clear'||audit.positionVerified!==true||audit.stationaryImagesCaptured!==true||audit.latchCleared!==false||audit.motionIssued!==false||audit.confirmedNoBStageSubmitted!==true||audit.verifiedNoBCountChange!==true||audit.completedZStepCounts!==200||fault.stages.length!==3||fault.stages.some(function(s){return s.axis==='B';})||fault.stages[2].nativeMotionCompletionReported!==true||fault.error!=='Error: cycle target Y mismatch')throw Error('Not the reviewed completed audit');
+ var batchGross=fault.request.previewStages.reduce(function(n,st){return n+(st.axis==='B'?Math.abs(st.targetRaw.B-st.startRaw.B):0);},0); if(batchGross!==239)throw Error('The exact batch reservation is not 239 degrees');
+ if(audit.faultId!==id||audit.faultSha256!==faultHash||audit.status!=='audit-complete-awaiting-separate-reviewed-latch-clear'||audit.positionVerified!==true||audit.stationaryImagesCaptured!==true||audit.latchCleared!==false||audit.motionIssued!==false||audit.verifiedPartialStop!==true||audit.completedStageCount!==52||audit.lastVerifiedStageIndex!==51||audit.lastVerifiedB!==-3174||fault.status!=='stopped-contiguous-batch-no-retry'||fault.stages.length!==52||fault.stages.some(function(s,i){return s.index!==i||s.verified!==true||s.nativeMotionCompletionReported!==true;})||fault.stages[51].axis!=='B'||fault.stages[51].targetRaw.B!==-3174||fault.uncertainCompletion!==false||fault.transportUncertain!==false||fault.controllerPositionVerified!==true||fault.executorQuarantined!==true||fault.queuedTasksCancelled!==0||fault.reservedAbsoluteDegrees!==8967||fault.ledgerPath==null)throw Error('Not the reviewed completed partial-batch audit');
  if(Number(java.lang.System.currentTimeMillis())-Date.parse(audit.finishedAt)>300000)throw Error('Fresh audit expired');
  if(!Java.type('javax.swing.SwingUtilities').isEventDispatchThread())throw Error('Use the reviewed EDT dispatcher for this short model-only release');
  var m=C.get().getMachine(),planner=m.getMotionPlanner(),jvm=Number(Java.type('java.lang.management.ManagementFactory').getRuntimeMXBean().getStartTime());

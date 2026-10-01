@@ -1257,8 +1257,8 @@
       "sourceRoot": "/home/lumen/lumenpnp",
       "sourcePath": "automation/paste/commissioning-stroke.cjs",
       "destination": "integrations/lumenpnp/automation/paste/commissioning-stroke.cjs",
-      "sha256": "902b82caca1aab63098d55b2154c3106ba820d50b4a17669b83026d9b7350ae1",
-      "bytes": 35133
+      "sha256": "09130602caa54ceb0c881cdea8ade3a681e82d9272f063b54ba9cbab30153bfe",
+      "bytes": 38053
     },
     {
       "sourceRoot": "/home/lumen/lumenpnp",
@@ -1418,8 +1418,8 @@
       "sourceRoot": "/home/lumen/lumenpnp",
       "sourcePath": "automation/paste/commissioning-batch.test.cjs",
       "destination": "integrations/lumenpnp/automation/paste/commissioning-batch.test.cjs",
-      "sha256": "1b867af431f1e7634d83f069b707ad13adefa67bf15a6f87afb79db51017a488",
-      "bytes": 68470
+      "sha256": "192d907262a76fa0f51124fead223932ff7b125e22994cdea79d077ce171253a",
+      "bytes": 64340
     },
     {
       "sourceRoot": "/home/lumen/lumenpnp",
@@ -1495,15 +1495,15 @@
       "sourceRoot": "/home/lumen/lumenpnp",
       "sourcePath": "automation/scripts/Release_Paste_Batch_Stop.js",
       "destination": "integrations/lumenpnp/automation/scripts/Release_Paste_Batch_Stop.js",
-      "sha256": "ec2b7e1e83486aee993194fecbee19c0ec6d654c91e5a908e78d174f4c6f5827",
-      "bytes": 8636
+      "sha256": "62040c96d9847984dc30851366c597abea6d4dbd76a69e596cc17b2e1a1cd787",
+      "bytes": 9210
     },
     {
       "sourceRoot": "/home/lumen/lumenpnp",
       "sourcePath": "automation/scripts/Reconcile_Paste_Batch_Budget.js",
       "destination": "integrations/lumenpnp/automation/scripts/Reconcile_Paste_Batch_Budget.js",
-      "sha256": "53e4b5fe6dcbf900db6ce48d18b825441dd4233d40705709dff6d4af5ecb4a69",
-      "bytes": 10313
+      "sha256": "c6ea0674047677b80c40288e7b154691cee29968326410fd63fb44b30d7cc765",
+      "bytes": 11676
     },
     {
       "sourceRoot": "/home/lumen/lumenpnp",
@@ -1868,6 +1868,20 @@
       "destination": "integrations/lumenpnp/automation/paste/analysis/native-current-pose-registration.md",
       "sha256": "4f0dfceb2763d0b8d485493d597a09981c959f9339f3ddb0a1673f3ce441b9e1",
       "bytes": 1520
+    },
+    {
+      "sourceRoot": "/home/lumen/lumenpnp",
+      "sourcePath": "automation/paste/commissioning-stroke-partial-stop.test.cjs",
+      "destination": "integrations/lumenpnp/automation/paste/commissioning-stroke-partial-stop.test.cjs",
+      "sha256": "2dc5ad368709a120635b46be96c8705f6c2861b9328f8af72eef53dbc93bd954",
+      "bytes": 4463
+    },
+    {
+      "sourceRoot": "/home/lumen/lumenpnp",
+      "sourcePath": "automation/paste/commissioning-stroke-partial-stop-integration.test.cjs",
+      "destination": "integrations/lumenpnp/automation/paste/commissioning-stroke-partial-stop-integration.test.cjs",
+      "sha256": "8e7afdfb147af37c11a2636d1bba8cd18c869d63b2734a7b2e88a9907056317a",
+      "bytes": 5910
     }
   ],
   "manifestSelfHash": "Excluded to avoid a recursive digest; this manifest enumerates every other exported/generated file.",
