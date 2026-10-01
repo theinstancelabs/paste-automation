@@ -32,7 +32,7 @@ def validate_eight(t):
             PREP.WIPE.checked_evidence(p.get('availabilityReportEvidence'),'availability report')
             if type(p.get('availabilityCapturedMs')) is not int:fail('Each pad needs camera-report capture time')
     c=t.get('compensatedSequence') or {}
-    if c.get('schema')!=1 or c.get('protocol')!='restore-dose-retract-lift-eight-pad' or c.get('doseDegrees') not in (4,6) or c.get('retractDegrees')!=2 or c.get('dwellMilliseconds')!=200 or c.get('retractDwellMilliseconds')!=500 or c.get('idleReliefDegrees')!=40:fail('Eight-pad sequence is fixed at dose4|6/R2/200ms/500ms/final40')
+    if c.get('schema')!=1 or c.get('protocol')!='restore-dose-retract-lift-eight-pad' or c.get('doseDegrees') not in (4,6) or c.get('retractDegrees')!=2 or type(c.get('dwellMilliseconds')) is not int or c.get('dwellMilliseconds') not in (200,1000) or c.get('retractDwellMilliseconds')!=500 or c.get('idleReliefDegrees')!=40:fail('Eight-pad sequence is fixed at dose4|6/R2/forward200|1000ms/retract500ms/final40')
     return refs,pads
 
 def validate_availability_reports(pads, template, now):

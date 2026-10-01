@@ -28,6 +28,8 @@ def derive(q,load,now):
  if not isinstance(q.get('startRaw'),dict) or set(q['startRaw'])!=set('XYZAB') or not all(finite(v) for v in q['startRaw'].values()) or q['startRaw']!=raw:fail('Explicit startRaw must equal supplied barrier')
  session={k:template[k] for k in ('sessionId','jvmStartMs','liveConfigurationSha256')}
  if q.get('doseDegrees') not in (4,6) or type(q['doseDegrees']) is not int:fail('Dose must be integer4 or6')
+ dwell=q.get('dwellMilliseconds',200)
+ if type(dwell) is not int or dwell not in (200,1000):fail('Forward dwell must be integer200 or1000 ms')
  clear=q.get('xyClearanceRawZ');work=q.get('surfaceRawZ')
  if not finite(clear) or not finite(work) or clear>=work:fail('Explicit work/clearance Z required')
  surface=docs['surface'].get('surface');offset=docs['tipOffset'].get('cameraMinusTipXYMm')
@@ -39,7 +41,7 @@ def derive(q,load,now):
  target=copy.deepcopy(docs['targetBase']);target.update(schema=1,scope='ftp-eight-pad-commissioning-targets',reviewedBy=q['reviewedBy'],reviewedMs=stamp,**session)
  for k in ('boardCleaned','padsAvailable','boardUnmovedSinceRegistration'):target[k]=attest[k]
  target.update(registrationEvidence=copy.deepcopy(src['registration']),registrationRevalidationEvidence=copy.deepcopy(src['registrationRevalidation']),surfaceEvidence=copy.deepcopy(src['surface']),surface=copy.deepcopy(surface),tipOffsetEvidence=copy.deepcopy(src['tipOffset']),cameraMinusTipXYMm=copy.deepcopy(offset),provenance='commissioning-provisional',precisionCalibrated=False,flowCalibrated=False,quantizationMm=.01)
- target['compensatedSequence']={'schema':1,'protocol':'restore-dose-retract-lift-eight-pad','doseDegrees':q['doseDegrees'],'retractDegrees':2,'dwellMilliseconds':200,'retractDwellMilliseconds':500,'idleReliefDegrees':40}
+ target['compensatedSequence']={'schema':1,'protocol':'restore-dose-retract-lift-eight-pad','doseDegrees':q['doseDegrees'],'retractDegrees':2,'dwellMilliseconds':dwell,'retractDwellMilliseconds':500,'idleReliefDegrees':40}
  pairs=q.get('pairReviews');registered={p['padId']:p for p in docs['registration'].get('resistorPadMachineXYTargets',[])}
  if not isinstance(pairs,list) or len(pairs)!=4:fail('Four explicit pair reviews required')
  target['pairReferences']=[];target['pads']=[]
