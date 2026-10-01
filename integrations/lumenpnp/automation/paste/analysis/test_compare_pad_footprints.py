@@ -49,6 +49,23 @@ class ComparePadFootprintsTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, 'same-pose'):
                 M.compare(bp, ap, q)
 
+    def test_explicit_ellipse_excludes_darkened_pixels_outside_copper_mask(self):
+        with tempfile.TemporaryDirectory() as d:
+            before, after = Image.new('L', (20, 20), 200), Image.new('L', (20, 20), 200)
+            after.putpixel((2, 2), 100)  # inside the rectangle, outside the ellipse
+            after.putpixel((10, 10), 100)  # inside both
+            bp, ap = Path(d) / 'b.png', Path(d) / 'a.png'
+            before.save(bp); after.save(ap)
+            q = {'schema': 1, 'samePoseReviewed': True,
+                 'captureSettings': {'before': {'e': 1}, 'after': {'e': 1}},
+                 'mmPerPixel': {'x': .1, 'y': .1}, 'darkeningThreshold': 50,
+                 'padBrightnessThreshold': 150,
+                 'padRois': [{'padId': 'P1', 'x0': 1, 'y0': 1, 'x1': 19, 'y1': 19,
+                             'ellipse': {'cx': 10, 'cy': 10, 'rx': 8, 'ry': 8}}]}
+            r = M.compare(bp, ap, q)
+        self.assertEqual(r['pads'][0]['darkenedPixelCountInsideBaselinePad'], 1)
+        self.assertEqual(r['pads'][0]['footprintBoundsPx'], {'xMin': 10, 'yMin': 10, 'xMax': 10, 'yMax': 10})
+
 
 if __name__ == '__main__':
     unittest.main()

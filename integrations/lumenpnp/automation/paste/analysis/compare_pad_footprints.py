@@ -68,9 +68,19 @@ def compare(before_path, after_path, request):
         x0, y0, x1, y1 = (roi.get(k) for k in ('x0', 'y0', 'x1', 'y1'))
         if any(type(v) is not int for v in (x0, y0, x1, y1)) or not (0 <= x0 < x1 <= width and 0 <= y0 < y1 <= height):
             raise ValueError('ROI must be an in-bounds nonempty integer rectangle')
+        ellipse = roi.get('ellipse')
+        if ellipse is not None:
+            if not isinstance(ellipse, dict):
+                raise ValueError('ellipse mask must contain cx,cy,rx,ry')
+            cx0, cy0, rx, ry = (ellipse.get(k) for k in ('cx', 'cy', 'rx', 'ry'))
+            if any(isinstance(v, bool) or not isinstance(v, (int, float)) or not math.isfinite(v)
+                   for v in (cx0, cy0, rx, ry)) or rx <= 0 or ry <= 0:
+                raise ValueError('ellipse mask requires finite center and positive radii')
         pad, changed = [], []
         for y in range(y0, y1):
             for x in range(x0, x1):
+                if ellipse is not None and ((x + .5 - cx0) / rx) ** 2 + ((y + .5 - cy0) / ry) ** 2 > 1:
+                    continue
                 b = before.getpixel((x, y))
                 a = after.getpixel((x, y))
                 if b >= bright:
@@ -82,6 +92,7 @@ def compare(before_path, after_path, request):
         cx, bounds = _centroid_bounds(changed)
         results.append({
             'padId': roi['padId'], 'roi': [x0, y0, x1, y1],
+            'padMask': {'shape': 'caller-supplied ellipse', **ellipse} if ellipse is not None else {'shape': 'rectangle'},
             'baselineBrightPadPixelCount': len(pad),
             'darkenedPixelCountInsideBaselinePad': len(changed),
             'fractionOfBaselinePadDarkened': len(changed) / len(pad),

@@ -1985,15 +1985,15 @@
       "sourceRoot": "/home/lumen/lumenpnp",
       "sourcePath": "automation/paste/analysis/compare_pad_footprints.py",
       "destination": "integrations/lumenpnp/automation/paste/analysis/compare_pad_footprints.py",
-      "sha256": "04e93962448baa120ebf1b31e2c0e06282af3478b1d249ea105156ffc883f839",
-      "bytes": 6229
+      "sha256": "2f87965237f2c1d19b4bec682233a5483de8e7a22e90965796354e14aaf7152a",
+      "bytes": 7016
     },
     {
       "sourceRoot": "/home/lumen/lumenpnp",
       "sourcePath": "automation/paste/analysis/test_compare_pad_footprints.py",
       "destination": "integrations/lumenpnp/automation/paste/analysis/test_compare_pad_footprints.py",
-      "sha256": "6f86abc57825dc2ae0ec168e9bf8b009055e281c0cf711601c79b7ba69fd7e02",
-      "bytes": 2530
+      "sha256": "4c8f0705dbd28a885f20077d0f6fa1205a438ec77dc3d853f37877af39f4c538",
+      "bytes": 3646
     }
   ],
   "manifestSelfHash": "Excluded to avoid a recursive digest; this manifest enumerates every other exported/generated file.",
