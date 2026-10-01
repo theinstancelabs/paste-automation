@@ -51,3 +51,11 @@ Record each repeat against `repeats.json` using the same `record` command. There
 ```sh
 node --test automation/paste/coupon-trials.test.cjs
 ```
+
+## Recent qualitative scrap-coupon observations (2026-10-01)
+
+- Controlled scrap run `8d080921`: dose 4° at raw work Z58.45, 200 ms dispense dwell, fixed 500 ms retract dwell, with R2/R3/R6. Three centered dots showed no bridges; rough image footprints were about 0.8–0.9 mm and threshold-dependent.
+- Dose-2 R2 repeat `cce165fd`: three transfers, with the first larger and the next two about 0.6 mm; no bridges observed.
+- Neither run qualifies FTP volume, transfer, or reflow. Recorded tip inspections at raw X300, Y232.27, Z32.25 showed a small bead and no long strand; they do not establish a clean or residue-free tip.
+- Native board attempt `ccf793a4` (2026-10-01): dose 2°/R2, 200 ms dwell, raw work Z58.25, with a provisional plane-derived gap estimate of 0.433 ± 0.3 mm. The fresh completed attempt produced four transfers on R21/R20; R21.1 had a large tail extending off-pad and R20.2 was tiny, roughly 0.3 mm. This does not qualify the recipe. An earlier unique attempt stopped at finalization because availability evidence was stale before any wet stage; the tool was lifted, then a fresh unique attempt completed. Across the board, 41 pads are touched and 39 remain untouched; observed quality is mixed. The three good-looking scrap dots do not establish board reliability.
+- Direct gap reference is still pending; the machine is parked raised for a fixed USB view.
