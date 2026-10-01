@@ -19,7 +19,7 @@ def derive(q,load,now):
   if not isinstance(q.get(key),str) or len(q[key].strip())<12:fail('Explicit '+key+' required')
  attest=q.get('attestations') or {}
  if any(attest.get(k)is not True for k in ATTEST):fail('Explicit route/cleaning attestations required')
- src=q.get('sources') or {};docs={k:load(src.get(k),k not in ('stationaryImage','tipImage')) for k in SOURCES}
+ src=q.get('sources') or {};docs={k:load(src.get(k),k not in ('stationaryImage','tipImage')) for k in SOURCES if k!='registrationRevalidation' or k in src}
  raw=(docs['barrier'].get('afterQuerySnapshot') or {}).get('raw')
  if not isinstance(raw,dict) or set(raw)!=set('XYZAB') or q.get('startRaw')!=raw:fail('Explicit startRaw must exactly equal source barrier')
  if docs['barrier'].get('status')!='completed-read-only-position-barrier' or docs['barrier'].get('controllerPositionVerified') is not True or docs['barrier'].get('noMotionCommandSubmitted') is not True or docs['barrier'].get('uncertainCompletion') is not False:fail('Successful read-only barrier required')
@@ -38,6 +38,7 @@ def derive(q,load,now):
  if type(final_wipe) not in (int,float) or final_wipe not in (0,1.5):fail('Conditioner final wipe must be 0 or +X1.5 mm')
  if final_wipe and (conditioning!=6 or retract!=3 or attest.get('conditioningFinalWipeReviewed') is not True):fail('Conditioner final wipe requires conditioner6/R3 and explicit review')
  target=copy.deepcopy(docs['targetBase'])
+ if 'registrationRevalidation' not in src:target.pop('registrationRevalidationEvidence',None)
  for k in ('pairReferences','inlineConditioning','compensatedSequence','padAvailabilityImage','padAvailabilityReport','cleanupSequence'):target.pop(k,None)
  surface_first=None;surface_ev_first=None;pads=[];seen=set()
  for item in reviews:
@@ -64,7 +65,8 @@ def derive(q,load,now):
   pads.append(pad)
   if surface_first is None:surface_first=copy.deepcopy(surface);surface_ev_first=copy.deepcopy(item['surfaceEvidence'])
  target.update(schema=1,scope='ftp-selected-pads-targets',reviewedBy=q['reviewedBy'],reviewedMs=stamp,**session)
- target.update(boardCleaned=attest['boardCleaned'],padsAvailable=attest['padsAvailable'],boardUnmovedSinceRegistration=attest['boardUnmovedSinceRegistration'],registrationEvidence=copy.deepcopy(src['registration']),registrationRevalidationEvidence=copy.deepcopy(src['registrationRevalidation']),surfaceEvidence=surface_ev_first,surface=surface_first,tipOffsetEvidence=copy.deepcopy(src['tipOffset']),cameraMinusTipXYMm=copy.deepcopy(offset),provenance='commissioning-provisional',precisionCalibrated=False,flowCalibrated=False,quantizationMm=.01,pads=pads)
+ target.update(boardCleaned=attest['boardCleaned'],padsAvailable=attest['padsAvailable'],boardUnmovedSinceRegistration=attest['boardUnmovedSinceRegistration'],registrationEvidence=copy.deepcopy(src['registration']),surfaceEvidence=surface_ev_first,surface=surface_first,tipOffsetEvidence=copy.deepcopy(src['tipOffset']),cameraMinusTipXYMm=copy.deepcopy(offset),provenance='commissioning-provisional',precisionCalibrated=False,flowCalibrated=False,quantizationMm=.01,pads=pads)
+ if 'registrationRevalidation' in src:target['registrationRevalidationEvidence']=copy.deepcopy(src['registrationRevalidation'])
  target['padAvailabilityImage']=copy.deepcopy(pads[0]['availabilityImageEvidence']);target['padAvailabilityReport']=copy.deepcopy(pads[0]['availabilityReportEvidence']);target['compensatedSequence']={'schema':1,'protocol':'restore-dose-retract-lift-selected-pads','doseDegrees':dose,'retractDegrees':retract,'dwellMilliseconds':dwell,'retractDwellMilliseconds':500,'idleReliefDegrees':40}
  exp=copy.deepcopy(docs['scrapExperiment']);exp.update(startRaw=copy.deepcopy(raw),doseDegrees=dose,retractDegrees=retract,conditioningDoseDegrees=conditioning,conditioningRestoreDegrees=restore,conditioningFinalWipeMm=final_wipe,targetsXY=copy.deepcopy(q.get('scrapTargetsXY')))
  if exp.get('mode')!='transfer-preparation' or exp.get('workRawZ')!=raw['Z'] or not isinstance(exp.get('targetsXY'),list) or len(exp['targetsXY'])!=2:fail('Explicit transfer-preparation experiment with two reviewed scrap targets required')

@@ -18,9 +18,13 @@ class AuthorInputsTests(unittest.TestCase):
  def tearDown(self):self.temp.cleanup()
  def load(self,e,json_value=True):
   b=Path(e['path']).read_bytes();return json.loads(b) if json_value else b
+ def test_fresh_registration_does_not_require_or_retain_old_revalidation(self):
+  q=copy.deepcopy(self.q);q['sources'].pop('registrationRevalidation');q['sources']['targetBase']=self.write('target-base-old.json',{'registrationRevalidationEvidence':{'path':'/stale/report.json','sha256':'0'*64}})
+  _,_,_,target=M.derive(q,self.load,q['reviewedMs'])
+  self.assertNotIn('registrationRevalidationEvidence',target)
  def test_derives_only_explicit_selection_preserves_inputs_and_pair_order(self):
   before=copy.deepcopy(self.q);e,r,p,t=M.derive(self.q,self.load,self.q['reviewedMs'])
-  self.assertEqual(self.q,before);self.assertEqual(e['startRaw'],self.raw);self.assertEqual(e['primeDegrees'],60);self.assertEqual(t['reviewedMs'],self.q['reviewedMs']);self.assertEqual(r['reviewedMs'],self.q['reviewedMs']);self.assertEqual([x['padId'] for x in t['pads']][:2],['R1.2','R1.1']);self.assertEqual(t['pads'][0]['rawPose'],{'X':55.6,'Y':266.49,'Z':58.3,'A':720});self.assertEqual(p['estimatedGapMm'],.4);self.assertEqual(t['compensatedSequence']['doseDegrees'],6)
+  self.assertEqual(self.q,before);self.assertEqual(e['startRaw'],self.raw);self.assertEqual(e['primeDegrees'],60);self.assertEqual(t['reviewedMs'],self.q['reviewedMs']);self.assertEqual(r['reviewedMs'],self.q['reviewedMs']);self.assertEqual([x['padId'] for x in t['pads']][:2],['R1.2','R1.1']);self.assertEqual(t['pads'][0]['rawPose'],{'X':55.6,'Y':266.49,'Z':58.3,'A':720});self.assertEqual(p['estimatedGapMm'],.4);self.assertEqual(t['compensatedSequence']['doseDegrees'],6);self.assertEqual(t['registrationRevalidationEvidence'],self.q['sources']['registrationRevalidation'])
  def test_explicit_forward_dwell_defaults200_and_accepts_only200_1000_or2000(self):
   original=copy.deepcopy(self.q)
   self.assertEqual(M.derive(self.q,self.load,self.q['reviewedMs'])[3]['compensatedSequence']['dwellMilliseconds'],200)

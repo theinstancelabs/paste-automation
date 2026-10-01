@@ -23,7 +23,7 @@ def derive(q,load,now):
  text(q.get('reviewBasis'),'reviewBasis');text(q.get('profileBasis'),'profileBasis')
  attest=q.get('attestations') or {}
  if any(attest.get(k) is not True for k in ATTESTATIONS):fail('Every physical attestation must be explicitly true')
- src=q.get('sources') or {};docs={k:load(src.get(k),k not in ('stationaryImage','tipImage')) for k in SOURCE_KEYS}
+ src=q.get('sources') or {};docs={k:load(src.get(k),k not in ('stationaryImage','tipImage')) for k in SOURCE_KEYS if k!='registrationRevalidation' or k in src}
  template,barrier=docs['template'],docs['barrier'];raw=(barrier.get('afterQuerySnapshot') or {}).get('raw')
  if not isinstance(q.get('startRaw'),dict) or set(q['startRaw'])!=set('XYZAB') or not all(finite(v) for v in q['startRaw'].values()) or q['startRaw']!=raw:fail('Explicit startRaw must equal supplied barrier')
  session={k:template[k] for k in ('sessionId','jvmStartMs','liveConfigurationSha256')}
@@ -49,9 +49,12 @@ def derive(q,load,now):
  if final_wipe:exp['conditioningFinalWipeReviewed']=attest['conditioningFinalWipeReviewed']
  else:exp.pop('conditioningFinalWipeReviewed',None)
  # Full emitted prefix is checked by the existing preparer; retain its authored amounts and waits.
- target=copy.deepcopy(docs['targetBase']);target.update(schema=1,scope='ftp-eight-pad-commissioning-targets',reviewedBy=q['reviewedBy'],reviewedMs=stamp,**session)
+ target=copy.deepcopy(docs['targetBase']);
+ if 'registrationRevalidation' not in src:target.pop('registrationRevalidationEvidence',None)
+ target.update(schema=1,scope='ftp-eight-pad-commissioning-targets',reviewedBy=q['reviewedBy'],reviewedMs=stamp,**session)
  for k in ('boardCleaned','padsAvailable','boardUnmovedSinceRegistration'):target[k]=attest[k]
- target.update(registrationEvidence=copy.deepcopy(src['registration']),registrationRevalidationEvidence=copy.deepcopy(src['registrationRevalidation']),surfaceEvidence=copy.deepcopy(src['surface']),surface=copy.deepcopy(surface),tipOffsetEvidence=copy.deepcopy(src['tipOffset']),cameraMinusTipXYMm=copy.deepcopy(offset),provenance='commissioning-provisional',precisionCalibrated=False,flowCalibrated=False,quantizationMm=.01)
+ target.update(registrationEvidence=copy.deepcopy(src['registration']),surfaceEvidence=copy.deepcopy(src['surface']),surface=copy.deepcopy(surface),tipOffsetEvidence=copy.deepcopy(src['tipOffset']),cameraMinusTipXYMm=copy.deepcopy(offset),provenance='commissioning-provisional',precisionCalibrated=False,flowCalibrated=False,quantizationMm=.01)
+ if 'registrationRevalidation' in src:target['registrationRevalidationEvidence']=copy.deepcopy(src['registrationRevalidation'])
  target['compensatedSequence']={'schema':1,'protocol':'restore-dose-retract-lift-eight-pad','doseDegrees':q['doseDegrees'],'retractDegrees':retract,'dwellMilliseconds':dwell,'retractDwellMilliseconds':500,'idleReliefDegrees':40}
  pairs=q.get('pairReviews');registered={p['padId']:p for p in docs['registration'].get('resistorPadMachineXYTargets',[])}
  if not isinstance(pairs,list) or len(pairs)!=4:fail('Four explicit pair reviews required')

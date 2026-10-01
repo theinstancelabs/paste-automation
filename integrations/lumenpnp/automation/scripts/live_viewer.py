@@ -33,6 +33,32 @@ EVIDENCE_ROOT = (REPOSITORY / 'automation/evidence').resolve()
 _ASSET_MAP_LOCK = threading.Lock()
 _ASSET_MAP_SIGNATURE = None
 _ASSET_MAP = {}
+PASTE_STATUS_PATH = REPOSITORY / 'automation/paste/run-status.json'
+PASTE_STATUSES = {'pending', 'running', 'blocked', 'completed'}
+
+
+def paste_status():
+    """Read the coordinator's public progress fields; never trigger any work."""
+    try:
+        value = json.loads(PASTE_STATUS_PATH.read_text(encoding='utf-8'))
+        if not isinstance(value, dict):
+            raise ValueError('status must be an object')
+        status = value.get('status')
+        if status not in PASTE_STATUSES:
+            raise ValueError('invalid status')
+        return {
+            'phase': str(value.get('phase') or ''),
+            'currentPad': value.get('currentPad'),
+            'completedPads': value.get('completedPads', 0),
+            'totalPads': value.get('totalPads', 0),
+            'message': str(value.get('message') or ''),
+            'updatedAt': str(value.get('updatedAt') or ''),
+            'status': status,
+        }
+    except FileNotFoundError:
+        return {'phase': 'waiting', 'currentPad': None, 'completedPads': 0,
+                'totalPads': 0, 'message': 'Paste run has not started.',
+                'updatedAt': '', 'status': 'pending'}
 
 
 class _InspectionRefs(HTMLParser):
@@ -125,14 +151,15 @@ def expected_request_origin(public_origin, host_header):
     return public_origin or ('http://' + host_header)
 
 PAGE = '''<!doctype html><meta name="viewport" content="width=device-width"><title>LumenPnP live view</title>
-<style>body{background:#101720;color:#e6edf3;font:16px system-ui;margin:20px}header{display:flex;justify-content:space-between}main{display:grid;grid-template-columns:repeat(auto-fit,minmax(450px,1fr));gap:16px}article{background:#1d2733;padding:12px;border-radius:10px}img{width:100%;cursor:zoom-in}small{color:#9bb1c8}h2{font-size:18px}#status{color:#9bb1c8}@media(max-width:500px){main{display:block}}</style>
+<style>body{background:#101720;color:#e6edf3;font:16px system-ui;margin:20px}header{display:flex;justify-content:space-between}main{display:grid;grid-template-columns:repeat(auto-fit,minmax(450px,1fr));gap:16px}article{background:#1d2733;padding:12px;border-radius:10px}img{width:100%;cursor:zoom-in}small{color:#9bb1c8}h2{font-size:18px}#status{color:#9bb1c8}#paste-progress{margin:12px 0;max-width:900px}#paste-progress p{margin:6px 0}@media(max-width:500px){main{display:block}}</style>
 <header><h1>LumenPnP live view</h1><p>Private viewer · 1 frame/sec</p><p><a id="inspection-report" href="/inspection">Placement inspection report</a></p></header>
 <style>#layout{display:grid;grid-template-columns:minmax(420px,1fr) minmax(360px,500px);gap:20px}main{display:block}main article{margin-bottom:16px}#chat{background:#1d2733;border-radius:10px;padding:16px;position:sticky;top:12px;height:calc(100vh - 165px);display:flex;flex-direction:column}#messages{overflow:auto;flex:1;min-height:200px}.message{padding:12px;margin:12px 0;background:#101720;border-radius:8px;border-left:3px solid #79b8ff}.message.user{border-color:#8be0b2}.message.progress{opacity:.85}.message p{white-space:pre-wrap;overflow-wrap:anywhere;margin:8px 0 0;line-height:1.5}.message small{font-size:12px}button{background:#324b66;color:white;border:0;padding:8px;border-radius:5px;cursor:pointer}button:disabled{opacity:.55;cursor:not-allowed}textarea{box-sizing:border-box;width:100%;min-height:84px;resize:vertical;background:#101720;color:#e6edf3;border:1px solid #49647d;border-radius:5px;padding:8px;font:inherit}#chat h2{margin:0 0 8px}#chat-status{padding:8px 0}.chat-controls{display:flex;gap:10px;align-items:center;font-size:13px}.composer{border-top:1px solid #49647d;margin-top:10px;padding-top:10px}.composer-row{display:flex;justify-content:space-between;gap:10px;align-items:center;margin-top:6px}.composer-row small{flex:1}@media(max-width:900px){#layout{display:block}#chat{position:static;height:70vh}}</style>
-<p id="status">Connecting…</p><div id="layout"><main></main><aside id="chat"><h2>Our conversation</h2><small>Live mirror · replies are sent to this Codex task</small><div class="chat-controls"><label><input id="progress" type="checkbox" checked>Progress updates</label><button id="latest">Jump to latest</button></div><small id="chat-status">Loading conversation…</small><div id="messages" aria-label="Conversation"></div><form id="composer" class="composer"><label for="reply">Reply to Codex</label><textarea id="reply" maxlength="4000" placeholder="Send a message to this task" required></textarea><div class="composer-row"><small id="send-status">Messages are delivered to the Codex task queue.</small><button id="send" type="submit">Send</button></div></form></aside></div>
+<p id="status">Connecting…</p><article id="paste-progress" aria-live="polite"><h2>Paste run</h2><strong id="paste-state">Loading…</strong><p id="paste-phase"></p><p id="paste-count"></p><p id="paste-message"></p><small id="paste-updated"></small></article><div id="layout"><main></main><aside id="chat"><h2>Our conversation</h2><small>Live mirror · replies are sent to this Codex task</small><div class="chat-controls"><label><input id="progress" type="checkbox" checked>Progress updates</label><button id="latest">Jump to latest</button></div><small id="chat-status">Loading conversation…</small><div id="messages" aria-label="Conversation"></div><form id="composer" class="composer"><label for="reply">Reply to Codex</label><textarea id="reply" maxlength="4000" placeholder="Send a message to this task" required></textarea><div class="composer-row"><small id="send-status">Messages are delivered to the Codex task queue.</small><button id="send" type="submit">Send</button></div></form></aside></div>
 <script>
 const token=location.hash.slice(1)||sessionStorage.getItem('viewerToken');
 if(token)sessionStorage.setItem('viewerToken',token);history.replaceState(null,'',location.pathname);
 const authHeaders=()=>({Authorization:'Bearer '+token});let csrfToken=null;
+async function pasteTick(){const el=id=>document.querySelector('#paste-'+id);try{const r=await fetch('/paste-status',{headers:authHeaders(),cache:'no-store'});if(!r.ok)throw Error('Progress unavailable.');const s=await r.json();el('state').textContent=s.status.toUpperCase();el('phase').textContent=s.phase?'Phase: '+s.phase:'';el('count').textContent=`Pads: ${s.completedPads}/${s.totalPads}`+(s.currentPad?' · current: '+s.currentPad:'');el('message').textContent=s.message||'';const time=Date.parse(s.updatedAt);if(!Number.isFinite(time)){el('updated').textContent='No update timestamp';}else{const age=Math.max(0,Math.floor((Date.now()-time)/1000));const ago=age<60?age+'s':Math.floor(age/60)+'m';el('updated').textContent=(age>60?'STALE · ':'Updated ')+ago+' ago · '+new Date(time).toLocaleString();}}catch(e){el('state').textContent='UNAVAILABLE';el('message').textContent=e.message;}setTimeout(pasteTick,2000);}pasteTick();
 document.querySelector('#inspection-report').onclick=async event=>{event.preventDefault();const link=event.currentTarget;try{const r=await fetch('/inspection/session',{method:'POST',headers:authHeaders(),cache:'no-store'});if(!r.ok)throw Error('Private viewer authorization is required.');location.href='/inspection';}catch(error){link.textContent='Placement inspection report unavailable.';}};
 const names={openpnp:'OpenPnP · top and bottom cameras',webcam:'Machine USB camera'};
 const main=document.querySelector('main');let urls={};
@@ -276,6 +303,8 @@ def main():
                 self.reply(403,{'error':'Access denied.'});return
             if path=='/csrf':
                 self.reply(200,{'token':csrf_token});return
+            if path=='/paste-status':
+                self.reply(200,paste_status());return
             if path=='/chat':
                 self.reply(200,mirror.snapshot());return
             with lock:

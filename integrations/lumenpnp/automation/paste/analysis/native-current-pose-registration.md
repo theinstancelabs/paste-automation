@@ -1,0 +1,7 @@
+# Native current-pose fiducial registration
+
+`Read_Paste_Fiducial_Vision.js` reads the selected board fiducial using the saved OpenPnP fiducial vision settings and the native vision pipeline. It requires an explicit reference and a fresh position-barrier report, captures only at the current camera pose, and writes a hash-bound report. The script does not move the machine, actuate outputs, save the job, or change the saved vision pipeline. The offline `native_fiducial_registration.py` analyzer consumes three distinct current-pose reports, fits FID1 and FID2, and checks FID3 independently before producing a candidate coordinate transform. The candidate remains review-only; analysis does not set live job registration or enable execution.
+
+The three captured native reports were physically acquired and passed the independent FID3 check with a 0.072 mm residual. This confirms that the native detector and transform fit worked for those captures. It does not establish paste-transfer quality or authorize dispensing. A moved or reclamped board requires fresh registration reports; prior board-height measurements also require a separate surface/height check before reuse.
+
+The authenticated viewer's `/paste-status` panel reads only `automation/paste/run-status.json` and displays `phase`, `currentPad`, `completedPads`, `totalPads`, `message`, `updatedAt`, and `status`. It renders those values as text and marks timestamps older than 60 seconds as stale. This panel is informational and has no machine controls.

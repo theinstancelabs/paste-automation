@@ -108,6 +108,26 @@ class LiveViewerHttpTest(unittest.TestCase):
         self.assertEqual(status, 400)
         self.assertEqual(body['error'], 'Expected a JSON object.')
 
+    def test_paste_status_is_authenticated_read_only_and_reports_fixed_schema(self):
+        path = self.state / 'run-status.json'
+        path.write_text(json.dumps({'status': 'running', 'phase': 'capture',
+            'currentPad': 'FID2', 'completedPads': 1, 'totalPads': 3,
+            'message': '<unsafe>', 'updatedAt': '2026-10-01T20:00:00Z',
+            'extra': 'ignored'}))
+        with mock.patch.object(live_viewer, 'PASTE_STATUS_PATH', path):
+            status, body = self.request('GET', '/paste-status')
+            self.assertEqual(status, 403)
+            status, data, headers = self.request_with_headers(
+                'GET', '/paste-status', headers=self.private_headers())
+        self.assertEqual(status, 200)
+        self.assertEqual(headers['cache-control'], 'no-store')
+        self.assertEqual(json.loads(data), {
+            'status': 'running', 'phase': 'capture', 'currentPad': 'FID2',
+            'completedPads': 1, 'totalPads': 3, 'message': '<unsafe>',
+            'updatedAt': '2026-10-01T20:00:00Z'})
+        self.assertNotIn('extra', body or {})
+        self.assertIn("el('message').textContent=s.message||''", live_viewer.PAGE.decode())
+
     def test_dispatches_once_and_reports_success(self):
         with mock.patch.object(live_viewer.subprocess, 'run', return_value=subprocess.CompletedProcess([], 0)) as run:
             headers = self.private_headers(True, 'duplicate-0001')
