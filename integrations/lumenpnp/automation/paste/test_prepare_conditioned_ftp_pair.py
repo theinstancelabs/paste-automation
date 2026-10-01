@@ -43,7 +43,7 @@ class ConditionedPairBuilderTests(unittest.TestCase):
                 {'padId':'R40.2','machineXYMm':[21.0,20.0]}]})
         self.evidence_file = self.json('evidence.json',{'ok':True})
         ev=MODULE.path_evidence(self.evidence_file)
-        self.target={'schema':1,'scope':'ftp-two-pad-commissioning-targets',**self.session,
+        self.target={'schema':1,'scope':'ftp-two-pad-commissioning-targets','boardId':'test-board',**self.session,
             'quantizationMm':0.01,'boardUnmovedSinceRegistration':True,
             'surface':{'rawZ':58.3,'estimatedGapMm':0.4,'gapUncertaintyMm':0.3},
             'cameraMinusTipXYMm':[0,0],
@@ -54,7 +54,8 @@ class ConditionedPairBuilderTests(unittest.TestCase):
                 'retractDwellMilliseconds':500,'idleReliefDegrees':40,
                 'conditioningReportEvidence':ev,'conditioningLedgerEvidence':ev,
                 'preparationExperimentEvidence':ev,'tipObservationEvidence':ev,
-                'conditioningFinishedMs':1,'maximumElapsedMilliseconds':120000},
+                'conditioningFinishedMs':1,'maximumElapsedMilliseconds':120000,
+                'authoredParameterNote':'preserved'},
             'pads':[{'padId':'R40.1','rawPose':{'X':20.0,'Y':20.0,'Z':58.3,'A':720.0}},
                     {'padId':'R40.2','rawPose':{'X':21.0,'Y':20.0,'Z':58.3,'A':720.0}}]}
         self.target_file=self.json('target.json',self.target)
@@ -101,6 +102,7 @@ class ConditionedPairBuilderTests(unittest.TestCase):
         self.assertEqual(recipe['stages'][len(expected_prefix)],{'axis':'Z','target':53.4})
         self.assertEqual([p['padId'] for p in targets['pads']],['R40.1','R40.2'])
         self.assertEqual(targets['compensatedSequence']['finalIdleStageIndices'][-1],len(recipe['stages'])-1)
+        self.assertEqual(targets['compensatedSequence']['authoredParameterNote'],'preserved')
         for forbidden in ('conditioningReportEvidence','conditioningLedgerEvidence','preparationExperimentEvidence',
                           'tipObservationEvidence','conditioningFinishedMs','maximumElapsedMilliseconds'):
             self.assertNotIn(forbidden,targets['compensatedSequence'])

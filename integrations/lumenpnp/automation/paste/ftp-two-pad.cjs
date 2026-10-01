@@ -3,20 +3,21 @@
 // caller and MUST verify file SHA-256 before returning JSON or image bytes.
 (function(root){
 var fail=function(s){throw Error(s);},hash=/^[a-f0-9]{64}$/;
+var Group=typeof module!=='undefined'&&module.exports?require('./ftp-pad-group.cjs'):root.PasteFtpPadGroup;
 var Revalidation=typeof module!=='undefined'&&module.exports?require('./ftp-registration-revalidation.cjs'):root.PasteFtpRegistrationRevalidation;
 var Inline=typeof module!=='undefined'&&module.exports?require('./ftp-inline-conditioning.cjs'):root.PasteFtpInlineConditioning;
 function number(v,label){if(typeof v!=='number'||!isFinite(v))fail(label+' must be finite');return v;}
 function evidence(e){if(!e||typeof e.path!=='string'||e.path.charAt(0)!=='/'||!hash.test(e.sha256))fail('FTP evidence path/hash required');return e;}
 function same(a,b){if(a===b)return true;if(!a||!b||typeof a!=='object'||typeof b!=='object'||Array.isArray(a)!==Array.isArray(b))return false;var ak=Object.keys(a).sort(),bk=Object.keys(b).sort();return JSON.stringify(ak)===JSON.stringify(bk)&&ak.every(function(k){return same(a[k],b[k]);});}
 function close(a,b,label){if(Math.abs(number(a,label)-Math.round(number(b,label)*100)/100)>1e-9)fail(label+' differs from registered target');}
-function scope(preview,q){return Inline&&Inline.isInline(q)?Inline.scope(preview):'contiguous-native-ftp-two-pad'+(preview?'-preview':'');}
+function scope(preview,q){if(Group&&Group.isGroup(q))return Group.scope(preview);return Inline&&Inline.isInline(q)?Inline.scope(preview):'contiguous-native-ftp-two-pad'+(preview?'-preview':'');}
 function isFtp(q){return q&&(q.scope===scope(false)||q.scope===scope(true)||Inline&&Inline.isInline(q));}
 function integer(v,lo,hi,label){if(Math.floor(number(v,label))!==v||v<lo||v>hi)fail(label+' outside reviewed integer range');return v;}
 function entryTime(q,now){if(Inline&&Inline.isInline(q))return;var c=q.ftpTargetRecord&&q.ftpTargetRecord.compensatedSequence;if(!c)return;var elapsed=number(now,'entry time')-number(c.conditioningFinishedMs,'conditioning finish');if(elapsed<0||elapsed>integer(c.maximumElapsedMilliseconds,1,300000,'conditioning elapsed limit'))fail('FTP conditioning entry state expired');}
 function retractWait(c){var v=c.retractDwellMilliseconds===undefined?0:c.retractDwellMilliseconds;if([0,200,500].indexOf(v)<0)fail('FTP retraction wait must be 0, 200 or 500 ms');return v;}
 function compensated(q,t,now){
  var c=t.compensatedSequence;if(c===undefined)return null;if(!c)fail('Explicit compensated FTP object required');
- if(q.mode!=='wet'||c.schema!==1||c.protocol!=='restore-dose-retract-lift-two-pad'||[2,3,4,6,12,20].indexOf(c.doseDegrees)<0||[2,3,4,6].indexOf(c.retractDegrees)<0)fail('Unknown compensated FTP protocol/amount');
+ if(q.mode!=='wet'||c.schema!==1||c.protocol!==(Group&&Group.isGroup(q)?'restore-dose-retract-lift-eight-pad':'restore-dose-retract-lift-two-pad')||[2,3,4,6,12,20].indexOf(c.doseDegrees)<0||[2,3,4,6].indexOf(c.retractDegrees)<0)fail('Unknown compensated FTP protocol/amount');
  integer(c.dwellMilliseconds,0,2000,'FTP dose dwell');entryTime(q,now);var wait=retractWait(c),idle=c.idleReliefDegrees===undefined?20:c.idleReliefDegrees;if([20,40].indexOf(idle)<0)fail('FTP idle relief must be 20 or 40 degrees');
  if(!Inline.isInline(q))['conditioningReportEvidence','conditioningLedgerEvidence','preparationExperimentEvidence','tipObservationEvidence'].forEach(function(k){evidence(c[k]);});
  if(!Inline.isInline(q)&&(!same(c.conditioningReportEvidence,q.previousReportEvidence)||c.conditioningLedgerEvidence.sha256!==q.previousLedgerSha256))fail('FTP conditioning must be exact preceding charged report/ledger');
@@ -33,7 +34,7 @@ function compensated(q,t,now){
   b(p.retractStageIndex,c.retractDegrees,p.rawPose,wait);var lift=at(p.liftStageIndex,'Z');if(lift.startRaw.Z!==t.surface.rawZ||lift.targetRaw.Z!==q.xyClearanceRawZ)fail('FTP lift must reach common clearance');last=p.liftStageIndex;
  });
  var idleIndices;if(idle===20){if(c.finalIdleStageIndices!==undefined)fail('Single idle uses finalIdleStageIndex');idleIndices=[c.finalIdleStageIndex];}else{if(c.finalIdleStageIndex!==undefined||!Array.isArray(c.finalIdleStageIndices)||c.finalIdleStageIndices.length!==2)fail('Double idle needs exactly two finalIdleStageIndices');idleIndices=c.finalIdleStageIndices;}
- idleIndices.forEach(function(i,n){if(i!==last+1+n||n===idleIndices.length-1&&i!==q.previewStages.length-1)fail('FTP final idle must immediately follow second lift and end route');var final=q.previewStages[i];if(!final)fail('FTP final idle stage missing');b(i,20,{X:final.startRaw.X,Y:final.startRaw.Y,Z:q.xyClearanceRawZ,A:q.expectedRaw.A},n===idleIndices.length-1?2000:0);});
+ idleIndices.forEach(function(i,n){if(i!==last+1+n||n===idleIndices.length-1&&i!==q.previewStages.length-1)fail('FTP final idle must immediately follow final pad lift and end route');var final=q.previewStages[i];if(!final)fail('FTP final idle stage missing');b(i,20,{X:final.startRaw.X,Y:final.startRaw.Y,Z:q.xyClearanceRawZ,A:q.expectedRaw.A},n===idleIndices.length-1?2000:0);});
  q.previewStages.forEach(function(st,i){if(st.axis==='B'&&!covered[i])fail('FTP unaccounted B stage');});return covered;
 }
 function verifyConditioning(q,read){if(Inline.isInline(q)){Inline.sources(q,read);return;}
@@ -52,7 +53,7 @@ function verifyConditioning(q,read){if(Inline.isInline(q)){Inline.sources(q,read
  if(!o||o.noLongStrand!==true||typeof o.reviewedBy!=='string'||!o.reviewedBy.trim()||!same(o.conditioningReportEvidence,c.conditioningReportEvidence)||integer(o.reviewedMs,c.conditioningFinishedMs,t.reviewedMs,'tip observation time')!==o.reviewedMs||integer(o.capturedMs,c.conditioningFinishedMs,o.reviewedMs,'tip capture time')!==o.capturedMs)fail('Fresh authored tip observation required');read(evidence(o.imageEvidence),false);
 }
 function validate(q,now){
- var t=q.ftpTargetRecord;if(!Inline.isInline(q)&&t&&t.inlineConditioning!==undefined)fail('Inline conditioning requires its separate scope');if(!t||t.schema!==1||t.scope!=='ftp-two-pad-commissioning-targets'||typeof t.boardId!=='string'||!t.boardId.trim())fail('Explicit FTP board identity/target record required');
+ var group=Group&&Group.isGroup(q);if(group)Group.validate(q,now);var t=q.ftpTargetRecord;if(!Inline.isInline(q)&&t&&t.inlineConditioning!==undefined)fail('Inline conditioning requires its separate scope');if(!t||t.schema!==1||t.scope!==(group?'ftp-eight-pad-commissioning-targets':'ftp-two-pad-commissioning-targets')||typeof t.boardId!=='string'||!t.boardId.trim())fail('Explicit FTP board identity/target record required');
  evidence(q.ftpTargetEvidence);if(t.quantizationMm!==0.01)fail('FTP targets must explicitly use the 0.01 mm report grid');
  if(t.sessionId!==q.sessionId||t.jvmStartMs!==q.jvmStartMs||t.liveConfigurationSha256!==q.liveConfigurationSha256)fail('FTP session/configuration mismatch');
  if(typeof t.reviewedBy!=='string'||!t.reviewedBy.trim()||Math.floor(number(t.reviewedMs,'FTP review time'))!==t.reviewedMs||t.reviewedMs>now||now-t.reviewedMs>300000)fail('Fresh explicitly authored FTP review required');
@@ -62,8 +63,8 @@ function validate(q,now){
  var s=t.surface;if(!s||number(s.rawZ,'FTP dispense Z')<=q.xyClearanceRawZ||number(s.estimatedGapMm,'FTP gap')<=0||number(s.gapUncertaintyMm,'FTP uncertainty')<0||s.estimatedGapMm-s.gapUncertaintyMm<0.1)fail('FTP board-specific positive gap required');
  if(!Array.isArray(t.padChecks)||t.padChecks.length!==3||t.padChecks.map(function(c){return c.reference;}).sort().join(',')!=='R1,R16,R40')fail('Three distant FTP pad checks required');
  t.padChecks.forEach(function(c){if(c.reviewedAligned!==true||!new RegExp('^'+c.reference+'\\.[12]$').test(c.padId))fail('Explicit reviewed distant-pad identity required');evidence(c.reportEvidence);evidence(c.imageEvidence);});
- if(!Array.isArray(t.pads)||t.pads.length!==2)fail('Exactly two FTP pads required');
- var ids={},ref=null,indices={};t.pads.forEach(function(p){var m=/^(R(?:[1-9]|[1-3][0-9]|40))\.([12])$/.exec(p.padId);if(!m||ids[p.padId]||ref&&m[1]!==ref)fail('Two unique pads of the same resistor required');ids[p.padId]=true;ref=m[1];
+ if(!Array.isArray(t.pads)||t.pads.length!==(group?8:2))fail('Exactly two FTP pads required');
+ var ids={},ref=null,indices={};t.pads.forEach(function(p){var m=/^(R(?:[1-9]|[1-3][0-9]|40))\.([12])$/.exec(p.padId);if(!m||ids[p.padId]||!group&&ref&&m[1]!==ref)fail('Two unique pads of the same resistor required');ids[p.padId]=true;ref=m[1];
   if(!p.rawPose)fail('FTP pad pose required');['X','Y','Z','A'].forEach(function(k){number(p.rawPose[k],'pad '+k);});
   if(['X','Y','Z'].some(function(k){return Math.abs(p.rawPose[k]-Math.round(p.rawPose[k]*100)/100)>1e-9;}))fail('FTP raw target must be on the 0.01 mm report grid');
   if(p.rawPose.Z!==s.rawZ||p.rawPose.A!==q.expectedRaw.A)fail('FTP target Z/A differs');
@@ -102,6 +103,7 @@ function affineSources(q,reg,registered,read,observe,fidReports,revalidated){
  checks.forEach(function(v){if(v.padIdentityReviewed!==true||v.centerMeasurementReviewed!==true)fail('Explicit independent pad image review required');var report=read(evidence(v.report),true);observe(report,v.report,evidence(v.image));if(used[report.id])fail('Pad checks must be independent of fitted fiducials and each other');used[report.id]=true;var xy=frame(report),size=pair(v.imageSizePixels,'image size'),p=pair(v.observedCenterPixel,'observed pad center');if(size.some(function(n){return n<2||Math.floor(n)!==n;})||p.some(function(n,i){return n<0||n>=size[i];}))fail('Pad image bounds invalid');var center=[(size[0]-1)/2,(size[1]-1)/2],delta=[p[0]-center[0],p[1]-center[1]],measured=[xy[0]-inv[0][0]*delta[0]-inv[0][1]*delta[1],xy[1]-inv[1][0]*delta[0]-inv[1][1]*delta[1]],px=distance(p,center),mm=distance(measured,registered[v.padId].machineXYMm);if(px>8||mm>.08)fail('Independent affine pad exceeds 8 pixels or 0.08 mm');equalPair(v.cameraXYMm,xy,'Pad camera source');equalPair(v.imageCenterPixel,center,'Pad image center');equalPair(v.measuredPadXYMm,measured,'Measured pad point');equalPair(v.predictedMachineXYMm,registered[v.padId].machineXYMm,'Pad prediction');if(Math.abs(number(v.imageCenterErrorPx,'pad pixels')-px)>1e-7||Math.abs(number(v.residualMm,'pad residual')-mm)>1e-7)fail('Independent pad residual metadata differs');var current=q.ftpTargetRecord.padChecks.filter(function(p){return p.padId===v.padId;})[0];if(!current||!same(current.reportEvidence,v.report)||!same(current.imageEvidence,v.image))fail('FTP target pad checks must bind the accepted affine held-out images');});
 }
 function verifySources(q,readEvidence){
+ if(Group&&Group.isGroup(q))Group.verifyImages(q,readEvidence);
  var t=q.ftpTargetRecord,actual=readEvidence(evidence(q.ftpTargetEvidence),true);if(!same(actual,t))fail('FTP target record bytes/content differ');
  var reg=readEvidence(t.registrationEvidence,true);readEvidence(t.cadEvidence,false);readEvidence(t.padAvailabilityImage,false);
  var affine=reg&&reg.scope==='offline-fresh-ftp-three-fiducial-affine-with-held-out-pad-checks';if(!reg||!affine&&reg.scope!=='offline-fresh-ftp-two-fiducial-transform-with-third-point-check'||!reg.acceptance||reg.acceptance.passed!==true||!same(reg.board,t.cadEvidence)||!reg.session||reg.session.jvmStartMs!==q.jvmStartMs||reg.session.liveConfigurationSha256!==q.liveConfigurationSha256||!affine&&(!reg.independentFID3Check||number(reg.independentFID3Check.residualMm,'FID3 residual')<0||reg.independentFID3Check.residualMm>0.08))fail('Accepted same-session three-fiducial registration required');

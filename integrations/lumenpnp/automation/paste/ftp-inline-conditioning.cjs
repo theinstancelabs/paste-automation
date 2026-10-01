@@ -1,13 +1,14 @@
 'use strict';
 // Pure admission for an explicitly reviewed scrap prefix in one FTP pair batch.
 (function(root){
+var Group=typeof module!=='undefined'&&module.exports?require('./ftp-pad-group.cjs'):root.PasteFtpPadGroup;
 function fail(s){throw Error(s);}
 function n(v){if(typeof v!=='number'||!isFinite(v))fail('Finite inline conditioning number required');return v;}
 function same(a,b){if(a===b)return true;if(!a||!b||typeof a!=='object'||typeof b!=='object')return false;var ak=Object.keys(a).sort(),bk=Object.keys(b).sort();return JSON.stringify(ak)===JSON.stringify(bk)&&ak.every(function(k){return same(a[k],b[k]);});}
 function ev(e){if(!e||typeof e.path!=='string'||e.path.charAt(0)!=='/'||!/^[a-f0-9]{64}$/.test(e.sha256))fail('Inline evidence path/hash required');return e;}
 function scope(preview){return 'contiguous-native-ftp-conditioned-two-pad'+(preview?'-preview':'');}
-function isInline(q){return q&&(q.scope===scope(false)||q.scope===scope(true));}
-function data(q){var x=q.ftpTargetRecord&&q.ftpTargetRecord.inlineConditioning;if(!isInline(q)||!x||x.schema!==1||x.protocol!=='scrap-condition-transit-two-pad'||x.maximumTransferMilliseconds!==15000||q.mode!=='wet')fail('Explicit inline conditioning scope/protocol/15-second deadline required');return x;}
+function isInline(q){return q&&(q.scope===scope(false)||q.scope===scope(true)||Group&&Group.isGroup(q));}
+function data(q){var x=q.ftpTargetRecord&&q.ftpTargetRecord.inlineConditioning;if(!isInline(q)||!x||x.schema!==1||x.protocol!==(Group&&Group.isGroup(q)?'scrap-condition-transit-eight-pad':'scrap-condition-transit-two-pad')||x.maximumTransferMilliseconds!==15000||q.mode!=='wet')fail('Explicit inline conditioning scope/protocol/15-second deadline required');return x;}
 function prefix(q){
  var x=data(q),e=x.experiment,c=q.ftpTargetRecord.compensatedSequence,p=q.receivingProfile;
  ev(x.experimentEvidence);if(!e||e.schema!==1||e.scope!=='reviewed-scrap-retraction-coupon'||e.mode!=='transfer-preparation'||!same(e.startRaw,q.expectedRaw)||e.workRawZ!==q.expectedRaw.Z||n(e.workRawZ)-n(e.clearanceRawZ)!==5||q.xyClearanceRawZ>e.clearanceRawZ||e.testWorkRawZ!==undefined)fail('Exact reviewed transfer-preparation start/height required');

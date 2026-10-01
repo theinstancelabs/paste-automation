@@ -16,6 +16,7 @@ var PASTE_CONTIGUOUS_BATCH_ENABLED = true;
  function privateValue(className,name,obj){var f=Java.type(className).class.getDeclaredField(name);f.setAccessible(true);return f.get(obj);}
  function configHash(){var w=new java.io.StringWriter();C.createSerializer().write(m,w);return hash(bytes(String(w)));}
  eval(read(root+'automation/paste/waste-prime.cjs'));
+ eval(read(root+'automation/paste/ftp-pad-group.cjs'));
  eval(read(root+'automation/paste/ftp-inline-conditioning.cjs'));
  eval(read(root+'automation/paste/ftp-registration-revalidation.cjs'));
  eval(read(root+'automation/paste/ftp-two-pad.cjs'));

@@ -70,6 +70,12 @@ def build(args):
         fail('Barrier/template session or live configuration mismatch')
     if profile.get('sessionId') != template.get('sessionId') or profile.get('jvmStartMs') != template.get('jvmStartMs') or profile.get('liveConfigurationSha256') != template.get('liveConfigurationSha256') or profile.get('provenance') != 'commissioning-provisional' or profile.get('precisionCalibrated') is not False or profile.get('flowCalibrated') is not False:
         fail('Preparation profile identity/provisional status mismatch')
+    if (target.get('schema') != 1 or target.get('scope') != 'ftp-two-pad-commissioning-targets' or
+            target.get('sessionId') != template.get('sessionId') or target.get('jvmStartMs') != template.get('jvmStartMs') or
+            target.get('liveConfigurationSha256') != barrier.get('liveConfigurationSha256') or
+            target.get('quantizationMm') != 0.01 or target.get('boardUnmovedSinceRegistration') is not True or
+            target.get('precisionCalibrated') is not False or target.get('flowCalibrated') is not False):
+        fail('FTP target identity/provisional/unmoved review mismatch')
     for axis in 'XYZA':
         if not COMP.finite(profile.get('rawPose', {}).get(axis)) or abs(profile['rawPose'][axis]-start[axis]) > 0.0001:
             fail(f'Preparation profile must match current barrier {axis}')
@@ -122,9 +128,10 @@ def build(args):
               'experimentEvidence':ee,'maximumTransferMilliseconds':max_transfer,
               'prefixStageCount':len(prefix),'retractionStageIndex':len(prefix)-2,'liftStageIndex':len(prefix)-1}
     target_copy['inlineConditioning'] = inline
-    target_copy.pop('compensatedSequence',None)
-    target_copy['compensatedSequence'] = {k:v for k,v in target.get('compensatedSequence',{}).items()
-        if k in ('schema','protocol','doseDegrees','retractDegrees','dwellMilliseconds','retractDwellMilliseconds','idleReliefDegrees')}
+    target_copy['compensatedSequence'] = copy.deepcopy(target.get('compensatedSequence',{}))
+    for key in ('conditioningReportEvidence','conditioningLedgerEvidence','preparationExperimentEvidence',
+                'tipObservationEvidence','conditioningFinishedMs','maximumElapsedMilliseconds'):
+        target_copy['compensatedSequence'].pop(key,None)
     suffix_target, suffix, _, _, accounting = COMP.build_route(at, shifted_native, target_copy, transfer_clearance)
     for pad in suffix_target['pads']:
         for key in ('restoreStageIndex','retractStageIndex','liftStageIndex'):
@@ -135,6 +142,8 @@ def build(args):
         if key in seq: seq[key] += len(prefix)+len(extra_prefix)
     if 'finalIdleStageIndices' in seq: seq['finalIdleStageIndices'] = [i+len(prefix)+len(extra_prefix) for i in seq['finalIdleStageIndices']]
     stages = prefix + extra_prefix + suffix
+    if len(stages) > 40:
+        fail('Combined preparation and FTP route exceeds the native 40-stage limit')
     if source_target_path.read_bytes() != source_target_bytes or ep.read_bytes() != experiment_bytes:
         fail('Authored target or conditioning experiment changed during preparation')
 
