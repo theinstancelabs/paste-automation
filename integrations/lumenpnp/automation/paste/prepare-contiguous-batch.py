@@ -74,7 +74,7 @@ def prepare(args):
  node_previous(report,ledger,hashlib.sha256(lb).hexdigest(),captured)
  if not ledger.get('entries') or ledger['entries'][-1].get('status')!='verified' or report['id'] not in (ledger['entries'][-1].get('requestId'),ledger['entries'][-1].get('cycleId'),ledger['entries'][-1].get('batchId')): err('Previous report is not current verified ledger tail')
  stages=recipe.get('stages')
- if not isinstance(stages,list) or not 1<=len(stages)<=(80 if recipe.get('targetSurface')=='scrap-conditioned-ftp-eight-pad' else 40): err('Recipe exceeds its reviewed scope stage limit')
+ if not isinstance(stages,list) or not 1<=len(stages)<=(96 if recipe.get('targetSurface')=='scrap-conditioned-ftp-eight-pad' else 40): err('Recipe exceeds its reviewed scope stage limit')
  start=copy.deepcopy(raw); built=[]
  for i,src in enumerate(stages):
   if not isinstance(src,dict) or src.get('axis') not in ('X','Y','Z','B') or not isinstance(src.get('target'),(int,float)): err(f'Invalid recipe stage {i}')

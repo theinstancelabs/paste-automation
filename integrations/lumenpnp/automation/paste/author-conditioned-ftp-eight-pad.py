@@ -27,7 +27,7 @@ def derive(q,load,now):
  template,barrier=docs['template'],docs['barrier'];raw=(barrier.get('afterQuerySnapshot') or {}).get('raw')
  if not isinstance(q.get('startRaw'),dict) or set(q['startRaw'])!=set('XYZAB') or not all(finite(v) for v in q['startRaw'].values()) or q['startRaw']!=raw:fail('Explicit startRaw must equal supplied barrier')
  session={k:template[k] for k in ('sessionId','jvmStartMs','liveConfigurationSha256')}
- if q.get('doseDegrees') not in (4,6,20) or type(q['doseDegrees']) is not int:fail('Dose must be integer4,6 or20')
+ if q.get('doseDegrees') not in (4,6,12,20) or type(q['doseDegrees']) is not int:fail('Dose must be integer4,6,12 or20')
  dwell=q.get('dwellMilliseconds',200)
  if type(dwell) is not int or dwell not in (200,1000,2000):fail('Forward dwell must be integer200,1000 or2000 ms')
  clear=q.get('xyClearanceRawZ');work=q.get('surfaceRawZ')

@@ -12,4 +12,6 @@ The authoring helper derives pad XY from the accepted registration minus the exp
 
 Optional input `dwellMilliseconds` accepts exactly integer 200, 1000 or 2000, defaulting to 200 when omitted. It selects only the eight FTP forward-dose waits. The supplied conditioning experiment and its waits are retained.
 
-Dose 20 remains one existing −20 B stage per pad. The 80-stage cap is unchanged; dose 12 remains outside this group scope. This admission does not establish deposited volume or physical qualification.
+Dose 20 remains one existing −20 B stage per pad. The group-only cap is 96 stages; dose 12 uses exactly two −6 stages per pad with the selected wait only on the second. This admission does not establish deposited volume or physical qualification.
+
+The 12-degree option adds eight stages versus a single-part dose. The complete route must still fit 96 stages; longer routes are rejected. No single −12 native command or stroke admission is added. Standard conditioning plus eight 12-degree pads charges 270 gross degrees.

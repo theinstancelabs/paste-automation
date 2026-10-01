@@ -32,7 +32,7 @@ def validate_eight(t):
             PREP.WIPE.checked_evidence(p.get('availabilityReportEvidence'),'availability report')
             if type(p.get('availabilityCapturedMs')) is not int:fail('Each pad needs camera-report capture time')
     c=t.get('compensatedSequence') or {}
-    if c.get('schema')!=1 or c.get('protocol')!='restore-dose-retract-lift-eight-pad' or c.get('doseDegrees') not in (4,6,20) or c.get('retractDegrees')!=2 or type(c.get('dwellMilliseconds')) is not int or c.get('dwellMilliseconds') not in (200,1000,2000) or c.get('retractDwellMilliseconds')!=500 or c.get('idleReliefDegrees')!=40:fail('Eight-pad sequence is fixed at dose4|6|20/R2/forward200|1000|2000ms/retract500ms/final40')
+    if c.get('schema')!=1 or c.get('protocol')!='restore-dose-retract-lift-eight-pad' or c.get('doseDegrees') not in (4,6,12,20) or c.get('retractDegrees')!=2 or type(c.get('dwellMilliseconds')) is not int or c.get('dwellMilliseconds') not in (200,1000,2000) or c.get('retractDwellMilliseconds')!=500 or c.get('idleReliefDegrees')!=40:fail('Eight-pad sequence is fixed at dose4|6|12|20/R2/forward200|1000|2000ms/retract500ms/final40')
     return refs,pads
 
 def validate_availability_reports(pads, template, now):
@@ -130,7 +130,7 @@ def build(args):
         if group==3:pairgross+=acct['grossChargedDegrees']
         all_stages.extend(active);pair_stage_count+=len(active)
         for s in active:at[s['axis']]=s['target']
-    if len(all_stages)>80:fail('Eight-pad combined route exceeds explicit 80-stage group limit')
+    if len(all_stages)>96:fail('Eight-pad combined route exceeds explicit 96-stage group limit')
     if target_path.read_bytes()!=target_bytes or ep.read_bytes()!=ebytes:fail('Authored target/experiment changed while preparing')
     route_states=[dict(start)];cur=dict(start)
     for s in all_stages:cur=dict(cur);cur[s['axis']]=s['target'];route_states.append(cur)
