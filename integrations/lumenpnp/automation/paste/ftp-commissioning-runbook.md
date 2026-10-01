@@ -1,10 +1,16 @@
 # FTP paste commissioning checkpoint and saved workflow
 
-## Current continuation — 2026-10-01 19:34 UTC
+## Current continuation — 2026-10-01
 
-Wet batch `e23c7a5d-eb2b-4b75-a0e6-bdbb028f5f19` ran 19:27:20.941–19:28:42.385 UTC, completing 76/76 verified stages for the four pairs R36, R35, R34 and R33 (eight pads). It used 6-degree doses, 3-degree retractions, 2000 ms forward dwell and 500 ms retraction dwell. Controller position and stage counts verified; final raw pose was X315.09, Y235.32, Z53.45, A720, B−3033. The charged ledger is 8503 degrees. Fresh native fiducial registration refresh 2 was accepted at 19:34 UTC for continued work.
+The first fresh eight-pad batch, `e23c7a5d-eb2b-4b75-a0e6-bdbb028f5f19`, ran 19:27:20.941–19:28:42.385 UTC for R36, R35, R34 and R33. It completed 76/76 verified stages; final raw pose was X315.09, Y235.32, Z53.45, A720, B−3033, with charged ledger 8503 degrees. The preliminary image review called these deposits compact, but later dimensional inspection estimates about 0.9–1.4 mm on 0.8×0.95 mm pads. Withdraw that acceptance: the eight deposits are oversized and not accepted.
 
-Parent review of the eight fresh after-reports found compact, separated deposits with no obvious bridges; slight overhang may remain. This is visual acceptance of these eight pads only. It does not establish delivered volume, reflow quality, or repeatability. Seventy-two pads remain. The earlier all-80 coverage/cleanup checkpoint and whole-board cleanup request below are superseded for current progress; do not use them to infer the present appearance of the board. Do not mark the board complete.
+The R37–R40 group also deposited, but the smaller footprints and tails were not accepted. R32/R31 and R30.1 had partial deposits; R30.1 became oversized after dwell. A separate R29/R2 dose12 trial produced two similar roughly 0.6–0.7 mm 2D footprints, a size candidate only, not a qualified recipe. A six-pad R28/R27/R26 batch (`4517dee0-21f5-401b-a7f4-8844591cbfad`) completed and is awaiting image review; do not infer its quality yet.
+
+The third group stopped under request `9d2592a4-0b68-41a7-ba1a-4fa1e7b40bc9` after 52 verified stages at raw X321.04, Y213.07, Z58.25, A720, B−3174. A fresh audit completed; no collision was observed. The reconciled ledger retained the full reservation. A later +40-degree wet stroke completed and advanced the charged ledger to 9007 degrees, B−3134, validating the reservation/reconciliation runtime path only. It does not qualify any deposit.
+
+Fresh native fiducial registration refresh 2 was accepted at 19:34 UTC. Current review remains open: prior group dimensions and tails are not accepted, the six-pad after-images are pending, and total-board completion is not established. Continue to inspect each group and preserve the full charged history.
+
+The earlier all-80 coverage/cleanup checkpoint below is historical and superseded as current-state guidance. Do not use it to infer present board condition or to issue a cleanup directive.
 
 The following table and records describe the prior inspection and cleanup history, not current pad state.
 
