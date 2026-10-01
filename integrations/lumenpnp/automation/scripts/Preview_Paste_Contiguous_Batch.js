@@ -9,11 +9,13 @@
  function field(c,n,o){var f=Java.type(c).class.getDeclaredField(n);f.setAccessible(true);return f;}
  function configHash(){var w=new java.io.StringWriter();C.createSerializer().write(m,w);return hash(bytes(String(w)));}
  eval(read(root+'automation/paste/waste-prime.cjs'));
+ eval(read(root+'automation/paste/ftp-inline-conditioning.cjs'));
+ eval(read(root+'automation/paste/ftp-registration-revalidation.cjs'));
  eval(read(root+'automation/paste/ftp-two-pad.cjs'));
  eval(read(root+'automation/paste/commissioning-stroke.cjs'));
  var q=JSON.parse(read(root+'automation/plans/paste-contiguous-batch-preview-request.json'));
  var jvm=Number(Java.type('java.lang.management.ManagementFactory').getRuntimeMXBean().getStartTime()),now=Number(java.lang.System.currentTimeMillis());
- if(q.schema!==1||['contiguous-native-scrap-batch-preview',PasteFtpTwoPad.scope(true)].indexOf(q.scope)<0)throw Error('Batch preview scope required');
+ if(q.schema!==1||['contiguous-native-scrap-batch-preview',PasteFtpTwoPad.scope(true,q)].indexOf(q.scope)<0)throw Error('Batch preview scope required');
  CommissioningStroke.validateBatch(q,now,jvm,true);
  function ftpEvidence(e,json){var b=Fs.readAllBytes(new F(e.path).toPath());if(hash(b)!==e.sha256)throw Error('FTP source changed');return json?JSON.parse(String(new java.lang.String(b,UTF))):null;}
  if(PasteFtpTwoPad.isFtp(q))PasteFtpTwoPad.verifySources(q,ftpEvidence);
