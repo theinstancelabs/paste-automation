@@ -78,7 +78,7 @@ def prepare(args):
  for i,src in enumerate(stages):
   if not isinstance(src,dict) or src.get('axis') not in ('X','Y','Z','B') or not isinstance(src.get('target'),(int,float)): err(f'Invalid recipe stage {i}')
   axis=src['axis']; target=copy.deepcopy(start); target[axis]=src['target']; stg={'axis':axis,'speedFraction':.05 if axis=='B' else 1,'startRaw':start,'targetRaw':target}
-  for key in ('gapEvidence','estimatedGapMm','gapUncertaintyMm','wipeReview','wipeReviewEvidence'):
+  for key in ('gapEvidence','estimatedGapMm','gapUncertaintyMm','wipeReview','wipeReviewEvidence','dwellMilliseconds'):
    if key in src: stg[key]=src[key]
   if 'gapEvidence' in stg: stg['gapEvidence']=sha_evidence(stg['gapEvidence'],f'stage {i} gapEvidence')
   if 'wipeReviewEvidence' in stg: stg['wipeReviewEvidence']=sha_evidence(stg['wipeReviewEvidence'],f'stage {i} wipeReviewEvidence')
@@ -104,6 +104,7 @@ def finalize(args):
  for i,(s,p) in enumerate(zip(q['previewStages'],pr['stages'])):
   for k in ('axis','speedFraction','startRaw','targetRaw'):
    if not same(s.get(k),p.get(k)): err(f'Preview stage {i} {k} mismatch')
+  if (s.get('dwellMilliseconds',0)!=p.get('dwellMilliseconds',0)): err(f'Preview stage {i} dwell mismatch')
   fe=p.get('formatterEvidence')
   if not isinstance(fe,dict): err(f'Preview stage {i} lacks formatter evidence')
   ev=sha_evidence(fe,f'preview stage {i} formatterEvidence')

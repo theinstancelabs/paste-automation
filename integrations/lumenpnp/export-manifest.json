@@ -1257,8 +1257,8 @@
       "sourceRoot": "/home/lumen/lumenpnp",
       "sourcePath": "automation/paste/commissioning-stroke.cjs",
       "destination": "integrations/lumenpnp/automation/paste/commissioning-stroke.cjs",
-      "sha256": "6125b06ac1b82868cadf36fa95d3f11003af8827b153a68f6260645a5754a10b",
-      "bytes": 28276
+      "sha256": "7bf55277146a4d3fd422094552d78c9235267c8527f4d6fd080c90e3c6347772",
+      "bytes": 28567
     },
     {
       "sourceRoot": "/home/lumen/lumenpnp",
@@ -1369,8 +1369,8 @@
       "sourceRoot": "/home/lumen/lumenpnp",
       "sourcePath": "automation/operations/paste-small-dot-trials-20260930.md",
       "destination": "integrations/lumenpnp/automation/operations/paste-small-dot-trials-20260930.md",
-      "sha256": "831491096d6598220108197733c622e0c61112fa4f748ad0287e83380fe8a0e4",
-      "bytes": 15973
+      "sha256": "fdbf90165c9b994ce9158758411e16cc3dd8ae441e06862b228465ae6b14c518",
+      "bytes": 16979
     },
     {
       "sourceRoot": "/home/lumen/lumenpnp",
@@ -1418,36 +1418,36 @@
       "sourceRoot": "/home/lumen/lumenpnp",
       "sourcePath": "automation/paste/commissioning-batch.test.cjs",
       "destination": "integrations/lumenpnp/automation/paste/commissioning-batch.test.cjs",
-      "sha256": "e7680bd27ac7a9ce3e85007e50d71d99b5fa1316c31d2c529113d5c403ab95c3",
-      "bytes": 6745
+      "sha256": "b477f9f15143b6383f6ce74044965c8ee0a341600919ad2c4810864b16dae22d",
+      "bytes": 7298
     },
     {
       "sourceRoot": "/home/lumen/lumenpnp",
       "sourcePath": "automation/scripts/Commission_Paste_Contiguous_Batch.js",
       "destination": "integrations/lumenpnp/automation/scripts/Commission_Paste_Contiguous_Batch.js",
-      "sha256": "679ceb188916d5d0d7541c9e8c52f58eed9823afe7600510a781b4204443d0a0",
-      "bytes": 35981
+      "sha256": "fb8f2fd8e60a820b84d7755c5adfaf6e295e6a7d5281286588e38b95f5f15188",
+      "bytes": 36992
     },
     {
       "sourceRoot": "/home/lumen/lumenpnp",
       "sourcePath": "automation/scripts/Preview_Paste_Contiguous_Batch.js",
       "destination": "integrations/lumenpnp/automation/scripts/Preview_Paste_Contiguous_Batch.js",
-      "sha256": "b49b05e9f76d5dc35fd63519a41e671d5ab8fe95bc66efb9808bc93a378733d2",
-      "bytes": 13151
+      "sha256": "8c93b3873690f46574d7b2f7d19296b8b0ecb4f668877385312e99f08d57de78",
+      "bytes": 13299
     },
     {
       "sourceRoot": "/home/lumen/lumenpnp",
       "sourcePath": "automation/plans/paste-contiguous-batch-PREPARE-ONLY.md",
       "destination": "integrations/lumenpnp/automation/plans/paste-contiguous-batch-PREPARE-ONLY.md",
-      "sha256": "ecea0bb3df6f2fa302974922b3c9c8dab0352ecbe6dd221d602c8daaba32da12",
-      "bytes": 3699
+      "sha256": "f0e67e04a143390d767fb964bb8756cb755d1f9cac0295dd82b70a4e65ce9197",
+      "bytes": 4120
     },
     {
       "sourceRoot": "/home/lumen/lumenpnp",
       "sourcePath": "automation/paste/prepare-contiguous-batch.py",
       "destination": "integrations/lumenpnp/automation/paste/prepare-contiguous-batch.py",
-      "sha256": "34e43a3d6e2b623374ec917762d7f16a71ec8f10a04b2d3dbdf65b17c5701298",
-      "bytes": 13165
+      "sha256": "af6806c197459116f07242c56324592f6e75001176c0e31287112eaab0ad3d32",
+      "bytes": 13293
     },
     {
       "sourceRoot": "/home/lumen/lumenpnp",
