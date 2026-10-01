@@ -26,6 +26,7 @@ def node_previous(report,ledger,ledger_sha,captured_ms):
  except subprocess.CalledProcessError as e: err('Installed previous-report validator rejected evidence: '+(e.stderr or e.stdout).strip())
 def node_validate(q,preview,now=None):
  js="const P=require(process.argv[1]);const q=JSON.parse(require('fs').readFileSync(0,'utf8'));P.validateBatch(q,Date.now(),q.jvmStartMs,"+("true" if preview else "false")+");"
+ js+="const F=require(require('path').join(require('path').dirname(process.argv[1]),'ftp-two-pad.cjs'));if(F.isFtp(q))F.verifySources(q,(e,json)=>{const b=require('fs').readFileSync(e.path);if(require('crypto').createHash('sha256').update(b).digest('hex')!==e.sha256)throw Error('FTP source hash changed');return json?JSON.parse(b):null;});"
  try: subprocess.run(['node','-e',js,str(POLICY)],input=json.dumps(q),text=True,check=True,capture_output=True)
  except subprocess.CalledProcessError as e: err('Installed Node validateBatch rejected request: '+(e.stderr or e.stdout).strip())
 def required_dict(o,k):
@@ -90,6 +91,10 @@ def prepare(args):
  q={'schema':1,'scope':'contiguous-native-scrap-batch-preview','enabled':False,'mode':mode,'stopPath':stop,'id':ident,'sessionId':base['sessionId'],'jvmStartMs':base['jvmStartMs'],'createdMs':now,'imageCapturedMs':captured,'reviewedImageMs':int(review['reviewedMs']),'liveConfigurationSha256':barrier['liveConfigurationSha256'],'expectedRaw':raw,'expectedDriver':driver,'expectedNativePoses':poses,'rawBounds':bounds,'headClearanceBounds':heads,'bothHeadsClearanceReview':True,'clearanceReviewEvidence':clear,'xyClearanceRawZ':recipe['xyClearanceRawZ'],'receivingProfile':receiving,'previewStages':built,'finalTargetRaw':start,
     'evidence':[],'previousReportEvidence':prev,'nativePreviewEvidence':None,'profileEvidence':profile_ev,'barrierEvidence':evidence(bp2),'reviewedImageEvidence':{'path':str(image),'sha256':imgsha},'previousLedgerSha256':hashlib.sha256(lb).hexdigest(),'syringeId':base['syringeId'],'primeLedgerSha256':base['primeLedgerSha256'],'carryoverSha256':base['carryoverSha256'],'budgetAmendmentEvidence':base.get('budgetAmendmentEvidence'),
     'primeLedgerEvidence':sha_evidence(base.get('primeLedgerEvidence'),'template primeLedgerEvidence'),'priorLedgerEvidence':sha_evidence(base.get('priorLedgerEvidence'),'template priorLedgerEvidence'),'carryoverEvidence':sha_evidence(base.get('carryoverEvidence'),'template carryoverEvidence')}
+ if recipe.get('targetSurface')=='cleaned-ftp-demo':
+  target_ev=sha_evidence(recipe.get('ftpTargetEvidence'),'ftpTargetEvidence'); target,_,_=read(target_ev['path'])
+  q.update(scope='contiguous-native-ftp-two-pad-preview',ftpTargetEvidence=target_ev,ftpTargetRecord=target)
+ elif recipe.get('targetSurface') not in (None,'scrap') or 'ftpTargetEvidence' in recipe: err('Explicit supported target surface required')
  q['evidence']=[q[k] for k in ('barrierEvidence','reviewedImageEvidence','profileEvidence','previousReportEvidence','primeLedgerEvidence','priorLedgerEvidence','carryoverEvidence')]+[{'path':str(lp),'sha256':q['previousLedgerSha256']},clear]
  node_validate(q,True)
  (out/'preview-request.json').write_text(json.dumps(q,indent=2)+'\n')
@@ -97,7 +102,7 @@ def prepare(args):
 
 def finalize(args):
  q,qp,_=read(args.request); pr,pp,pbytes=read(args.preview)
- if q.get('scope')!='contiguous-native-scrap-batch-preview' or q.get('enabled') is not False: err('Disabled preview request required')
+ if q.get('scope') not in ('contiguous-native-scrap-batch-preview','contiguous-native-ftp-two-pad-preview') or q.get('enabled') is not False: err('Disabled preview request required')
  if pr.get('status')!='completed-model-only-contiguous-batch-preview' or pr.get('noControllerAccess') is not True or pr.get('noMotion') is not True or pr.get('id')!=q.get('id') or pr.get('jvmStartMs')!=q.get('jvmStartMs') or pr.get('liveConfigurationSha256')!=q.get('liveConfigurationSha256'): err('Matching no-controller/no-motion native preview required')
  if not same(pr.get('request'),q) or not isinstance(pr.get('stages'),list) or len(pr['stages'])!=len(q.get('previewStages',[])): err('Preview report request/stage count mismatch')
  q=copy.deepcopy(q); stages=[]
@@ -110,7 +115,7 @@ def finalize(args):
   ev=sha_evidence(fe,f'preview stage {i} formatterEvidence')
   if p.get('path')!=ev['path'] or p.get('sha256')!=ev['sha256'] or not isinstance(p.get('expandedCommands'),list) or not p['expandedCommands']: err(f'Preview stage {i} formatter trace mismatch')
   s.update({'expandedCommands':p['expandedCommands'],'path':ev['path'],'sha256':ev['sha256']}); stages.append(s)
- q['previewStages']=stages; q['scope']='contiguous-native-scrap-batch'; q['nativePreviewEvidence']=evidence(pp)
+ q['previewStages']=stages; q['scope']='contiguous-native-ftp-two-pad' if q['scope']=='contiguous-native-ftp-two-pad-preview' else 'contiguous-native-scrap-batch'; q['nativePreviewEvidence']=evidence(pp)
  q['evidence']=[e for e in q['evidence'] if e.get('path')!=q['nativePreviewEvidence']['path']]+[q['nativePreviewEvidence']]+[{'path':s['path'],'sha256':s['sha256']} for s in stages]
  node_validate(q,False)
  out=pp.parent/'runtime-request.json'

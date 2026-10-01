@@ -13,3 +13,63 @@ A B stage may include `dwellMilliseconds` as an integer from 0 to 2000; omission
 The `stopPath` is a cooperative operator stop file. If it appears at an inter-stage boundary, the batch faults remaining reserved B budget and never resumes automatically. If the current pose is below the reviewed XY clearance Z, the only motion permitted after a stop is an already-listed Z stage whose target is exactly that clearance; there is no synthesized lift. The report records whether the stop occurred at clearance.
 
 The detached preview writes one formatter JSON per stage and a report. Copy each generated stage’s exact `expandedCommands`, `path`, and `sha256` into the physical request; keep all stage poses, bounds, gap/wipe evidence, and profile identical to the preview request. The physical request also retains the existing cycle evidence fields: `barrierEvidence`, `profileEvidence`, `primeLedgerEvidence`, `priorLedgerEvidence`, `carryoverEvidence`, `nativePreviewEvidence`, `reviewedImageEvidence`, `previousReportEvidence`, `previousLedgerSha256`, `primeLedgerSha256`, `carryoverSha256`, `syringeId`, `budgetAmendmentEvidence`, and `evidence` (all hash-bound). Wet mode reserves the whole B gross budget before the first query and consumes all reserved gross on fault. Air mode reads and verifies the ledger hash without changing it.
+
+
+## Explicit FTP demo two-pad extension
+
+The existing scrap scopes remain unchanged. A cleaned FTP demo board must use
+`contiguous-native-ftp-two-pad-preview` and `contiguous-native-ftp-two-pad`.
+This is bounded commissioning, not production acceptance or a calibrated recipe.
+The same native owner, stage formatter, speed/step limits, B ledger reservation,
+stop behavior, and no-replay checks apply. Cleanup/priming on scrap stays separate.
+
+An offline recipe selects `targetSurface: "cleaned-ftp-demo"` and supplies
+`ftpTargetEvidence: {path, sha256}` for an explicitly authored JSON record. The
+existing prepare helper loads that record into `ftpTargetRecord`; preview and
+runtime compare it exactly and independently verify the source file hashes. The
+helper does not invent review attestations or select an offset, Z, gap or dose.
+The record must contain:
+
+- `schema: 1`, `scope: "ftp-two-pad-commissioning-targets"`, a concrete `boardId`,
+  and matching `sessionId`, `jvmStartMs`, `liveConfigurationSha256`.
+- A named `reviewedBy` and integer `reviewedMs` no more than five minutes old;
+  explicit `boardCleaned: true`, `padsAvailable: true`, and
+  `boardUnmovedSinceRegistration: true`.
+- `provenance: "commissioning-provisional"`, `precisionCalibrated: false`,
+  `flowCalibrated: false`; never promote image estimates to calibrated geometry.
+- Hash-bound `cadEvidence`, `registrationEvidence`, `tipOffsetEvidence`,
+  `surfaceEvidence`, and `padAvailabilityImage` (absolute `path` and `sha256`).
+- `cameraMinusTipXYMm: [x, y]`, explicitly chosen by the reviewer, and
+  `surface: {rawZ, estimatedGapMm, gapUncertaintyMm}` for this board. The positive
+  gap lower bound remains at least 0.1 mm; the entire route must stay at or above
+  that reviewed dispense height in physical space (raw Z no greater than rawZ).
+- Exactly three `padChecks`, identified by `reference` R1, R16 and R40. Each has
+  `padId`, `reviewedAligned: true`, `reportEvidence`, and `imageEvidence`.
+- Exactly two `pads`, each `{padId, rawPose: {X,Y,Z,A}, doseStageIndex}`. IDs must
+  be the two distinct pads of one resistor. For wet mode each index points to
+  its single negative-B stage. For air mode both indices are `null` and no B
+  stage is permitted.
+
+The registration must be the accepted three-fiducial FTP record, bind the same
+CAD/session/configuration, and contain its 80 camera pad targets. Its three
+fiducial reports/images and the distant-pad reports/images are hash-verified;
+reports must be successful and reviewed within one hour. Distant camera checks
+must be within 0.1 mm of the registered pad center. The two raw head targets must
+match registered camera XY minus the explicitly selected offset within 0.001 mm
+(rounding allowance only). Their Z/A and negative-B stage poses match exactly.
+Exactly two total B stages, both negative and assigned one per pad, are accepted
+on wet FTP. Positive B relief is also excluded from this branch; perform
+cleanup separately on scrap. No dispense-height XY/wipe is accepted on FTP.
+
+`tipOffsetEvidence` and `surfaceEvidence` are explicitly authored selection
+records. Both carry `boardId`, `jvmStartMs`, `liveConfigurationSha256`,
+`reviewedBy`, `provenance: "commissioning-provisional"`,
+`precisionCalibrated: false`, and hash-bound `basisEvidence`. The tip selection
+record carries the exact `cameraMinusTipXYMm`; the surface selection carries the
+exact `surface` object. For example, the existing provisional offset calculation
+may be the tip selection's `basisEvidence`; it is not silently rewritten or
+promoted to a machine setting. Source hashes are rechecked before task preflight.
+
+No physical FTP result follows from this extension or its offline tests. The
+parent must review the explicit two-pad record and detached preview before the
+first wet demo-board trial, then inspect both deposits before further work.

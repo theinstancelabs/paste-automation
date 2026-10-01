@@ -9,11 +9,14 @@
  function field(c,n,o){var f=Java.type(c).class.getDeclaredField(n);f.setAccessible(true);return f;}
  function configHash(){var w=new java.io.StringWriter();C.createSerializer().write(m,w);return hash(bytes(String(w)));}
  eval(read(root+'automation/paste/waste-prime.cjs'));
+ eval(read(root+'automation/paste/ftp-two-pad.cjs'));
  eval(read(root+'automation/paste/commissioning-stroke.cjs'));
  var q=JSON.parse(read(root+'automation/plans/paste-contiguous-batch-preview-request.json'));
  var jvm=Number(Java.type('java.lang.management.ManagementFactory').getRuntimeMXBean().getStartTime()),now=Number(java.lang.System.currentTimeMillis());
- if(q.schema!==1||q.scope!=='contiguous-native-scrap-batch-preview')throw Error('Batch preview scope required');
+ if(q.schema!==1||['contiguous-native-scrap-batch-preview',PasteFtpTwoPad.scope(true)].indexOf(q.scope)<0)throw Error('Batch preview scope required');
  CommissioningStroke.validateBatch(q,now,jvm,true);
+ function ftpEvidence(e,json){var b=Fs.readAllBytes(new F(e.path).toPath());if(hash(b)!==e.sha256)throw Error('FTP source changed');return json?JSON.parse(String(new java.lang.String(b,UTF))):null;}
+ if(PasteFtpTwoPad.isFtp(q))PasteFtpTwoPad.verifySources(q,ftpEvidence);
  var mDrivers=m.getDrivers(),GD='org.openpnp.machine.reference.driver.GcodeDriver',AP='org.openpnp.machine.reference.driver.AbstractMotionPlanner',AM='org.openpnp.spi.base.AbstractMachine',top=m.getDefaultHead().getDefaultCamera();
  if(mDrivers.size()!==1||String(planner.getClass().getName())!=='org.openpnp.machine.reference.driver.NullMotionPlanner')throw Error('Audited native model required');
  var d=mDrivers.get(0);if(String(d.getClass().getName())!==GD||String(d.getId())!=='DRV16982438146c1dd4')throw Error('Driver changed');
