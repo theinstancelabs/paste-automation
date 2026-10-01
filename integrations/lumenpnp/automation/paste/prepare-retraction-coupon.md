@@ -9,6 +9,7 @@ The explicitly authored experiment JSON contains:
 - `schema: 1`, `scope: "reviewed-scrap-retraction-coupon"`.
 - `startRaw: {X,Y,Z,A,B}`, exactly equal to the supplied barrier; `workRawZ` equal to start Z and `clearanceRawZ` exactly 5 mm smaller.
 - `targetsXY`: five distinct `{X,Y}` objects, ordered as the wipe endpoint, sacrificial conditioning point, and three test points. XY targets and work/clearance Z must lie on the 0.01 mm reporting grid. The wipe changes one XY axis by at most 2 mm; all later XY stages occur at clearance and each axis step is at most 10 mm.
+- Optional `testWorkRawZ`: exactly three finite numeric heights, ordered with the three test targets; omission uses `workRawZ` for all three. Each must lie on the 0.01 mm grid, be greater than common `clearanceRawZ`, and be no greater than conditioning `workRawZ`. Conditioning and the initial wipe remain at `workRawZ`; every lift and later XY move retains the common clearance. For example, conditioning at 58.25 with clearance 53.25 permits `[58.0, 58.15, 58.25]`, preserving the 5 mm maximum Z stage. The authored experiment review covers these selected heights; each B-stage provisional gap is adjusted from the profile at conditioning height by `workRawZ - stageRawZ`. This does not establish a measured gap or authorize contact.
 - `doseDegrees`: 6, 12 or 20; `retractDegrees`: 3 or 6.
 - `primeDegrees`: 40 or 60, always split into existing -20-degree stages.
 - Fixed values: `preWipeReliefDegrees: 20`, `idleReliefDegrees: 20`, `conditioningDoseDegrees: 20`.

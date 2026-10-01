@@ -51,6 +51,52 @@ class RetractionCouponTests(unittest.TestCase):
                     self.assertEqual(stages[i+1], dict(axis='Z', target=53.25))
             self.assertTrue(all(p['A'] == 720 for p in poses))
 
+    def test_optional_test_heights_preserve_clearance_accounting_and_gap_origin(self):
+        e = experiment()
+        baseline = M.stages_for(e, dict(path='/review', sha256=H), 1.1, 1)
+        e['testWorkRawZ'] = [58.25]*3
+        self.assertEqual(M.stages_for(e, dict(path='/review', sha256=H), 1.1, 1), baseline)
+        e['testWorkRawZ'] = [58.0, 58.15, 58.25]
+        stages, poses, accounting = M.stages_for(e, dict(path='/review', sha256=H), 1.1, 1)
+        self.assertEqual(accounting, baseline[2])
+        self.assertEqual(len(stages), len(baseline[0]))
+        working_z = [s['target'] for s in stages if s['axis'] == 'Z' and s['target'] != 53.25]
+        self.assertEqual(working_z, [58.25, 58.0, 58.15, 58.25])
+        for i, stage in enumerate(stages):
+            if stage['axis'] == 'Z':
+                self.assertLessEqual(abs(stage['target']-poses[i]['Z']), 5)
+            if stage['axis'] in ('X', 'Y') and not stage.get('wipeReview'):
+                self.assertEqual(poses[i]['Z'], 53.25)
+            if stage['axis'] == 'B':
+                self.assertAlmostEqual(stage['estimatedGapMm'], 1.1+58.25-poses[i]['Z'])
+        for invalid in (None, [], [58]*2, [58]*4, [True,58,58], [float('nan'),58,58],
+                        [float('inf'),58,58], [58.001,58,58], [58.26,58,58], [53.25,58,58]):
+            e['testWorkRawZ'] = invalid
+            with self.subTest(invalid=invalid), self.assertRaises(ValueError):
+                M.stages_for(e, dict(path='/review', sha256=H), 1.1, 1)
+
+    def test_height_sweep_passes_offline_gate_and_keeps_authored_evidence_required(self):
+        with tempfile.TemporaryDirectory() as d:
+            args = self.fixture(d)
+            e = json.loads(Path(args.experiment).read_text()); e['testWorkRawZ'] = [58.0,58.15,58.25]
+            Path(args.experiment).write_text(json.dumps(e))
+            with self.assertRaises(ValueError): M.build(args)
+            review = json.loads(Path(args.review).read_text()); review['experimentEvidence'] = M.WIPE.evidence(args.experiment)
+            Path(args.review).write_text(json.dumps(review))
+            with self.assertRaises(ValueError): M.build(args)
+            profile = json.loads(Path(args.profile).read_text()); profile['measurementEvidence'] = M.WIPE.evidence(args.review)
+            Path(args.profile).write_text(json.dumps(profile))
+            result = M.build(args)
+            self.assertEqual(result['rawBounds']['Z'], dict(min=53.25,max=58.25))
+            self.assertEqual(result['bAccounting']['grossCommandedDegrees'],139)
+            self.assertEqual([s['target'] for s in result['stages'] if s['axis']=='Z' and s['target']!=53.25],
+                             [58.25,58.0,58.15,58.25])
+            review['rawZRange'] = [53.25,58.15]
+            Path(args.review).write_text(json.dumps(review))
+            profile['measurementEvidence'] = M.WIPE.evidence(args.review)
+            Path(args.profile).write_text(json.dumps(profile))
+            with self.assertRaises(ValueError): M.build(args)
+
     def test_twelve_degree_dose_is_two_six_degree_stages_with_one_dwell(self):
         e = experiment(12, 3)
         stages, poses, accounting = M.stages_for(e, dict(path='/review', sha256=H), 1.1, 1)

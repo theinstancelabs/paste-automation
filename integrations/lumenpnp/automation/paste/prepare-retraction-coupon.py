@@ -58,6 +58,15 @@ def stages_for(experiment, review_evidence, gap, uncertainty):
         raise ValueError('Working and clearance Z must use the 0.01 mm reporting grid')
     if raw['Z'] != work or work-clear != 5:
         raise ValueError('Start must be at reviewed working Z; clearance is exactly 5 mm higher')
+    test_work = e.get('testWorkRawZ', [work]*3)
+    if not isinstance(test_work, list) or len(test_work) != 3:
+        raise ValueError('testWorkRawZ requires exactly three ordered heights')
+    for value in test_work:
+        number(value, 'testWorkRawZ')
+        if abs(value*100-round(value*100)) > 1e-7:
+            raise ValueError('Test working Z must use the 0.01 mm reporting grid')
+        if not clear < value <= work:
+            raise ValueError('Test working Z must be below common clearance and no deeper than conditioning Z')
     targets = e.get('targetsXY')
     if not isinstance(targets, list) or len(targets) != 5:
         raise ValueError('Five ordered XY targets required: wipe end, conditioning point, three tests')
@@ -101,7 +110,7 @@ def stages_for(experiment, review_evidence, gap, uncertainty):
     for index, target in enumerate(targets[1:]):
         add('X', target['X'])
         add('Y', target['Y'])
-        add('Z', work)
+        add('Z', work if index == 0 else test_work[index-1])
         if index:
             stroke(-e['retractDegrees'])
         dose = 20 if index == 0 else e['doseDegrees']
