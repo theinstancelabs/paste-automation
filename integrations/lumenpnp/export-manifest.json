@@ -1369,8 +1369,8 @@
       "sourceRoot": "/home/lumen/lumenpnp",
       "sourcePath": "automation/operations/paste-small-dot-trials-20260930.md",
       "destination": "integrations/lumenpnp/automation/operations/paste-small-dot-trials-20260930.md",
-      "sha256": "eba0a4b2110878b76b6e799437600d118fffb52e70b041ea66c5caf8d4581a18",
-      "bytes": 47605
+      "sha256": "421edceb99e1eb4d42be137d64e8646a46eaddf667ee68f15501463cca57829a",
+      "bytes": 48175
     },
     {
       "sourceRoot": "/home/lumen/lumenpnp",
@@ -1810,8 +1810,29 @@
       "sourceRoot": "/home/lumen/lumenpnp",
       "sourcePath": "automation/paste/ftp-commissioning-runbook.md",
       "destination": "integrations/lumenpnp/automation/paste/ftp-commissioning-runbook.md",
-      "sha256": "9b764bd89ade4035d4d45fa4e7721debf821f45d16e52ab162072b86c7bfb18e",
-      "bytes": 6753
+      "sha256": "cc366cceca6d1cae39f5ea9b36223d9364bd8c168bc238f5846054e9d350396f",
+      "bytes": 7843
+    },
+    {
+      "sourceRoot": "/home/lumen/lumenpnp",
+      "sourcePath": "automation/paste/author-no-b-scrap-wipe.py",
+      "destination": "integrations/lumenpnp/automation/paste/author-no-b-scrap-wipe.py",
+      "sha256": "4175ae6118d8d42a2eeab86082e9fc65cd3d15a4768e954c666a869f8629dae2",
+      "bytes": 9242
+    },
+    {
+      "sourceRoot": "/home/lumen/lumenpnp",
+      "sourcePath": "automation/paste/author-no-b-scrap-wipe.md",
+      "destination": "integrations/lumenpnp/automation/paste/author-no-b-scrap-wipe.md",
+      "sha256": "47987c87c2d9031b382fedac4fb1e49ba2153e4a0abd7a3bb5bf85b2d8789d2f",
+      "bytes": 2626
+    },
+    {
+      "sourceRoot": "/home/lumen/lumenpnp",
+      "sourcePath": "automation/paste/test_author_no_b_scrap_wipe.py",
+      "destination": "integrations/lumenpnp/automation/paste/test_author_no_b_scrap_wipe.py",
+      "sha256": "43bc9ff1412a24d58e9dc2bf47d281b577e4adaa389fa85606c210961c074143",
+      "bytes": 4960
     }
   ],
   "manifestSelfHash": "Excluded to avoid a recursive digest; this manifest enumerates every other exported/generated file.",
