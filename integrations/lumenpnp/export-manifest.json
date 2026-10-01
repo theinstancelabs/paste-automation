@@ -1446,8 +1446,8 @@
       "sourceRoot": "/home/lumen/lumenpnp",
       "sourcePath": "automation/paste/prepare-contiguous-batch.py",
       "destination": "integrations/lumenpnp/automation/paste/prepare-contiguous-batch.py",
-      "sha256": "4ff96510fbb46b5d62e8be7dfea620e84bb440281484e54e3688ca4f070eac13",
-      "bytes": 15632
+      "sha256": "ae936082d52a59eb3f291a2236065d5379e0589af0dbca13a354c9ca4c5b59fb",
+      "bytes": 15678
     },
     {
       "sourceRoot": "/home/lumen/lumenpnp",
@@ -1798,6 +1798,13 @@
       "destination": "integrations/lumenpnp/automation/paste/test_prepare_conditioned_ftp_selected_pads.py",
       "sha256": "0920d815a1ab4e8e126f5dc9622adea2da37274c035eb41438a4f1cfd6938a4f",
       "bytes": 7776
+    },
+    {
+      "sourceRoot": "/home/lumen/lumenpnp",
+      "sourcePath": "automation/paste/test_finalize_contiguous_batch.py",
+      "destination": "integrations/lumenpnp/automation/paste/test_finalize_contiguous_batch.py",
+      "sha256": "efeef5c3463f1f6b617df882a916899485550e914d45381e4b7669cc877ca5f2",
+      "bytes": 2076
     }
   ],
   "manifestSelfHash": "Excluded to avoid a recursive digest; this manifest enumerates every other exported/generated file.",

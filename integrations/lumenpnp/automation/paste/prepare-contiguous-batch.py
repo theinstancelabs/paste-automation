@@ -110,7 +110,7 @@ def prepare(args):
 
 def finalize(args):
  q,qp,_=read(args.request); pr,pp,pbytes=read(args.preview)
- if q.get('scope') not in ('contiguous-native-scrap-batch-preview','contiguous-native-ftp-two-pad-preview','contiguous-native-ftp-conditioned-two-pad-preview','contiguous-native-ftp-conditioned-eight-pad-preview','contiguous-native-ftp-one-pad-cleanup-preview') or q.get('enabled') is not False: err('Disabled preview request required')
+ if q.get('scope') not in ('contiguous-native-scrap-batch-preview','contiguous-native-ftp-two-pad-preview','contiguous-native-ftp-conditioned-two-pad-preview','contiguous-native-ftp-conditioned-eight-pad-preview','contiguous-native-ftp-one-pad-cleanup-preview','contiguous-native-ftp-selected-pads-preview') or q.get('enabled') is not False: err('Disabled preview request required')
  if pr.get('status')!='completed-model-only-contiguous-batch-preview' or pr.get('noControllerAccess') is not True or pr.get('noMotion') is not True or pr.get('id')!=q.get('id') or pr.get('jvmStartMs')!=q.get('jvmStartMs') or pr.get('liveConfigurationSha256')!=q.get('liveConfigurationSha256'): err('Matching no-controller/no-motion native preview required')
  if not same(pr.get('request'),q) or not isinstance(pr.get('stages'),list) or len(pr['stages'])!=len(q.get('previewStages',[])): err('Preview report request/stage count mismatch')
  q=copy.deepcopy(q); stages=[]
