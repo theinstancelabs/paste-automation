@@ -51,6 +51,40 @@ class RetractionCouponTests(unittest.TestCase):
                     self.assertEqual(stages[i+1], dict(axis='Z', target=53.25))
             self.assertTrue(all(p['A'] == 720 for p in poses))
 
+    def test_idle_forty_and_post_retract_wait_preserve_stage_order_and_charge(self):
+        for idle in (20,40):
+            for wait in (0,200,500):
+                e=experiment(4,2);e.update(primeDegrees=60,preWipeReliefDegrees=2,idleReliefDegrees=idle,
+                    dwellMilliseconds=200,conditioningDwellMilliseconds=2000,retractDwellMilliseconds=wait)
+                stages,poses,a=M.stages_for(e,dict(path='/review',sha256=H),1.1,1)
+                strokes=[(right['B']-left['B'],stages[i]['dwellMilliseconds']) for i,(left,right) in enumerate(zip(poses,poses[1:])) if stages[i]['axis']=='B']
+                self.assertEqual(strokes,[(-20,0),(-20,0),(-20,2000),(2,1000),(-20,2000),(2,wait)]+[(-2,0),(-4,200),(2,wait)]*3+([(20,2000)] if idle==20 else [(20,0),(20,2000)]))
+                self.assertEqual(a['grossCommandedDegrees'],108+idle)
+                self.assertEqual(a['netDegrees'],-88+idle)
+                self.assertEqual(len(stages),34+(idle==40))
+                for i,stage in enumerate(stages):
+                    if stage['axis']=='B' and stage['target']-poses[i]['B']==2 and i>3:
+                        self.assertEqual(stages[i+1],dict(axis='Z',target=53.25))
+                self.assertTrue(all(poses[i]['Z']==53.25 for i in range(len(stages)-idle//20,len(stages))))
+        original=experiment();explicit=copy.deepcopy(original);explicit['retractDwellMilliseconds']=0
+        self.assertEqual(M.stages_for(original,dict(path='/review',sha256=H),1.1,1),M.stages_for(explicit,dict(path='/review',sha256=H),1.1,1))
+        for key,values in [('idleReliefDegrees',[True,40.0,0,60]),('retractDwellMilliseconds',[True,200.0,-1,1000])]:
+            for value in values:
+                e=experiment();e[key]=value
+                with self.assertRaises(ValueError):M.stages_for(e,dict(path='/review',sha256=H),1.1,1)
+        e=experiment();e.update(mode='transfer-preparation',maximumTransferElapsedMilliseconds=120000,retractDwellMilliseconds=500,targetsXY=e['targetsXY'][:2])
+        with self.assertRaises(ValueError):M.stages_for(e,dict(path='/review',sha256=H),1.1,1)
+        with tempfile.TemporaryDirectory() as d:
+            args=self.fixture(d);e=experiment(4,2);e.update(primeDegrees=60,preWipeReliefDegrees=2,idleReliefDegrees=40,
+                dwellMilliseconds=200,conditioningDwellMilliseconds=2000,retractDwellMilliseconds=500)
+            Path(args.experiment).write_text(json.dumps(e))
+            review=json.loads(Path(args.review).read_text());review['experimentEvidence']=M.WIPE.evidence(args.experiment)
+            Path(args.review).write_text(json.dumps(review))
+            profile=json.loads(Path(args.profile).read_text());profile['measurementEvidence']=M.WIPE.evidence(args.review)
+            Path(args.profile).write_text(json.dumps(profile))
+            recipe=M.build(args);self.assertEqual(recipe['bAccounting']['grossCommandedDegrees'],148)
+            self.assertEqual(len(recipe['stages']),35)
+
     def test_conditioning_dwell_and_pre_wipe_relief_are_separate_bounded_choices(self):
         for before in (2,3,4,6,20):
             e=experiment(4,2);e.update(dwellMilliseconds=200,conditioningDwellMilliseconds=2000,preWipeReliefDegrees=before)

@@ -41,8 +41,15 @@ def stages_for(experiment, review_evidence, gap, uncertainty):
             raise ValueError('Transfer preparation requires reviewed elapsed limit in 1..300000 ms')
         if 'testWorkRawZ' in e:
             raise ValueError('Transfer preparation has no test heights')
-    fixed = {'idleReliefDegrees': 20,
-             'conditioningDoseDegrees': 20}
+    idle = e.get('idleReliefDegrees', 20)
+    if type(idle) is not int or idle not in (20, 40):
+        raise ValueError('Idle relief must be 20 or 40 degrees')
+    retract_dwell = e.get('retractDwellMilliseconds', 0)
+    if type(retract_dwell) is not int or retract_dwell not in (0, 200, 500):
+        raise ValueError('Retraction dwell must be 0, 200 or 500 milliseconds')
+    if mode == 'transfer-preparation' and retract_dwell != 0:
+        raise ValueError('Existing FTP transfer preparation requires zero retraction dwell')
+    fixed = {'conditioningDoseDegrees': 20}
     for key, expected in fixed.items():
         if type(e.get(key)) is not int or e[key] != expected:
             raise ValueError('Fixed experiment parameter changed: ' + key)
@@ -135,10 +142,11 @@ def stages_for(experiment, review_evidence, gap, uncertainty):
             stroke(-6, dwell)
         else:
             stroke(-dose, conditioning_dwell if index == 0 else dwell)
-        stroke(e['retractDegrees'])
+        stroke(e['retractDegrees'], retract_dwell)
         add('Z', clear)
     if mode == 'coupon':
-        stroke(20, 2000)
+        for index in range(idle//20):
+            stroke(20, 2000 if index == idle//20-1 else 0)
     gross = sum(abs(right['B']-left['B']) for left, right in zip(poses, poses[1:]))
     return stages, poses, {'grossCommandedDegrees': gross, 'netDegrees': at['B']-raw['B'],
                            'finalRaw': dict(at), 'doseDegrees': e['doseDegrees'],
