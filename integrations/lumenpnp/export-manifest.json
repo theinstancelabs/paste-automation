@@ -1369,8 +1369,8 @@
       "sourceRoot": "/home/lumen/lumenpnp",
       "sourcePath": "automation/operations/paste-small-dot-trials-20260930.md",
       "destination": "integrations/lumenpnp/automation/operations/paste-small-dot-trials-20260930.md",
-      "sha256": "9a420478d84824d9d04457a3936171ab95c50a9f496074b5b570492f8e71e8be",
-      "bytes": 13582
+      "sha256": "e0934f4e642438de4b451aaff871b108207993ec8741a8719783a02c13db6563",
+      "bytes": 14713
     },
     {
       "sourceRoot": "/home/lumen/lumenpnp",
@@ -1448,6 +1448,13 @@
       "destination": "integrations/lumenpnp/automation/paste/prepare-contiguous-batch.py",
       "sha256": "f5b4bcaddb98df074974fe107fc7836420055152f2ef396f04c42bc49ab4fdfe",
       "bytes": 12831
+    },
+    {
+      "sourceRoot": "/home/lumen/lumenpnp",
+      "sourcePath": "automation/scripts/capture-paste-overview-still.py",
+      "destination": "integrations/lumenpnp/automation/scripts/capture-paste-overview-still.py",
+      "sha256": "556f69e35aad9b162bcb76666c3d79819c9777ead6ea748f41c4b00e1decf610",
+      "bytes": 1701
     }
   ],
   "manifestSelfHash": "Excluded to avoid a recursive digest; this manifest enumerates every other exported/generated file.",
