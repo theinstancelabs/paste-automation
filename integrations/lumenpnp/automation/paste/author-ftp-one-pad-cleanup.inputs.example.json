@@ -1,0 +1,87 @@
+{
+  "schema": 1,
+  "scope": "reviewed-one-pad-cleanup-authoring-inputs",
+  "reviewedBy": null,
+  "reviewedMs": null,
+  "reviewBasis": null,
+  "profileBasis": null,
+  "startRaw": {
+    "X": null,
+    "Y": null,
+    "Z": null,
+    "A": null,
+    "B": null
+  },
+  "xyClearanceRawZ": null,
+  "padId": null,
+  "retractDegrees": 20,
+  "dwellMilliseconds": 2000,
+  "defectCapturedMs": null,
+  "attestations": {
+    "padIdentityReviewed": false,
+    "defectReviewed": false,
+    "boardUnmovedSinceRegistration": false,
+    "bothHeadsClearanceReviewed": false,
+    "clearTransitCorridorReviewed": false,
+    "tipReviewedForCleanup": false,
+    "positiveOnlyTrialReviewed": false
+  },
+  "sources": {
+    "template": {
+      "path": null,
+      "sha256": null
+    },
+    "barrier": {
+      "path": null,
+      "sha256": null
+    },
+    "stationaryImage": {
+      "path": null,
+      "sha256": null
+    },
+    "tipImage": {
+      "path": null,
+      "sha256": null
+    },
+    "registration": {
+      "path": null,
+      "sha256": null
+    },
+    "registrationRevalidation": {
+      "path": null,
+      "sha256": null
+    },
+    "targetBase": {
+      "path": null,
+      "sha256": null
+    },
+    "profileBase": {
+      "path": null,
+      "sha256": null
+    },
+    "surface": {
+      "path": null,
+      "sha256": null
+    },
+    "tipOffset": {
+      "path": null,
+      "sha256": null
+    },
+    "previousReport": {
+      "path": null,
+      "sha256": null
+    },
+    "ledger": {
+      "path": null,
+      "sha256": null
+    },
+    "defectReport": {
+      "path": null,
+      "sha256": null
+    },
+    "defectImage": {
+      "path": null,
+      "sha256": null
+    }
+  }
+}
