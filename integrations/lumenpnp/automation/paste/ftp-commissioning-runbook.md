@@ -1,6 +1,6 @@
 # FTP paste commissioning checkpoint and saved workflow
 
-Parent review of the historical 80-pad crop gallery found visible paste on all 80 resistor pads. These were retained post-deposition frames, not a new simultaneous whole-board inspection. This is coverage, not physical acceptance. Paste volume, height accuracy, reflow performance and production repeatability remain unverified.
+A fresh 17-site camera inspection completed around 16:33 UTC on 2026-10-01. Parent review of all four gallery pages, with normal and alternate exposure 73 images, found visible paste on all 80 resistor pads. This supersedes the earlier historical-only coverage review. It is sequential camera inspection, not physical acceptance: volume, height accuracy, reflow performance and production repeatability remain unverified.
 
 | Unresolved pad | Observed issue |
 | --- | --- |
@@ -10,9 +10,15 @@ Parent review of the historical 80-pad crop gallery found visible paste on all 8
 | R40.2 | Tail after the selected-six trial; subsequently observed loop bridge to R40.1 |
 | R7.1, R11.1, R15.1, R23.1 | First-deposit edge residue or tails |
 | R34.1 | Off-center deposit near the pad edge |
-| Earlier R30–R38 trials | Several very small or variable footprints; see historical crop review |
+| R30.1, R31.1, R32.1 | Long strings observed in the fresh inspection |
+| R37.2, R39.2 | Tails |
+| R19.1 | Extra residue |
+| R3.1; R2 | Oversized R3.1 deposit; large R2 deposits |
+| R30.2, R31.2, R32.2, R33.1, R35–R38 | Small or variable footprints |
 
-The sole selected-six wet request was `8c85165f-35f3-4a7c-8ff9-b45570b896d8`, completed at 15:14:59.870 UTC with 79 verified stages and no uncertain completion. It dosed R3.1, R3.2, R2.1, R2.2, R1.2 and R40.2, charging 246 gross degrees. The checkpoint ledger total was 7369 degrees and B was −2889. Follow-up camera reports were R40 `03c831bb`, R1 `b8c4f9bc`, R2 `4e2bb30e`, and R3 `2063e427`, captured at 15:15–15:16 UTC. These reports and the private image review support the final coverage observation; command completion alone does not prove deposit quality.
+The fresh images do not establish when the newly observed strings formed. The current request is to wipe the **entire FTP board** when the user is awake; cleaning only the earlier three named references is insufficient. Keep the board fixed if possible and report any movement. Reinspect the cleaned board and check registration before reuse.
+
+The sole selected-six wet request was `8c85165f-35f3-4a7c-8ff9-b45570b896d8`, completed at 15:14:59.870 UTC with 79 verified stages and no uncertain completion. It dosed R3.1, R3.2, R2.1, R2.2, R1.2 and R40.2, charging 246 gross degrees. The checkpoint ledger total was 7369 degrees and B was −2889. Follow-up camera reports were R40 `03c831bb`, R1 `b8c4f9bc`, R2 `4e2bb30e`, and R3 `2063e427`, captured at 15:15–15:16 UTC. These reports and the private image review supported the earlier coverage observation; command completion alone does not prove deposit quality.
 
 ## Last executed recipe
 
@@ -40,7 +46,7 @@ Do not extend expired evidence by changing timestamps. Pad availability and setu
 
 ## Cleanup and pressure history
 
-Further aspiration trials were abandoned after both +20 and +100 produced no useful removal. Physical rework of R1, R16 and R40 has been requested and remains unresolved. The stored cleanup tools below describe historical experimental capability, not a recommended continuation of this failed method.
+Further aspiration trials were abandoned after both +20 and +100 produced no useful removal. The earlier R1/R16/R40 rework request has been superseded by the whole-board wipe request above; physical rework remains unresolved. The stored cleanup tools below describe historical experimental capability, not a recommended continuation of this failed method.
 
 The existing cleanup author permits exactly one reviewed R1.1, R40.1 or R16.2 defect, one positive +6 or +20 B action, or an explicitly selected 100-degree series of five consecutive +20 stages, followed by immediate clearance lift. The 100-degree protocol allows at most 2000 ms after each stage, no interleaved motion and no forward B; it charges all 100 gross degrees and preserves the original 40-stage route cap. It requires a fresh defect camera report/image and current registration, tip, surface and clearance evidence. Positive B is an experimental aspiration attempt; it does not prove paste removal. R40.2 is not admitted by the current cleanup scope.
 
@@ -69,4 +75,12 @@ These ordinary scrap coupons are separate from the FTP dose12 recipe recorded ab
 
 The two rows showed six visible transfers, with size variation between repeats. These are coarse 2D footprint observations, not deposited-volume, reflow or production-repeatability qualification. Bare-mask coupon transfer does not establish that dose6 is optimal on FTP copper. The canonical `prepare-retraction-coupon.py` can reproduce this command structure using explicit conditioner6, dose6, retract3 and the stated waits, with fresh reviewed targets, source hashes, profile and ledger evidence; it does not create physical attestations.
 
-After coupon4, charged history was 8278 degrees of 8400 and B was −2982; no charge was refunded. Manual R1/R16/R40 rework remained pending. This subsection does not replace the historical FTP coverage review or claim a fresh whole-board gallery.
+After coupon4, charged history was 8278 degrees of 8400 and B was −2982; no charge was refunded. At that coupon checkpoint, manual R1/R16/R40 rework remained pending. The later fresh whole-board inspection and expanded cleanup request are recorded above; these scrap results do not qualify FTP deposition.
+
+## Parked state and resumption conditions
+
+The later canonical no-B scrap wipe `669e22da` completed at 16:27:18.262 UTC. It moved X307.48→308.98 at Y301.32 and raw Z58.45, then lifted to 53.45, with B remaining −2982. Parent review of the fresh 4K after-image showed the hanging blob removed; it does not prove a residue-free tip or reliable subsequent cleaning.
+
+Final park `552ab483` completed at 16:35:41.805 UTC at raw X294.98, Y298.82, Z32.25, A720, B−2982. No motion was queued at this checkpoint. Charged history was 8278 of 8400 degrees, leaving 122 degrees. A full dispensing batch exceeds this remaining allowance. Review actual remaining mechanical travel before increasing the cap; do not reset or refund the ledger. No additional B motion is planned while PCB cleanup is pending.
+
+Revalidation6 centroid errors were FID1: 0.727 pixels (pass), FID2: 3.658 pixels (fail), and FID3: 3.816 pixels (fail). There is no newly accepted revalidation and no affine-registration change. After the requested whole-board cleanup, inspect actual board condition and movement and obtain a fresh accepted registration check before deposition. Do not reuse failed checks or freshen old timestamps.
