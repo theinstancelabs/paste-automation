@@ -14,6 +14,9 @@ from needle_centroid import sweep
 REFERENCES = ('FID1', 'FID2', 'FID3')
 MAX_REPORT_AGE_MS = 30 * 60 * 1000
 MIN_SCALE, MAX_SCALE, MAX_THIRD_RESIDUAL_MM = 0.99, 1.01, 0.08
+AFFINE_MODEL = 'three-fiducial-affine'
+MAX_AFFINE_SKEW_DEGREES = 0.3
+HELD_OUT_PADS = ('R1.2', 'R16.1', 'R40.1')
 
 
 def finite_pair(value, label):
@@ -52,19 +55,157 @@ def similarity_from_pair(p1, p2, q1, q2):
             'matrix': [[a, -b], [b, a]], 'translationMm': [tx, ty]}
 
 
+def affine_from_three(design, measured):
+    """Fit three points exactly; fit residuals are not independent validation."""
+    p1,p2,p3 = [finite_pair(p, 'design fiducial') for p in design]
+    q1,q2,q3 = [finite_pair(p, 'measured fiducial') for p in measured]
+    dx1,dy1,dx2,dy2 = p2[0]-p1[0],p2[1]-p1[1],p3[0]-p1[0],p3[1]-p1[1]
+    den = dx1*dy2-dx2*dy1
+    if abs(den) < 1e-9:
+        raise ValueError('Three fiducials must be noncollinear')
+    ux1,uy1,ux2,uy2 = q2[0]-q1[0],q2[1]-q1[1],q3[0]-q1[0],q3[1]-q1[1]
+    a,b,c,d = (ux1*dy2-ux2*dy1)/den,(-ux1*dx2+ux2*dx1)/den,(uy1*dy2-uy2*dy1)/den,(-uy1*dx2+uy2*dx1)/den
+    det = a*d-b*c
+    if not all(math.isfinite(v) for v in (a,b,c,d,det)) or det <= 0:
+        raise ValueError('Affine orientation must be preserved')
+    aa,bb,ab = a*a+c*c,b*b+d*d,a*b+c*d
+    disc = math.hypot(aa-bb,2*ab)
+    sv = [math.sqrt(max(0,(aa+bb-disc)/2)),math.sqrt(max(0,(aa+bb+disc)/2))]
+    skew = abs(math.degrees(math.acos(max(-1,min(1,ab/math.sqrt(aa*bb)))))-90)
+    if sv[0] < MIN_SCALE-1e-12 or sv[1] > MAX_SCALE+1e-12:
+        raise ValueError('Affine singular values must remain in 0.99–1.01')
+    if skew > MAX_AFFINE_SKEW_DEGREES+1e-12:
+        raise ValueError('Affine axis skew exceeds 0.3 degrees')
+    return dict(model=AFFINE_MODEL,matrix=[[a,b],[c,d]],translationMm=[q1[0]-a*p1[0]-b*p1[1],q1[1]-c*p1[0]-d*p1[1]],
+                determinant=det,singularValues=sv,axisSkewDegrees=skew)
+
+
 def apply(transform, point):
     a, neg_b = transform['matrix'][0]
     b, a2 = transform['matrix'][1]
-    if abs(a-a2) > 1e-10 or abs(neg_b+b) > 1e-10:
+    if transform.get('model') != AFFINE_MODEL and (abs(a-a2) > 1e-10 or abs(neg_b+b) > 1e-10):
         raise ValueError('Malformed similarity matrix')
     x, y = point
     t = transform['translationMm']
     return [a*x + neg_b*y + t[0], b*x + a2*y + t[1]]
 
 
+def checked_json(evidence, label):
+    if not isinstance(evidence, dict):
+        raise ValueError(label+' evidence required')
+    data, actual = bound(evidence['path'])
+    if actual['sha256'] != evidence.get('sha256'):
+        raise ValueError(label+' evidence hash changed')
+    return json.loads(data), actual
+
+
+def camera_evidence(report_ev, image_ev, session, now):
+    from PIL import Image
+    import io
+    r, rp = checked_json(report_ev, 'camera report')
+    q = r.get('request', {})
+    if (r.get('status') not in ('completed-camera-survey-awaiting-image-review','completed-contiguous-air-batch-awaiting-observation')
+            or r.get('controllerPositionVerified') is not True or r.get('uncertainCompletion') is not False
+            or r.get('error') or r.get('id') != q.get('id')
+            or q.get('jvmStartMs') != session['jvmStartMs'] or q.get('liveConfigurationSha256') != session['liveConfigurationSha256']):
+        raise ValueError('Successful same-session camera report required')
+    finished = iso_ms(r.get('finishedAt'))
+    if finished > now or now-finished > MAX_REPORT_AGE_MS:
+        raise ValueError('Camera proof must be no more than 30 minutes old')
+    snap = r.get('afterQuerySnapshot', {}); raw = source.axes(snap.get('raw'), 'camera raw')
+    top = snap.get('nativePoses', {}).get('top', {})
+    xy = finite_pair([top.get('x'),top.get('y')], 'camera XY')
+    plane = finite_pair([top.get('z'),top.get('rotation')], 'camera plane')
+    if [raw[k] for k in ('Z','A','B')] != session['fixedRawZAB'] or plane != session['topCameraZRotation']:
+        raise ValueError('Camera proof Z/A/B or imaging plane changed')
+    path = (Path(rp['path']).parent/r.get('afterImages',{}).get('top',{}).get('path','')).resolve(strict=True)
+    if path.parent != Path(rp['path']).parent or str(path) != image_ev.get('path'):
+        raise ValueError('Proof image must belong to camera report')
+    data, ip = bound(path)
+    if ip['sha256'] != image_ev.get('sha256'):
+        raise ValueError('Proof image hash changed')
+    with Image.open(io.BytesIO(data)) as im:
+        size = list(im.size)
+    return r, rp, ip, raw, xy, size
+
+
+def inverse(matrix):
+    if not isinstance(matrix,list) or len(matrix)!=2:
+        raise ValueError('Finite 2x2 Jacobian required')
+    a,b=finite_pair(matrix[0],'Jacobian row');c,d=finite_pair(matrix[1],'Jacobian row')
+    det=a*d-b*c
+    if abs(det)<1e-9:
+        raise ValueError('Degenerate image Jacobian')
+    return [[d/det,-b/det],[-c/det,a/det]]
+
+
+def matrix_product(a,b):
+    return [[sum(a[i][k]*b[k][j] for k in (0,1)) for j in (0,1)] for i in (0,1)]
+
+
+def reviewed_jacobian(ev, session, now):
+    j, prov = checked_json(ev,'image Jacobian')
+    if (j.get('schema')!=1 or j.get('scope')!='measured-top-camera-image-jacobian'
+            or j.get('session')!={k:session[k] for k in ('jvmStartMs','liveConfigurationSha256')}
+            or j.get('fixedRawZAB')!=session['fixedRawZAB'] or not isinstance(j.get('reviewedBy'),str) or not j['reviewedBy'].strip()
+            or type(j.get('reviewedMs')) is not int or not 0<=now-j['reviewedMs']<=MAX_REPORT_AGE_MS):
+        raise ValueError('Fresh explicitly reviewed same-session image Jacobian required')
+    samples=j.get('sourceMeasurements')
+    if not isinstance(samples,list) or len(samples)!=3:
+        raise ValueError('Three measured Jacobian source images required')
+    centers=[];positions=[];ids=set()
+    for item in samples:
+        r,_,_,raw,xy,size=camera_evidence(item['report'],item['image'],session,now)
+        if r['id'] in ids or iso_ms(r['finishedAt'])>j['reviewedMs'] or finite_pair(item['rawXY'],'Jacobian raw XY') != [raw['X'],raw['Y']]:
+            raise ValueError('Jacobian source identity/pose/review time mismatch')
+        ids.add(r['id']);center=finite_pair(item['centerPixels'],'Jacobian observed center')
+        if any(not 0<=center[k]<size[k] for k in (0,1)):
+            raise ValueError('Jacobian center lies outside image')
+        centers.append(center);positions.append(xy)
+    displacement=lambda points:[[points[1][k]-points[0][k],points[2][k]-points[0][k]] for k in (0,1)]
+    derived=matrix_product(displacement(centers),inverse(displacement(positions)))
+    supplied=j.get('pixelShiftPerCameraMm');inverse(supplied)
+    if any(abs(derived[i][k]-supplied[i][k])>1e-7 for i in (0,1) for k in (0,1)):
+        raise ValueError('Jacobian differs from measured report/image displacements')
+    return supplied,prov
+
+
+def held_out_checks(request, result, now):
+    checks=request['heldOutPadChecks'];session=result['session']
+    if not isinstance(checks,list) or len(checks)!=3 or sorted(c.get('padId','') for c in checks)!=sorted(HELD_OUT_PADS):
+        raise ValueError('Exactly R1.2, R16.1 and R40.1 held-out image checks required')
+    jac,prov=reviewed_jacobian(request.get('imageJacobianEvidence'),session,now);inv=inverse(jac)
+    targets={p['padId']:p['machineXYMm'] for p in result['resistorPadMachineXYTargets']};out=[]
+    used={m['reportId'] for m in result['measurements'].values()}
+    for c in checks:
+        if c.get('padIdentityReviewed') is not True or c.get('centerMeasurementReviewed') is not True:
+            raise ValueError('Explicit held-out pad identity/center review required')
+        report_ev=dict(path=c['report'],sha256=c['reportSha256'])
+        r,_=checked_json(report_ev,'pad report');image_path=str((Path(c['report']).parent/r['afterImages']['top']['path']).resolve(strict=True))
+        r,rp,ip,raw,xy,size=camera_evidence(report_ev,dict(path=image_path,sha256=c['topImageSha256']),session,now)
+        if r['id'] in used:
+            raise ValueError('Held-out pads require distinct reports independent of fitted fiducials')
+        used.add(r['id']);observed=finite_pair(c.get('observedCenterPixel'),'observed pad center')
+        if any(not 0<=observed[k]<size[k] for k in (0,1)):
+            raise ValueError('Observed pad center lies outside image')
+        center=[(n-1)/2 for n in size];delta=[observed[k]-center[k] for k in (0,1)]
+        measured=[xy[i]-sum(inv[i][k]*delta[k] for k in (0,1)) for i in (0,1)]
+        px=math.hypot(*delta);mm=math.dist(measured,targets[c['padId']])
+        if px>8 or mm>0.08:
+            raise ValueError('Independent held-out pad exceeds 8 pixels or 0.08 mm')
+        out.append(dict(padId=c['padId'],report=rp,image=ip,reportId=r['id'],finishedAt=r['finishedAt'],
+                        padIdentityReviewed=True,centerMeasurementReviewed=True,observedCenterPixel=observed,imageSizePixels=size,
+                        imageCenterPixel=center,cameraXYMm=xy,measuredPadXYMm=measured,predictedMachineXYMm=targets[c['padId']],
+                        imageCenterErrorPx=px,residualMm=mm))
+    return out,prov
+
+
 def analyze(request, now_ms=None):
     if not isinstance(request, dict) or request.get('schema') != 1 or request.get('scope') != 'fresh-ftp-top-camera-fiducials':
         raise ValueError('Expected schema-1 fresh-ftp-top-camera-fiducials request')
+    model = request.get('registrationModel', 'two-fiducial-similarity')
+    if model not in ('two-fiducial-similarity', AFFINE_MODEL):
+        raise ValueError('Unsupported registration model')
     operator = request.get('operator')
     if not isinstance(operator, str) or not operator.strip():
         raise ValueError('Named operator review is required')
@@ -142,17 +283,20 @@ def analyze(request, now_ms=None):
                         'imageCenterErrorPx': error_px, 'report': report_prov, 'image': image_prov,
                         'reportId': report['id'], 'finishedAt': report['finishedAt']}
 
-    transform = similarity_from_pair(design['FID1'], design['FID2'],
-                                     samples['FID1']['measuredTopCameraXYMm'],
-                                     samples['FID2']['measuredTopCameraXYMm'])
-    if not MIN_SCALE <= transform['scale'] <= MAX_SCALE:
-        raise ValueError('Two-fiducial scale is outside the 0.99–1.01 review gate')
-    pred3 = apply(transform, design['FID3'])
-    measured3 = samples['FID3']['measuredTopCameraXYMm']
-    residual3 = math.dist(pred3, measured3)
-    if residual3 > MAX_THIRD_RESIDUAL_MM:
-        raise ValueError('Independent FID3 check exceeds 0.08 mm')
-
+    if model == AFFINE_MODEL:
+        transform = affine_from_three([design[r] for r in REFERENCES], [samples[r]['measuredTopCameraXYMm'] for r in REFERENCES])
+        pred3, measured3, residual3 = None, None, None
+    else:
+        transform = similarity_from_pair(design['FID1'], design['FID2'],
+                                         samples['FID1']['measuredTopCameraXYMm'],
+                                         samples['FID2']['measuredTopCameraXYMm'])
+        if not MIN_SCALE <= transform['scale'] <= MAX_SCALE:
+            raise ValueError('Two-fiducial scale is outside the 0.99–1.01 review gate')
+        pred3 = apply(transform, design['FID3'])
+        measured3 = samples['FID3']['measuredTopCameraXYMm']
+        residual3 = math.dist(pred3, measured3)
+        if residual3 > MAX_THIRD_RESIDUAL_MM:
+            raise ValueError('Independent FID3 check exceeds 0.08 mm')
     pads = cad.extract_kicad(board_bytes.decode())
     if len(pads) != 80 or {p['reference'] for p in pads} != {f'R{i}' for i in range(1, 41)}:
         raise ValueError('Expected exactly two resistor paste pads for each R1–R40')
@@ -163,7 +307,7 @@ def analyze(request, now_ms=None):
                         'machineXYMm': apply(transform, point)})
     parser_path = Path(cad.__file__).resolve()
     parser_bytes = parser_path.read_bytes()
-    return {'schema': 1, 'scope': 'offline-fresh-ftp-two-fiducial-transform-with-third-point-check',
+    result = {'schema': 1, 'scope': 'offline-fresh-ftp-two-fiducial-transform-with-third-point-check',
             'operator': operator.strip(), 'board': board_prov,
             'parser': {'path': str(parser_path), 'sha256': hashlib.sha256(parser_bytes).hexdigest()},
             'coordinateConvention': {'design': 'KiCad front-board Cartesian, X right / Y up',
@@ -187,6 +331,21 @@ def analyze(request, now_ms=None):
                             'Two fiducials define the similarity transform; FID3 is an independent held-out check.',
                             'Targets inherit camera-centering, board identity and imaging uncertainty.',
                             'No Z, nozzle offset, clearance, paste dose or physical pad-availability is inferred.']}
+
+    if model == AFFINE_MODEL:
+        del result['transformFromFID1FID2'], result['independentFID3Check']
+        result.update(scope='offline-fresh-ftp-three-fiducial-affine-candidate', transformFromThreeFiducials=transform,
+                      fittedFiducials=list(REFERENCES), independentHeldOutPadChecks=[],
+                      acceptance=dict(singularValueRange=[MIN_SCALE,MAX_SCALE],axisSkewDegreesMaximum=MAX_AFFINE_SKEW_DEGREES,
+                                      fiducialCenterErrorPxMaximum=2.0,heldOutPadErrorPxMaximum=8.0,heldOutPadResidualMmMaximum=0.08,passed=False))
+        result['limitations'][1] = 'All three fiducials are fitted; only separate held-out pad images can independently validate this model.'
+        if request.get('heldOutPadChecks') is not None:
+            checks, jacobian = held_out_checks(request, result, now)
+            result.update(scope='offline-fresh-ftp-three-fiducial-affine-with-held-out-pad-checks', independentHeldOutPadChecks=checks,
+                          imageJacobianEvidence=jacobian)
+            result['acceptance']['passed'] = True
+    return result
+
 
 
 def main():

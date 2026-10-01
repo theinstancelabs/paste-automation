@@ -1320,22 +1320,22 @@
       "sourceRoot": "/home/lumen/lumenpnp",
       "sourcePath": "automation/paste/analysis/fresh_ftp_registration.py",
       "destination": "integrations/lumenpnp/automation/paste/analysis/fresh_ftp_registration.py",
-      "sha256": "d73fb8d22a5bf7fdab7b81c189b99818e87db00dc4ad1f143ff18d37099ae92f",
-      "bytes": 11781
+      "sha256": "cc89f092ed8a84020494facaf361fb7b73723623c94eb24b5257fd5902310909",
+      "bytes": 21702
     },
     {
       "sourceRoot": "/home/lumen/lumenpnp",
       "sourcePath": "automation/paste/analysis/fresh_ftp_registration.md",
       "destination": "integrations/lumenpnp/automation/paste/analysis/fresh_ftp_registration.md",
-      "sha256": "faceccc24b6f2139920d04d19dd05cabe7171ef349f0b7b4d3105fb29eaf0f14",
-      "bytes": 3518
+      "sha256": "7e96e32196e92ab13db49e271cef061ee9992b4b492d9a84a008756dcb084a30",
+      "bytes": 5928
     },
     {
       "sourceRoot": "/home/lumen/lumenpnp",
       "sourcePath": "automation/paste/analysis/test_fresh_ftp_registration.py",
       "destination": "integrations/lumenpnp/automation/paste/analysis/test_fresh_ftp_registration.py",
-      "sha256": "ff9a57c4fa676dd3e764ab3830f9f075ffc78208917c4355aa1d5febb4e7224b",
-      "bytes": 7178
+      "sha256": "0e5cf66922fa9094f17ae339a85970ac00997f93eaafb3afa21dba0122b86358",
+      "bytes": 11462
     },
     {
       "sourceRoot": "/home/lumen/lumenpnp",
@@ -1369,8 +1369,8 @@
       "sourceRoot": "/home/lumen/lumenpnp",
       "sourcePath": "automation/operations/paste-small-dot-trials-20260930.md",
       "destination": "integrations/lumenpnp/automation/operations/paste-small-dot-trials-20260930.md",
-      "sha256": "32774db968377226126a59415842d7b1c72705bffa50d07b161840e7218a8a99",
-      "bytes": 39035
+      "sha256": "9789af1aa4c42d4b492a0d0788d78ce8134b93576a9854b16c68fe745b15cb34",
+      "bytes": 40475
     },
     {
       "sourceRoot": "/home/lumen/lumenpnp",
@@ -1418,8 +1418,8 @@
       "sourceRoot": "/home/lumen/lumenpnp",
       "sourcePath": "automation/paste/commissioning-batch.test.cjs",
       "destination": "integrations/lumenpnp/automation/paste/commissioning-batch.test.cjs",
-      "sha256": "60252af15c4b7aacb5f97690936a26e55ab9ceac83d222632a22210eb43c6f47",
-      "bytes": 33398
+      "sha256": "83dcf0c5dadb29ad0c8750944e7b6533ef10b1ef413ca63c096f2bc6f480d540",
+      "bytes": 37517
     },
     {
       "sourceRoot": "/home/lumen/lumenpnp",
@@ -1481,8 +1481,8 @@
       "sourceRoot": "/home/lumen/lumenpnp",
       "sourcePath": "automation/paste/ftp-two-pad.cjs",
       "destination": "integrations/lumenpnp/automation/paste/ftp-two-pad.cjs",
-      "sha256": "8c00141464199cfde9183f8fbda7e1b20669a2475951a718cad4c802fecf8a9a",
-      "bytes": 17461
+      "sha256": "538282ac2dc9de4e57aac41092dffbaa758d36dbda59927d65977371585db8f1",
+      "bytes": 23506
     },
     {
       "sourceRoot": "/home/lumen/lumenpnp",

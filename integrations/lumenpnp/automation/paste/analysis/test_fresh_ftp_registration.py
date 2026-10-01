@@ -6,7 +6,7 @@ import tempfile
 import unittest
 from PIL import Image, ImageDraw
 
-from fresh_ftp_registration import analyze
+from fresh_ftp_registration import analyze, affine_from_three
 
 
 class FreshFtpRegistrationTests(unittest.TestCase):
@@ -54,6 +54,71 @@ class FreshFtpRegistrationTests(unittest.TestCase):
                    'board': str(board), 'measurements': measurements,
                    'roi': [10, 10, 54, 54], 'thresholds': [100, 150, 200]}
         return request, transformed
+
+    def affine_fixture(self, root):
+        request, _ = self.fixture(root)
+        request['registrationModel'] = 'three-fiducial-affine'
+        candidate = analyze(request, now_ms=1000)
+        targets = {p['padId']: p['machineXYMm'] for p in candidate['resistorPadMachineXYTargets']}
+        template = json.loads(Path(request['measurements']['FID1']['report']).read_text())
+        def proof(name, xy):
+            folder = root/name; folder.mkdir()
+            Image.new('RGB', (256, 256), 'white').save(folder/'top.png')
+            r = json.loads(json.dumps(template)); r['id'] = r['request']['id'] = name
+            for key in ('raw', 'driver'):
+                r['afterQuerySnapshot'][key].update(X=xy[0], Y=xy[1])
+            r['after']['reported'].update(X=xy[0], Y=xy[1])
+            for pose in r['afterQuerySnapshot']['nativePoses'].values():
+                pose.update(x=xy[0], y=xy[1])
+            path = folder/'report.json'; path.write_text(json.dumps(r))
+            ev = lambda p: dict(path=str(p), sha256=hashlib.sha256(p.read_bytes()).hexdigest())
+            return ev(path), ev(folder/'top.png')
+        samples = []
+        for i, (xy, center) in enumerate([([0,0],[127.5,127.5]),([1,0],[227.5,127.5]),([1,1],[227.5,27.5])]):
+            report, image = proof('J'+str(i), xy)
+            samples.append(dict(report=report, image=image, rawXY=xy, centerPixels=center))
+        j = dict(schema=1, scope='measured-top-camera-image-jacobian',
+                 session={k:candidate['session'][k] for k in ('jvmStartMs','liveConfigurationSha256')},
+                 fixedRawZAB=candidate['session']['fixedRawZAB'], reviewedBy='test', reviewedMs=900,
+                 pixelShiftPerCameraMm=[[100,0],[0,-100]], sourceMeasurements=samples)
+        path=root/'jacobian.json'; path.write_text(json.dumps(j))
+        request['imageJacobianEvidence']=dict(path=str(path),sha256=hashlib.sha256(path.read_bytes()).hexdigest())
+        request['heldOutPadChecks']=[]
+        for pad in ('R1.2','R16.1','R40.1'):
+            report,image=proof(pad,targets[pad])
+            request['heldOutPadChecks'].append(dict(padId=pad,report=report['path'],reportSha256=report['sha256'],
+                topImageSha256=image['sha256'],padIdentityReviewed=True,centerMeasurementReviewed=True,observedCenterPixel=[127.5,127.5]))
+        return request
+
+    def test_affine_candidate_requires_three_independent_held_out_pads(self):
+        with tempfile.TemporaryDirectory() as td:
+            q=self.affine_fixture(Path(td)); accepted=analyze(q,now_ms=1000)
+            self.assertTrue(accepted['acceptance']['passed'])
+            self.assertNotIn('independentFID3Check',accepted)
+            self.assertEqual(len(accepted['independentHeldOutPadChecks']),3)
+            self.assertFalse(accepted['executionReady'])
+            del q['heldOutPadChecks']
+            self.assertFalse(analyze(q,now_ms=1000)['acceptance']['passed'])
+
+    def test_affine_rejects_wrong_jacobian_and_bad_heldout(self):
+        with tempfile.TemporaryDirectory() as td:
+            q=self.affine_fixture(Path(td))
+            for edit in (lambda x:x['heldOutPadChecks'][0].update(observedCenterPixel=[136,127.5]),
+                         lambda x:x['heldOutPadChecks'][0].update(centerMeasurementReviewed=False),
+                         lambda x:x['heldOutPadChecks'].pop(),
+                         lambda x:x['imageJacobianEvidence'].update(sha256='0'*64)):
+                bad=json.loads(json.dumps(q));edit(bad)
+                with self.assertRaises(ValueError):analyze(bad,now_ms=1000)
+            path=Path(q['imageJacobianEvidence']['path']);j=json.loads(path.read_text())
+            j['pixelShiftPerCameraMm'][0][0]=99;path.write_text(json.dumps(j))
+            q['imageJacobianEvidence']['sha256']=hashlib.sha256(path.read_bytes()).hexdigest()
+            with self.assertRaisesRegex(ValueError,'displacements'):analyze(q,now_ms=1000)
+
+    def test_affine_orientation_scale_and_skew_are_bounded(self):
+        design=[[0,0],[1,0],[0,1]]
+        affine_from_three(design,[[0,0],[1.001,0],[.002,.999]])
+        for points in ([[0,0],[-1,0],[0,1]], [[0,0],[1.02,0],[0,1]], [[0,0],[1,0],[.008,1]]):
+            with self.assertRaises(ValueError):affine_from_three(design,points)
 
     def test_two_fiducials_and_held_out_third_produce_80_repeatable_xy_candidates(self):
         with tempfile.TemporaryDirectory() as td:

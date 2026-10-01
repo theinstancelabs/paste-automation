@@ -146,3 +146,26 @@ test('compensated FTP rejects undeclared waits, malformed idle groups and mismat
  const sourceEdits=[x=>delete x.f.files[x.c.preparationExperimentEvidence.path].retractDwellMilliseconds,x=>x.f.files[x.c.conditioningReportEvidence.path].request.previewStages[1].dwellMilliseconds=200,x=>delete x.f.files[x.c.conditioningReportEvidence.path].stages[1].dwell,x=>x.f.files[x.c.conditioningReportEvidence.path].stages[1].dwell.actualElapsedMilliseconds=499,x=>x.f.files[x.c.conditioningReportEvidence.path].stages[1].dwell.stopObserved=true,x=>x.f.files[x.c.conditioningReportEvidence.path].stages[1].dwell.endedAt=new Date(699).toISOString(),x=>x.f.files[x.c.tipObservationEvidence.path].capturedMs=700];
  for(const edit of sourceEdits){const x=compensatedFixture(4,2,500,40);edit(x);assert.throws(()=>FTP.verifySources(x.q,x.f.read));}
 });
+
+function affineFixture(){
+ const q=ftpRequest(),f=ftpSources(q),t=q.ftpTargetRecord,reg=f.files[t.registrationEvidence.path],e=name=>({path:'/ftp/'+name,sha256:hash});
+ reg.scope='offline-fresh-ftp-three-fiducial-affine-with-held-out-pad-checks';delete reg.independentFID3Check;reg.fittedFiducials=['FID1','FID2','FID3'];reg.session.fixedRawZAB=[50,720,-240];reg.session.topCameraZRotation=[0,0];reg.transformFromThreeFiducials={model:'three-fiducial-affine',matrix:[[1,0],[0,1]],translationMm:[0,0]};
+ function proof(name,xy){const report={id:name,status:'completed-contiguous-air-batch-awaiting-observation',controllerPositionVerified:true,uncertainCompletion:false,finishedAt:new Date(900).toISOString(),request:{id:name,jvmStartMs:1,liveConfigurationSha256:hash},afterImages:{top:{path:'top.png'}},afterQuerySnapshot:{raw:{X:xy[0],Y:xy[1],Z:50,A:720,B:-240},nativePoses:{top:{x:xy[0],y:xy[1],z:0,rotation:0}}}};f.files[e(name+'/report.json').path]=report;return {report:e(name+'/report.json'),image:e(name+'/top.png')};}
+ reg.resistorPadMachineXYTargets.forEach(p=>p.designXYMm=p.machineXYMm.slice());
+ ['FID1','FID2','FID3'].forEach((k,i)=>{const xy=[[0,0],[50,0],[0,50]][i];Object.assign(reg.measurements[k],proof(k,xy),{designXYMm:xy,measuredTopCameraXYMm:xy});});
+ reg.imageJacobianEvidence=e('jacobian.json');const j={schema:1,scope:'measured-top-camera-image-jacobian',session:{jvmStartMs:1,liveConfigurationSha256:hash},fixedRawZAB:[50,720,-240],reviewedBy:'test',reviewedMs:925,pixelShiftPerCameraMm:[[100,0],[0,-100]],sourceMeasurements:[]};
+ [[0,0],[1,0],[1,1]].forEach((xy,i)=>j.sourceMeasurements.push({...proof('J'+i,xy),rawXY:xy,centerPixels:[127.5+100*xy[0],127.5-100*xy[1]]}));f.files[reg.imageJacobianEvidence.path]=j;
+ reg.independentHeldOutPadChecks=[];t.padChecks=[];
+ ['R1.2','R16.1','R40.1'].forEach(padId=>{const xy=reg.resistorPadMachineXYTargets.find(p=>p.padId===padId).machineXYMm,p=proof(padId,xy);reg.independentHeldOutPadChecks.push({...p,padId,padIdentityReviewed:true,centerMeasurementReviewed:true,imageSizePixels:[256,256],observedCenterPixel:[127.5,127.5],imageCenterPixel:[127.5,127.5],cameraXYMm:xy,measuredPadXYMm:xy,predictedMachineXYMm:xy,imageCenterErrorPx:0,residualMm:0});t.padChecks.push({reference:padId.split('.')[0],padId,reviewedAligned:true,reportEvidence:p.report,imageEvidence:p.image});});f.files[q.ftpTargetEvidence.path]=clone(t);return {q,f,reg,j};
+}
+test('affine native admission recomputes fit, measured Jacobian and three held-out pads',()=>{const x=affineFixture();FTP.verifySources(x.q,x.f.read);});
+test('affine native admission rejects candidate, fake independence, skew, changed J and held-out proof',()=>{
+ for(const edit of [x=>x.reg.scope='offline-fresh-ftp-three-fiducial-affine-candidate',x=>x.reg.independentFID3Check={residualMm:0},x=>x.reg.transformFromThreeFiducials.matrix[0][1]=.008,x=>x.j.pixelShiftPerCameraMm[0][0]=99,x=>x.reg.independentHeldOutPadChecks.pop(),x=>x.reg.independentHeldOutPadChecks[0].observedCenterPixel[0]+=9,x=>x.reg.independentHeldOutPadChecks[0].centerMeasurementReviewed=false,x=>x.f.files['/ftp/R1.2/report.json'].id='FID1',x=>x.reg.resistorPadMachineXYTargets[0].designXYMm=[999,999]]){const x=affineFixture();edit(x);assert.throws(()=>FTP.verifySources(x.q,x.f.read));}
+});
+test('compensated decimal Z keeps authored gap and only tolerates derived floating arithmetic',()=>{
+ const {q,t}=compensatedFixture(4,2,500,40),z=v=>v===50?58.3:v===45?53.4:v;
+ t.surface={rawZ:58.3,estimatedGapMm:.4,gapUncertaintyMm:.3};t.pads.forEach(p=>p.rawPose.Z=58.3);q.xyClearanceRawZ=53.4;q.rawBounds.Z={min:53.4,max:58.3};q.expectedRaw.Z=q.expectedDriver.Z=53.4;q.finalTargetRaw.Z=53.4;
+ q.previewStages.forEach(s=>{s.startRaw={...s.startRaw,Z:z(s.startRaw.Z)};s.targetRaw={...s.targetRaw,Z:z(s.targetRaw.Z)};if(s.axis==='B'){s.estimatedGapMm=.4+(58.3-s.startRaw.Z);s.gapUncertaintyMm=.3;}});
+ FTP.validate(q,1000);q.previewStages[t.pads[0].doseStageIndices[0]].estimatedGapMm+=2e-9;assert.throws(()=>FTP.validate(q,1000),/gap differs/);
+ t.surface.estimatedGapMm=.399;assert.throws(()=>FTP.validate(q,1000),/positive gap/);
+});
