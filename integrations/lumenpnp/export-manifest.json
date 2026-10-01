@@ -1369,8 +1369,8 @@
       "sourceRoot": "/home/lumen/lumenpnp",
       "sourcePath": "automation/operations/paste-small-dot-trials-20260930.md",
       "destination": "integrations/lumenpnp/automation/operations/paste-small-dot-trials-20260930.md",
-      "sha256": "30175a50e87abe84e52cf93eff36ebb3f7e650b2c92ee374244f6a82c701f590",
-      "bytes": 48846
+      "sha256": "94d6994f9e43b51ef60479c9cfb0a28382a6da736c9ca31eabde74f8ef5d2c18",
+      "bytes": 49984
     },
     {
       "sourceRoot": "/home/lumen/lumenpnp",
@@ -1810,8 +1810,8 @@
       "sourceRoot": "/home/lumen/lumenpnp",
       "sourcePath": "automation/paste/ftp-commissioning-runbook.md",
       "destination": "integrations/lumenpnp/automation/paste/ftp-commissioning-runbook.md",
-      "sha256": "9743e9f5d00c864c7cd9c92348dde42dcbeac3f99b547135c895b1d89b9b719d",
-      "bytes": 13077
+      "sha256": "8e02336128487a5e7541d6e23f80efaaad9039bb90edca4bd817abe949c91764",
+      "bytes": 13810
     },
     {
       "sourceRoot": "/home/lumen/lumenpnp",

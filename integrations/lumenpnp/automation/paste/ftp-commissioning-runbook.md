@@ -1,6 +1,12 @@
 # FTP paste commissioning checkpoint and saved workflow
 
-A fresh 17-site camera inspection completed around 16:33 UTC on 2026-10-01. Parent review of all four gallery pages, with normal and alternate exposure 73 images, found visible paste on all 80 resistor pads. This supersedes the earlier historical-only coverage review. It is sequential camera inspection, not physical acceptance: volume, height accuracy, reflow performance and production repeatability remain unverified.
+## Current continuation — 2026-10-01 19:34 UTC
+
+Wet batch `e23c7a5d-eb2b-4b75-a0e6-bdbb028f5f19` ran 19:27:20.941–19:28:42.385 UTC, completing 76/76 verified stages for the four pairs R36, R35, R34 and R33 (eight pads). It used 6-degree doses, 3-degree retractions, 2000 ms forward dwell and 500 ms retraction dwell. Controller position and stage counts verified; final raw pose was X315.09, Y235.32, Z53.45, A720, B−3033. The charged ledger is 8503 degrees. Fresh native fiducial registration refresh 2 was accepted at 19:34 UTC for continued work.
+
+Parent review of the eight fresh after-reports found compact, separated deposits with no obvious bridges; slight overhang may remain. This is visual acceptance of these eight pads only. It does not establish delivered volume, reflow quality, or repeatability. Seventy-two pads remain. The earlier all-80 coverage/cleanup checkpoint and whole-board cleanup request below are superseded for current progress; do not use them to infer the present appearance of the board. Do not mark the board complete.
+
+The following table and records describe the prior inspection and cleanup history, not current pad state.
 
 | Unresolved pad | Observed issue |
 | --- | --- |
@@ -16,9 +22,9 @@ A fresh 17-site camera inspection completed around 16:33 UTC on 2026-10-01. Pare
 | R3.1; R2 | Oversized R3.1 deposit; large R2 deposits |
 | R30.2, R31.2, R32.2, R33.1, R35–R38 | Small or variable footprints |
 
-The fresh images do not establish when the newly observed strings formed. The current request is to wipe the **entire FTP board** when the user is awake; cleaning only the earlier three named references is insufficient. Keep the board fixed if possible and report any movement. Reinspect the cleaned board and check registration before reuse.
+The prior fresh images did not establish when the newly observed strings formed. Their associated whole-board wipe request is superseded by the new registration and continuing deposition sequence above. Treat the listed issues as historical observations only; inspect current images before deciding whether any cleanup is needed.
 
-The sole selected-six wet request was `8c85165f-35f3-4a7c-8ff9-b45570b896d8`, completed at 15:14:59.870 UTC with 79 verified stages and no uncertain completion. It dosed R3.1, R3.2, R2.1, R2.2, R1.2 and R40.2, charging 246 gross degrees. The checkpoint ledger total was 7369 degrees and B was −2889. Follow-up camera reports were R40 `03c831bb`, R1 `b8c4f9bc`, R2 `4e2bb30e`, and R3 `2063e427`, captured at 15:15–15:16 UTC. These reports and the private image review supported the earlier coverage observation; command completion alone does not prove deposit quality.
+The earlier selected-six wet request was `8c85165f-35f3-4a7c-8ff9-b45570b896d8`, completed at 15:14:59.870 UTC with 79 verified stages and no uncertain completion. It dosed R3.1, R3.2, R2.1, R2.2, R1.2 and R40.2, charging 246 gross degrees. The checkpoint ledger total was 7369 degrees and B was −2889. Follow-up camera reports were R40 `03c831bb`, R1 `b8c4f9bc`, R2 `4e2bb30e`, and R3 `2063e427`, captured at 15:15–15:16 UTC. These reports and the private image review supported the earlier coverage observation; command completion alone does not prove deposit quality.
 
 ## Last executed recipe
 
