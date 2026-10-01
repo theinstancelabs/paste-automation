@@ -1509,22 +1509,22 @@
       "sourceRoot": "/home/lumen/lumenpnp",
       "sourcePath": "automation/paste/prepare-retraction-coupon.py",
       "destination": "integrations/lumenpnp/automation/paste/prepare-retraction-coupon.py",
-      "sha256": "7e8313f1b5d1901a009c943ab7976d01307dcc27588a646a9ae33b19ac0db478",
-      "bytes": 9356
+      "sha256": "b7016b4df47313de3b74a0d9f21ba43d4e68de002a5df5ea9fd2a25c08dc0524",
+      "bytes": 9560
     },
     {
       "sourceRoot": "/home/lumen/lumenpnp",
       "sourcePath": "automation/paste/prepare-retraction-coupon.md",
       "destination": "integrations/lumenpnp/automation/paste/prepare-retraction-coupon.md",
-      "sha256": "369c99f21bf439f3bf73004e9ab99d9b6c2dd82f48ebff46d86a2112ed8d5751",
-      "bytes": 3120
+      "sha256": "d48908d6fd3f45c693f9625f6cce4240a5124ad82fcdd6ad83c0458cb3356276",
+      "bytes": 3339
     },
     {
       "sourceRoot": "/home/lumen/lumenpnp",
       "sourcePath": "automation/paste/analysis/test_prepare_retraction_coupon.py",
       "destination": "integrations/lumenpnp/automation/paste/analysis/test_prepare_retraction_coupon.py",
-      "sha256": "7434a2e62afe8503c9b95be6152940e927ee44b6b3defaa74441cac7fb205b82",
-      "bytes": 8954
+      "sha256": "67a7c8b77c4b381619a892316f6058a102da3c1469197c1c20964f2598a512ea",
+      "bytes": 10280
     }
   ],
   "manifestSelfHash": "Excluded to avoid a recursive digest; this manifest enumerates every other exported/generated file.",

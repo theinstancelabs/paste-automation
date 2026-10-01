@@ -58,6 +58,26 @@ class RetractionCouponTests(unittest.TestCase):
         b = [(right['B']-left['B'], stages[i]['dwellMilliseconds']) for i, (left, right) in enumerate(zip(poses, poses[1:])) if stages[i]['axis'] == 'B']
         self.assertEqual(b, [(-20,0),(-20,2000),(20,1000),(-20,2000),(3,0)]+[(-3,0),(-6,0),(-6,2000),(3,0)]*3+[(20,2000)])
 
+    def test_optional_forward_dwell_defaults_and_only_follows_complete_doses(self):
+        for dose in (6, 12, 20):
+            for dwell in (200, 500, 2000, None):
+                e = experiment(dose, 3)
+                if dwell is None:
+                    del e['dwellMilliseconds']
+                else:
+                    e['dwellMilliseconds'] = dwell
+                expected = 2000 if dwell is None else dwell
+                stages, poses, accounting = M.stages_for(e, dict(path='/review', sha256=H), 1.1, 1)
+                values = [(right['B']-left['B'], stages[i]['dwellMilliseconds']) for i, (left, right) in enumerate(zip(poses, poses[1:])) if stages[i]['axis'] == 'B']
+                split = [(-6,0),(-6,expected)] if dose == 12 else [(-dose,expected)]
+                self.assertEqual(values, [(-20,0),(-20,2000),(20,1000),(-20,expected),(3,0)]+([(-3,0)]+split+[(3,0)])*3+[(20,2000)])
+                self.assertEqual(accounting['forwardDwellMilliseconds'], expected)
+                self.assertEqual(accounting['grossCommandedDegrees'],100+3*dose+21)
+        for invalid in (0, 199, 201, 1000, 2001, 500.0, '500', True):
+            e = experiment(); e['dwellMilliseconds'] = invalid
+            with self.assertRaises(ValueError):
+                M.stages_for(e, dict(path='/review', sha256=H), 1.1, 1)
+
     def test_unsafe_or_unreviewed_parameters_rejected(self):
         edits = [lambda e: e.update(doseDegrees=3), lambda e: e.update(retractDegrees=20),
                  lambda e: e.update(dwellMilliseconds=True), lambda e: e.update(primeDegrees=60),

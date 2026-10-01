@@ -33,10 +33,13 @@ def stages_for(experiment, review_evidence, gap, uncertainty):
     if e.get('schema') != 1 or e.get('scope') != 'reviewed-scrap-retraction-coupon':
         raise ValueError('Explicit scrap retraction experiment required')
     fixed = {'primeDegrees': 40, 'preWipeReliefDegrees': 20, 'idleReliefDegrees': 20,
-             'conditioningDoseDegrees': 20, 'dwellMilliseconds': 2000}
+             'conditioningDoseDegrees': 20}
     for key, expected in fixed.items():
         if type(e.get(key)) is not int or e[key] != expected:
             raise ValueError('Fixed experiment parameter changed: ' + key)
+    dwell = e.get('dwellMilliseconds', 2000)
+    if type(dwell) is not int or dwell not in (200, 500, 2000):
+        raise ValueError('Forward-dose dwell must be 200, 500 or 2000 milliseconds')
     if type(e.get('doseDegrees')) is not int or e['doseDegrees'] not in (6, 12, 20):
         raise ValueError('Dose must be 6, 12 or 20 degrees')
     if type(e.get('retractDegrees')) is not int or e['retractDegrees'] not in (3, 6):
@@ -102,16 +105,16 @@ def stages_for(experiment, review_evidence, gap, uncertainty):
         # Twelve degrees uses two existing -6 stages, with dwell only after the second.
         if dose == 12:
             stroke(-6)
-            stroke(-6, 2000)
+            stroke(-6, dwell)
         else:
-            stroke(-dose, 2000)
+            stroke(-dose, dwell)
         stroke(e['retractDegrees'])
         add('Z', clear)
     stroke(20, 2000)
     gross = sum(abs(right['B']-left['B']) for left, right in zip(poses, poses[1:]))
     return stages, poses, {'grossCommandedDegrees': gross, 'netDegrees': at['B']-raw['B'],
                            'finalRaw': dict(at), 'doseDegrees': e['doseDegrees'],
-                           'retractDegrees': e['retractDegrees'],
+                           'retractDegrees': e['retractDegrees'], 'forwardDwellMilliseconds': dwell,
                            'testRetractionRatio': e['retractDegrees']/e['doseDegrees']}
 
 
