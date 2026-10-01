@@ -84,7 +84,8 @@ def build(inputs,output):
  profile['measurementEvidence']=EIGHT.ev(rp);pp=write('profile.json',profile);tp=write('targets.json',target)
  src=q['sources'];cmd=[sys.executable,str(HERE/'prepare-conditioned-ftp-eight-pad.py')]
  for k,p in [('experiment',ep),('template',src['template']['path']),('barrier',src['barrier']['path']),('profile',pp),('clearance-review',rp),('image',src['stationaryImage']['path']),('target-record',tp),('previous-report',src['previousReport']['path']),('ledger',src['ledger']['path']),('output',out/'prepared'),('xy-clearance-raw-z',q['xyClearanceRawZ'])]:cmd.extend(['--'+k,str(p)])
- result=subprocess.run(cmd,check=True,text=True,capture_output=True)
+ try:result=subprocess.run(cmd,check=True,text=True,capture_output=True)
+ except subprocess.CalledProcessError as exc:fail('Eight-pad offline preparer rejected inputs: '+(exc.stderr or exc.stdout or str(exc)).strip())
  for p,b in snapshots.items():
   if p.read_bytes()!=b:fail('Input evidence changed during preparation: '+str(p))
  print(json.dumps({'output':str(out),'previewRequest':str(out/'prepared/native/preview-request.json'),'enabled':False,'motionDispatched':False,'preparerResult':json.loads(result.stdout)},indent=2))

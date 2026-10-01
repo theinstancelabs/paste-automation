@@ -32,6 +32,9 @@ class AuthorInputsTests(unittest.TestCase):
   with patch.object(M.subprocess,'run',side_effect=run):M.build(inp,out)
   self.assertEqual(Path(calls[0][1]).name,'prepare-conditioned-ftp-eight-pad.py');self.assertNotIn('dispatch',' '.join(calls[0]));self.assertEqual(json.loads((out/'clearance-review.json').read_text())['reviewedMs'],self.q['reviewedMs'])
   with self.assertRaises(FileExistsError):M.build(inp,out)
+  failure=M.subprocess.CalledProcessError(2,['offline-preparer'],stderr='specific source hash mismatch')
+  with patch.object(M.subprocess,'run',side_effect=failure):
+   with self.assertRaisesRegex(ValueError,'specific source hash mismatch'):M.build(inp,self.root/'rejected')
   Path(self.q['sources']['surface']['path']).write_text('{}')
   with self.assertRaises(ValueError):M.build(inp,self.root/'changed')
 if __name__=='__main__':unittest.main()

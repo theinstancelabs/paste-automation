@@ -1628,8 +1628,8 @@
       "sourceRoot": "/home/lumen/lumenpnp",
       "sourcePath": "automation/paste/author-conditioned-ftp-eight-pad.py",
       "destination": "integrations/lumenpnp/automation/paste/author-conditioned-ftp-eight-pad.py",
-      "sha256": "61e7bf13b84ff01ae93d92b07fe440f71a5db491399c9d4012774adc03beb47b",
-      "bytes": 9301
+      "sha256": "ae1d8b09ed7682d5bdcf6aba34e8ceec607df28e3746d7aca44a12511cadd3c1",
+      "bytes": 9450
     },
     {
       "sourceRoot": "/home/lumen/lumenpnp",
@@ -1649,8 +1649,8 @@
       "sourceRoot": "/home/lumen/lumenpnp",
       "sourcePath": "automation/paste/test_author_conditioned_ftp_eight_pad.py",
       "destination": "integrations/lumenpnp/automation/paste/test_author_conditioned_ftp_eight_pad.py",
-      "sha256": "1b2c112b650dc05629bc12075e173fabe4165c3753aa1ff274375dd597759465",
-      "bytes": 4876
+      "sha256": "8a85b6cf02b7eaac630e47edc6b678c2c102e12028650580a897821053eea832",
+      "bytes": 5151
     }
   ],
   "manifestSelfHash": "Excluded to avoid a recursive digest; this manifest enumerates every other exported/generated file.",
