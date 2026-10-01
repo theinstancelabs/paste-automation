@@ -58,7 +58,8 @@ var PASTE_COMMISSIONING_STROKE_ENABLED = true;
  function snapshot(){var s={raw:{},driver:{},nativePoses:poses()};Object.keys(axes).forEach(function(k){s.raw[k]=Number(axes[k].getCoordinate());s.driver[k]=Number(axes[k].getDriverCoordinate());});return s;}
  var originalReader=privateValue('org.openpnp.machine.reference.driver.GcodeDriver','readerThread',d),originalCommands=d.commands;
  function supervisionGate(){if(!q.supervisionEvidence)return;var a=boundJson(q.supervisionEvidence);PasteWastePrime.supervision(a,q);if(hash(Fs.readAllBytes(new F(a.manualInterventionEvidence.path).toPath()))!==a.manualInterventionEvidence.sha256)throw Error('Manual intervention evidence changed');if(typeof r!=='undefined'&&r&&r.nativeMotionCompletionReported===true)return;var stop=new F(a.stopPath),heartbeat=new F(a.heartbeatPath),age=Number(java.lang.System.currentTimeMillis())-Number(heartbeat.lastModified());if(stop.exists()||!heartbeat.isFile()||age<0||age>60000)throw Error('Supervised stop requested or heartbeat expired');}
- function stateGate(){supervisionGate();
+ function verifyTravelReview(){if(budgetAmendmentContext){var travel=CommissioningStroke.budgetTravelReview(q,budgetAmendmentContext.record);if(travel)boundJson(travel);}}
+ function stateGate(){verifyTravelReview();supervisionGate();
   if(d.isInSimulationMode()||String(d.getCommunicationsType())!=='serial')throw Error('Physical native serial owner required');
   var activeExecutor=privateValue('org.openpnp.spi.base.AbstractMachine','executor',m),owned=m.isTask(java.lang.Thread.currentThread());if(activeExecutor==null||activeExecutor.isShutdown()||activeExecutor.isTerminated()||activeExecutor.getCorePoolSize()!==1||activeExecutor.getMaximumPoolSize()!==1||activeExecutor.getActiveCount()!==(owned?1:0)||!activeExecutor.getQueue().isEmpty()||(executor!=null&&activeExecutor!==executor))throw Error('Exact idle/owned single native executor required');
 

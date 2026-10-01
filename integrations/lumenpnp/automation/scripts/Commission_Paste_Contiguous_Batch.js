@@ -65,7 +65,8 @@ var PASTE_CONTIGUOUS_BATCH_ENABLED = true;
  var permitClearanceLiftOnStop=false;
  function stopRequested(){return new F(q.stopPath).exists();}
  function supervisionGate(){if(stopRequested()&&!permitClearanceLiftOnStop){if(typeof r!=='undefined'&&r){r.cooperativeStopRequested=true;r.stopAtClearance=snapshot().raw.Z===q.xyClearanceRawZ;}throw Error('Cooperative stop requested; no further native stage');}}
- function stateGate(){supervisionGate();
+ function verifyTravelReview(){if(budgetAmendmentContext){var travel=CommissioningStroke.budgetTravelReview(q,budgetAmendmentContext.record);if(travel)boundJson(travel);}}
+ function stateGate(){verifyTravelReview();supervisionGate();
   if(d.isInSimulationMode()||String(d.getCommunicationsType())!=='serial')throw Error('Physical native serial owner required');
   var activeExecutor=privateValue('org.openpnp.spi.base.AbstractMachine','executor',m),owned=m.isTask(java.lang.Thread.currentThread());if(activeExecutor==null||activeExecutor.isShutdown()||activeExecutor.isTerminated()||activeExecutor.getCorePoolSize()!==1||activeExecutor.getMaximumPoolSize()!==1||activeExecutor.getActiveCount()!==(owned?1:0)||!activeExecutor.getQueue().isEmpty()||(executor!=null&&activeExecutor!==executor))throw Error('Exact idle/owned single native executor required');
 

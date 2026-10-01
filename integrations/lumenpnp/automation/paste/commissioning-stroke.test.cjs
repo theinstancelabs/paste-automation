@@ -35,12 +35,14 @@ test('cycle binds negative lift, bounded parameters, and three intermediate prev
 test('cycle reserves dose and retract gross together, verifies intermediate B, then lifts without changing ledger B',()=>{let l=null;for(const [i,d] of [[0,20],[1,-2],[2,2]]){let s=q(d);s.id=`4234567${i}-1234-1234-1234-123456789abc`;if(l){s.expectedRaw.B=l.lastVerifiedB;s.expectedDriver.B=l.lastVerifiedB;s.previousLedgerSha256=H;s.previousReportEvidence={path:'/report',sha256:H};}l=P.reserve(l,s,carry);l=P.finish(l,s,true);}assert.equal(l.totalAbsoluteDegrees,24);const c=cycle();c.expectedRaw.B=l.lastVerifiedB;c.expectedDriver.B=l.lastVerifiedB;c.previewStages=cycle().previewStages;c.previewStages[0].startRaw.B=-220;c.previewStages[0].targetRaw.B=-240;c.previewStages[1].startRaw.B=-240;c.previewStages[1].targetRaw.B=-238;c.previewStages[2].startRaw.B=-238;c.previewStages[2].targetRaw.B=-238;c.liftTargetRaw.B=-238;c.previousLedgerSha256=H;const pending=P.reserveCycle(l,c,carry);assert.equal(pending.totalAbsoluteDegrees,46);assert.equal(pending.entries.at(-2).targetB,-240);assert.equal(pending.entries.at(-1).targetB,-238);assert.throws(()=>P.markCycleStep(pending,c,2,-238));const forged={...l,totalAbsoluteDegrees:0};assert.throws(()=>P.reserveCycle(forged,c,carry),/sum\/chain/);const afterDose=P.markCycleStep(pending,c,0,-240);assert.equal(afterDose.lastVerifiedB,-240);const afterRetract=P.markCycleStep(afterDose,c,1,-238);const complete=P.finishCycle(afterRetract,c,true);assert.equal(complete.status,'verified');assert.equal(complete.lastVerifiedB,-238);assert.equal(complete.totalAbsoluteDegrees,46);});
 test('failed cycle faults pending substeps and retains the absolute reserve',()=>{const c=cycle();c.expectedRaw.B=-240;c.expectedDriver.B=-240;c.previousLedgerSha256=null;c.liftTargetRaw.B=-258;c.previewStages[0].startRaw.B=-240;c.previewStages[0].targetRaw.B=-260;c.previewStages[1].startRaw.B=-260;c.previewStages[1].targetRaw.B=-258;c.previewStages[2].startRaw.B=-258;c.previewStages[2].targetRaw.B=-258;const l=P.reserveCycle(null,c,carry),failed=P.finishCycle(l,c,false);assert.equal(failed.status,'faulted');assert.equal(failed.totalAbsoluteDegrees,22);assert.throws(()=>P.reserveCycle(failed,cycle(),carry));});
 
-test('reviewed 240 and 2400 ceilings stay bounded with immutable anchor and individual20 cap',()=>{
- for(const ceiling of [240,2400]){
+test('reviewed 240, 2400 and evidence-bound 3600 ceilings stay bounded with immutable anchor and individual20 cap',()=>{
+ for(const ceiling of [240,2400,3600]){
   const f=amendmentFixture();f.record.newMaximumAbsoluteDegrees=ceiling;f.envelope.newMaximumAbsoluteDegrees=ceiling;
+  if(ceiling===3600){f.record.travelReviewEvidence={path:'/travel-review.json',sha256:'9'.repeat(64)};f.envelope.travelReviewEvidence=f.record.travelReviewEvidence;}
   const ledger=JSON.parse(JSON.stringify(f.anchor));let i=0;
   while(ledger.totalAbsoluteDegrees<ceiling-20){const start=ledger.lastVerifiedB;ledger.entries.push({requestId:`${String(i++).padStart(8,'0')}-1234-1234-1234-123456789abc`,startB:start,targetB:start+20,deltaDegrees:20,absoluteDegrees:20,status:'verified'});ledger.lastVerifiedB+=20;ledger.totalAbsoluteDegrees+=20;}
   const next={...q(20),id:'a2345678-1234-1234-1234-123456789abc',expectedRaw:{...q().expectedRaw,B:ledger.lastVerifiedB},expectedDriver:{...q().expectedDriver,B:ledger.lastVerifiedB},previousLedgerSha256:H,previousReportEvidence:{path:'/prior-report',sha256:H},budgetAmendmentEvidence:f.envelope};
+  if(ceiling===3600)next.evidence.push(f.record.travelReviewEvidence);
   assert.throws(()=>P.reserve(ledger,{...next,deltaDegrees:40},carry,f.context),/bounded reviewed signed B/);
   const reserved=P.reserve(ledger,next,carry,f.context);assert.equal(reserved.totalAbsoluteDegrees,ceiling);assert.deepEqual(reserved.entries.slice(0,f.anchor.entries.length),f.anchor.entries);assert.equal(carry.maximumAbsoluteDegrees,120);
   const done=P.finish(reserved,next,true),over={...next,id:'b2345678-1234-1234-1234-123456789abc',deltaDegrees:2,expectedRaw:{...next.expectedRaw,B:done.lastVerifiedB},expectedDriver:{...next.expectedDriver,B:done.lastVerifiedB}};
@@ -77,4 +79,22 @@ test('cycle at gross 464 needs loaded 2400 amendment and retains anchor/time/par
  const stale={...f.record,reviewedAt:'1969-12-30T00:00:00.000Z'};assert.throws(()=>P.reserveCycle(l,{...c,budgetAmendmentEvidence:{...f.envelope,reviewedAt:stale.reviewedAt}},carry,{...f.context,record:stale}),/stale/);
  assert.throws(()=>P.reserveCycle(l,{...c,doseDegrees:40},carry,f.context),/bounds/);
  const small={...f.record,newMaximumAbsoluteDegrees:240};assert.throws(()=>P.reserveCycle(l,{...c,budgetAmendmentEvidence:{...f.envelope,newMaximumAbsoluteDegrees:240}},carry,{...f.context,record:small}),/ceiling/);
+});
+
+test('3600 requires exact loaded travel evidence and preserves charges, anchors and original carryover',()=>{
+ const f=amendmentFixture(),travel={path:'/travel-review.json',sha256:'9'.repeat(64)};
+ f.record.newMaximumAbsoluteDegrees=3600;f.envelope.newMaximumAbsoluteDegrees=3600;
+ const next={...q(20),expectedRaw:{...q().expectedRaw,B:-284},expectedDriver:{...q().expectedDriver,B:-284},previousLedgerSha256:H,previousReportEvidence:{path:'/previous',sha256:H},budgetAmendmentEvidence:f.envelope};
+ assert.throws(()=>P.reserve(f.anchor,next,carry,f.context),/travel review/);
+ f.record.travelReviewEvidence=travel;f.envelope.travelReviewEvidence={...travel};
+ assert.throws(()=>P.reserve(f.anchor,next,carry,f.context),/travel review/);
+ next.evidence.push({...travel});f.envelope.travelReviewEvidence.sha256='8'.repeat(64);
+ assert.throws(()=>P.reserve(f.anchor,next,carry,f.context),/travel review/);
+ f.envelope.travelReviewEvidence={...travel,path:'/different-review.json'};
+ assert.throws(()=>P.reserve(f.anchor,next,carry,f.context),/travel review/);
+ f.envelope.travelReviewEvidence={...travel};const reserved=P.reserve(f.anchor,next,carry,f.context);
+ assert.equal(reserved.totalAbsoluteDegrees,140);assert.deepEqual(reserved.entries.slice(0,f.anchor.entries.length),f.anchor.entries);
+ const failed=P.finish(reserved,next,false);assert.equal(failed.totalAbsoluteDegrees,140);assert.equal(failed.entries.at(-1).status,'faulted');assert.throws(()=>P.reserve(failed,next,carry,f.context));
+ const refund=JSON.parse(JSON.stringify(f.anchor));refund.totalAbsoluteDegrees=100;assert.throws(()=>P.reserve(refund,next,carry,f.context));
+ assert.throws(()=>P.reserve(f.anchor,next,{...carry,maximumAbsoluteDegrees:3600},f.context),/carryover/);
 });
