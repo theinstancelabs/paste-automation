@@ -43,10 +43,10 @@ def stages_for(experiment, review_evidence, gap, uncertainty):
     dwell = e.get('dwellMilliseconds', 2000)
     if type(dwell) is not int or dwell not in (200, 500, 2000):
         raise ValueError('Forward-dose dwell must be 200, 500 or 2000 milliseconds')
-    if type(e.get('doseDegrees')) is not int or e['doseDegrees'] not in (6, 12, 20):
-        raise ValueError('Dose must be 6, 12 or 20 degrees')
-    if type(e.get('retractDegrees')) is not int or e['retractDegrees'] not in (3, 6):
-        raise ValueError('Retraction must be 3 or 6 degrees')
+    if type(e.get('doseDegrees')) is not int or e['doseDegrees'] not in (2, 3, 4, 6, 12, 20):
+        raise ValueError('Dose must be 2, 3, 4, 6, 12 or 20 degrees')
+    if type(e.get('retractDegrees')) is not int or e['retractDegrees'] not in (2, 3, 4, 6):
+        raise ValueError('Retraction must be 2, 3, 4 or 6 degrees')
     raw = e.get('startRaw')
     if not isinstance(raw, dict) or set(raw) != {'X', 'Y', 'Z', 'A', 'B'}:
         raise ValueError('Exact five-axis startRaw required')

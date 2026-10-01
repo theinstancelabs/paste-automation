@@ -51,6 +51,33 @@ class RetractionCouponTests(unittest.TestCase):
                     self.assertEqual(stages[i+1], dict(axis='Z', target=53.25))
             self.assertTrue(all(p['A'] == 720 for p in poses))
 
+    def test_low_doses_and_selected_retraction_restore_accounting(self):
+        for dose in (2, 3, 4, 6, 12, 20):
+            for retract in (2, 3, 4, 6):
+                with self.subTest(dose=dose, retract=retract):
+                    e = experiment(dose, retract)
+                    stages, poses, accounting = M.stages_for(e, dict(path='/review', sha256=H), 1.1, 1)
+                    strokes = [(right['B']-left['B'], stages[i]['dwellMilliseconds'])
+                               for i, (left, right) in enumerate(zip(poses, poses[1:])) if stages[i]['axis']=='B']
+                    forward = [(-6,0),(-6,2000)] if dose==12 else [(-dose,2000)]
+                    self.assertEqual(strokes, [(-20,0),(-20,2000),(20,1000),(-20,2000),(retract,0)]
+                                     + ([(-retract,0)]+forward+[(retract,0)])*3+[(20,2000)])
+                    self.assertEqual(accounting['grossCommandedDegrees'],100+3*dose+7*retract)
+                    self.assertEqual(accounting['netDegrees'],-20+retract-3*dose)
+        for dose, retract in ((True,2),(2,True),(2.0,2),(2,4.0),(1,2),(2,5)):
+            with self.assertRaises(ValueError):
+                M.stages_for(experiment(dose,retract),dict(path='/review',sha256=H),1.1,1)
+        for dose, retract in ((2,2),(3,3),(4,4),(2,4)):
+            with tempfile.TemporaryDirectory() as d:
+                args = self.fixture(d)
+                Path(args.experiment).write_text(json.dumps(experiment(dose,retract)))
+                review=json.loads(Path(args.review).read_text()); review['experimentEvidence']=M.WIPE.evidence(args.experiment)
+                Path(args.review).write_text(json.dumps(review))
+                profile=json.loads(Path(args.profile).read_text()); profile['measurementEvidence']=M.WIPE.evidence(args.review)
+                Path(args.profile).write_text(json.dumps(profile))
+                recipe=M.build(args)
+                self.assertEqual(recipe['bAccounting']['grossCommandedDegrees'],100+3*dose+7*retract)
+
     def test_optional_test_heights_preserve_clearance_accounting_and_gap_origin(self):
         e = experiment()
         baseline = M.stages_for(e, dict(path='/review', sha256=H), 1.1, 1)
@@ -151,7 +178,7 @@ class RetractionCouponTests(unittest.TestCase):
             self.assertEqual(result['bAccounting']['grossCommandedDegrees'],222)
 
     def test_unsafe_or_unreviewed_parameters_rejected(self):
-        edits = [lambda e: e.update(doseDegrees=3), lambda e: e.update(retractDegrees=20),
+        edits = [lambda e: e.update(doseDegrees=5), lambda e: e.update(retractDegrees=20),
                  lambda e: e.update(dwellMilliseconds=True), lambda e: e.update(primeDegrees=80),
                  lambda e: e.update(clearanceRawZ=52), lambda e: e['targetsXY'][0].update(Y=201),
                  lambda e: e['targetsXY'][1].update(X=120), lambda e: e['targetsXY'][1].update(X=float('nan')),
