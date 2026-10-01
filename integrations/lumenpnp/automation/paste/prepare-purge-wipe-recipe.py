@@ -29,7 +29,7 @@ def recipe_stages(raw, review_ev, axis, wipe_delta, clearance, gap, uncertainty,
     if type(wipe_delta) not in (int,float) or not math.isfinite(wipe_delta) or wipe_delta==0 or abs(wipe_delta)>2: fail('Wipe delta must be nonzero and at most 2 mm')
     if (any(type(x) not in (int,float) or not math.isfinite(x) for x in (gap,uncertainty))
             or gap<=0 or uncertainty<0 or gap-uncertainty<0.1): fail('Reviewed gap lower bound must be at least 0.1 mm')
-    if prime not in (20,40,60) or before not in (0,2,4,6,20) or after not in (0,2,4,6,20,40): fail('B stroke outside reviewed choices')
+    if prime not in (20,40,60) or before not in (0,2,3,4,6,20) or after not in (0,2,4,6,20,40): fail('B stroke outside reviewed choices')
     start_z=raw['Z']
     if not isinstance(clearance,(int,float)) or not math.isfinite(clearance) or not start_z-5<=clearance<start_z: fail('Right-tip clearance must satisfy startZ-5 <= clearance < startZ')
     current=dict(raw); stages=[]

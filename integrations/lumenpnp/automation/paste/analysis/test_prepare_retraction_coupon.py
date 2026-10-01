@@ -51,6 +51,57 @@ class RetractionCouponTests(unittest.TestCase):
                     self.assertEqual(stages[i+1], dict(axis='Z', target=53.25))
             self.assertTrue(all(p['A'] == 720 for p in poses))
 
+    def test_conditioning_dwell_and_pre_wipe_relief_are_separate_bounded_choices(self):
+        for before in (2,3,4,6,20):
+            e=experiment(4,2);e.update(dwellMilliseconds=200,conditioningDwellMilliseconds=2000,preWipeReliefDegrees=before)
+            stages,poses,a=M.stages_for(e,dict(path='/review',sha256=H),1.1,1)
+            strokes=[(right['B']-left['B'],stages[i]['dwellMilliseconds']) for i,(left,right) in enumerate(zip(poses,poses[1:])) if stages[i]['axis']=='B']
+            self.assertEqual(strokes,[(-20,0),(-20,2000),(before,1000),(-20,2000),(2,0)]+[(-2,0),(-4,200),(2,0)]*3+[(20,2000)])
+            self.assertEqual(a['grossCommandedDegrees'],106+before)
+            self.assertEqual(a['netDegrees'],-50+before)
+        default=experiment();omitted=copy.deepcopy(default);del omitted['preWipeReliefDegrees']
+        self.assertEqual(M.stages_for(default,dict(path='/review',sha256=H),1.1,1),M.stages_for(omitted,dict(path='/review',sha256=H),1.1,1))
+        for key,values in [('conditioningDwellMilliseconds',[True,200.0,0,201,2001]),('preWipeReliefDegrees',[True,2.0,0,5,40])]:
+            for value in values:
+                e=experiment();e[key]=value
+                with self.assertRaises(ValueError):M.stages_for(e,dict(path='/review',sha256=H),1.1,1)
+        for mode in ('coupon','transfer-preparation'):
+            with tempfile.TemporaryDirectory() as d:
+                args=self.fixture(d);e=experiment(4,2);e.update(mode=mode,dwellMilliseconds=200,conditioningDwellMilliseconds=2000,preWipeReliefDegrees=2)
+                if mode=='transfer-preparation':e.update(targetsXY=e['targetsXY'][:2],maximumTransferElapsedMilliseconds=120000)
+                Path(args.experiment).write_text(json.dumps(e))
+                review=json.loads(Path(args.review).read_text());review['experimentEvidence']=M.WIPE.evidence(args.experiment)
+                Path(args.review).write_text(json.dumps(review))
+                profile=json.loads(Path(args.profile).read_text());profile['measurementEvidence']=M.WIPE.evidence(args.review)
+                Path(args.profile).write_text(json.dumps(profile))
+                recipe=M.build(args)
+                self.assertEqual(recipe['bAccounting']['grossCommandedDegrees'],108 if mode=='coupon' else 64)
+
+    def test_explicit_transfer_preparation_stops_after_conditioning_retract_lift(self):
+        e=experiment(4,2); e.update(mode='transfer-preparation',maximumTransferElapsedMilliseconds=120000)
+        e['targetsXY']=e['targetsXY'][:2]
+        stages,poses,accounting=M.stages_for(e,dict(path='/review',sha256=H),1.1,1)
+        self.assertEqual([s['axis'] for s in stages[-3:]],['B','B','Z'])
+        self.assertEqual([poses[-2]['B']-poses[-3]['B'], poses[-3]['B']-poses[-4]['B']],[2,-20])
+        self.assertEqual(accounting['grossCommandedDegrees'],82)
+        self.assertEqual(accounting['netDegrees'],-38)
+        self.assertEqual(poses[-1]['Z'],53.25)
+        for edit in (lambda v:v.update(maximumTransferElapsedMilliseconds=True),
+                     lambda v:v.update(maximumTransferElapsedMilliseconds=300001),
+                     lambda v:v.update(maximumTransferElapsedMilliseconds=0),
+                     lambda v:v.update(mode='unknown'),lambda v:v.update(testWorkRawZ=[58]*3)):
+            bad=copy.deepcopy(e);edit(bad)
+            with self.assertRaises(ValueError):M.stages_for(bad,dict(path='/review',sha256=H),1.1,1)
+        with tempfile.TemporaryDirectory() as d:
+            args=self.fixture(d);Path(args.experiment).write_text(json.dumps(e))
+            review=json.loads(Path(args.review).read_text());review['experimentEvidence']=M.WIPE.evidence(args.experiment)
+            Path(args.review).write_text(json.dumps(review))
+            profile=json.loads(Path(args.profile).read_text());profile['measurementEvidence']=M.WIPE.evidence(args.review)
+            Path(args.profile).write_text(json.dumps(profile))
+            recipe=M.build(args)
+            self.assertEqual(recipe['bAccounting']['grossCommandedDegrees'],82)
+            self.assertEqual(recipe['stages'][-1]['axis'],'Z')
+
     def test_low_doses_and_selected_retraction_restore_accounting(self):
         for dose in (2, 3, 4, 6, 12, 20):
             for retract in (2, 3, 4, 6):

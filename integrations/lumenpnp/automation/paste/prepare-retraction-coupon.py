@@ -32,17 +32,32 @@ def stages_for(experiment, review_evidence, gap, uncertainty):
     e = experiment
     if e.get('schema') != 1 or e.get('scope') != 'reviewed-scrap-retraction-coupon':
         raise ValueError('Explicit scrap retraction experiment required')
-    fixed = {'preWipeReliefDegrees': 20, 'idleReliefDegrees': 20,
+    mode = e.get('mode', 'coupon')
+    if mode not in ('coupon', 'transfer-preparation'):
+        raise ValueError('Mode must be coupon or transfer-preparation')
+    if mode == 'transfer-preparation':
+        elapsed = e.get('maximumTransferElapsedMilliseconds')
+        if type(elapsed) is not int or not 1 <= elapsed <= 300000:
+            raise ValueError('Transfer preparation requires reviewed elapsed limit in 1..300000 ms')
+        if 'testWorkRawZ' in e:
+            raise ValueError('Transfer preparation has no test heights')
+    fixed = {'idleReliefDegrees': 20,
              'conditioningDoseDegrees': 20}
     for key, expected in fixed.items():
         if type(e.get(key)) is not int or e[key] != expected:
             raise ValueError('Fixed experiment parameter changed: ' + key)
+    before = e.get('preWipeReliefDegrees', 20)
+    if type(before) is not int or before not in (2, 3, 4, 6, 20):
+        raise ValueError('Pre-wipe relief must be 2, 3, 4, 6 or 20 degrees')
     prime = e.get('primeDegrees')
     if type(prime) is not int or prime not in (40, 60):
         raise ValueError('Prime must be 40 or 60 degrees')
     dwell = e.get('dwellMilliseconds', 2000)
     if type(dwell) is not int or dwell not in (200, 500, 2000):
         raise ValueError('Forward-dose dwell must be 200, 500 or 2000 milliseconds')
+    conditioning_dwell = e.get('conditioningDwellMilliseconds', dwell)
+    if type(conditioning_dwell) is not int or conditioning_dwell not in (200, 500, 2000):
+        raise ValueError('Conditioning dwell must be 200, 500 or 2000 milliseconds')
     if type(e.get('doseDegrees')) is not int or e['doseDegrees'] not in (2, 3, 4, 6, 12, 20):
         raise ValueError('Dose must be 2, 3, 4, 6, 12 or 20 degrees')
     if type(e.get('retractDegrees')) is not int or e['retractDegrees'] not in (2, 3, 4, 6):
@@ -68,8 +83,8 @@ def stages_for(experiment, review_evidence, gap, uncertainty):
         if not clear < value <= work:
             raise ValueError('Test working Z must be below common clearance and no deeper than conditioning Z')
     targets = e.get('targetsXY')
-    if not isinstance(targets, list) or len(targets) != 5:
-        raise ValueError('Five ordered XY targets required: wipe end, conditioning point, three tests')
+    if not isinstance(targets, list) or len(targets) != (2 if mode == 'transfer-preparation' else 5):
+        raise ValueError('Ordered XY targets required: wipe end, conditioning point, and three tests only in coupon mode')
     for target in targets:
         if not isinstance(target, dict) or set(target) != {'X', 'Y'}:
             raise ValueError('Each target must contain exactly X and Y')
@@ -77,14 +92,14 @@ def stages_for(experiment, review_evidence, gap, uncertainty):
             value = number(target[axis], 'target ' + axis)
             if abs(value*100-round(value*100)) > 1e-7:
                 raise ValueError('Target XY must use the 0.01 mm reporting grid')
-    if len({(target['X'], target['Y']) for target in targets}) != 5:
-        raise ValueError('Five distinct target points required')
+    if len({(target['X'], target['Y']) for target in targets}) != len(targets):
+        raise ValueError('Distinct target points required')
     changed = [axis for axis in ('X', 'Y') if targets[0][axis] != raw[axis]]
     if len(changed) != 1:
         raise ValueError('Named wipe must change exactly one XY axis')
     axis = changed[0]
     stages = WIPE.recipe_stages(raw, review_evidence, axis, targets[0][axis]-raw[axis],
-                               clear, gap, uncertainty, prime, 20, 0)
+                               clear, gap, uncertainty, prime, before, 0)
     at = dict(raw)
     poses = [dict(at)]
     for stage in stages:
@@ -119,10 +134,11 @@ def stages_for(experiment, review_evidence, gap, uncertainty):
             stroke(-6)
             stroke(-6, dwell)
         else:
-            stroke(-dose, dwell)
+            stroke(-dose, conditioning_dwell if index == 0 else dwell)
         stroke(e['retractDegrees'])
         add('Z', clear)
-    stroke(20, 2000)
+    if mode == 'coupon':
+        stroke(20, 2000)
     gross = sum(abs(right['B']-left['B']) for left, right in zip(poses, poses[1:]))
     return stages, poses, {'grossCommandedDegrees': gross, 'netDegrees': at['B']-raw['B'],
                            'finalRaw': dict(at), 'doseDegrees': e['doseDegrees'],
@@ -151,7 +167,7 @@ def build(args):
     # Reuse existing identity, reviewed image, provisional profile and current-ledger checks.
     recipe = WIPE.build(bp, pp, rp, args.previous_report, args.ledger, wipe['axis'],
                         wipe['target']-raw[wipe['axis']], experiment['clearanceRawZ'],
-                        gap, uncertainty, experiment['primeDegrees'], 20, 0)
+                        gap, uncertainty, experiment['primeDegrees'], experiment.get('preWipeReliefDegrees',20), 0)
     bounds = {axis: {'min': min(p[axis] for p in poses), 'max': max(p[axis] for p in poses)}
               for axis in ('X', 'Y', 'Z', 'B')}
     heads = {}
