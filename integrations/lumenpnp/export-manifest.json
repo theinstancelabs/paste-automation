@@ -1369,8 +1369,8 @@
       "sourceRoot": "/home/lumen/lumenpnp",
       "sourcePath": "automation/operations/paste-small-dot-trials-20260930.md",
       "destination": "integrations/lumenpnp/automation/operations/paste-small-dot-trials-20260930.md",
-      "sha256": "e0934f4e642438de4b451aaff871b108207993ec8741a8719783a02c13db6563",
-      "bytes": 14713
+      "sha256": "831491096d6598220108197733c622e0c61112fa4f748ad0287e83380fe8a0e4",
+      "bytes": 15973
     },
     {
       "sourceRoot": "/home/lumen/lumenpnp",
@@ -1446,8 +1446,8 @@
       "sourceRoot": "/home/lumen/lumenpnp",
       "sourcePath": "automation/paste/prepare-contiguous-batch.py",
       "destination": "integrations/lumenpnp/automation/paste/prepare-contiguous-batch.py",
-      "sha256": "f5b4bcaddb98df074974fe107fc7836420055152f2ef396f04c42bc49ab4fdfe",
-      "bytes": 12831
+      "sha256": "34e43a3d6e2b623374ec917762d7f16a71ec8f10a04b2d3dbdf65b17c5701298",
+      "bytes": 13165
     },
     {
       "sourceRoot": "/home/lumen/lumenpnp",

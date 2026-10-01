@@ -11,7 +11,14 @@ def evidence(p):
  p=Path(p).resolve(strict=True); b=p.read_bytes()
  if not b: err(f'Empty evidence: {p}')
  return {'path':str(p),'sha256':hashlib.sha256(b).hexdigest()}
-def same(a,b): return json.dumps(a,sort_keys=True,separators=(',',':'))==json.dumps(b,sort_keys=True,separators=(',',':'))
+def same(a,b):
+ if isinstance(a,bool) or isinstance(b,bool): return type(a) is bool and type(b) is bool and a is b
+ if isinstance(a,(int,float)) and isinstance(b,(int,float)):
+  return math.isfinite(a) and math.isfinite(b) and a==b
+ if type(a) is not type(b): return False
+ if isinstance(a,dict): return a.keys()==b.keys() and all(same(a[k],b[k]) for k in a)
+ if isinstance(a,list): return len(a)==len(b) and all(same(x,y) for x,y in zip(a,b))
+ return a==b
 def node_previous(report,ledger,ledger_sha,captured_ms):
  js="const P=require(process.argv[1]),v=JSON.parse(require('fs').readFileSync(0,'utf8'));P.validatePreviousReport(v.report,v.ledger,v.sha,v.capturedMs);"
  data={'report':report,'ledger':ledger,'sha':ledger_sha,'capturedMs':captured_ms}
