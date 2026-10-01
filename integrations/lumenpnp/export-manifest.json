@@ -1369,8 +1369,8 @@
       "sourceRoot": "/home/lumen/lumenpnp",
       "sourcePath": "automation/operations/paste-small-dot-trials-20260930.md",
       "destination": "integrations/lumenpnp/automation/operations/paste-small-dot-trials-20260930.md",
-      "sha256": "4dfc61a2b331dbe70e5d11c583560817a7d0bfa5cba136de6811d2f7dc2945ee",
-      "bytes": 18624
+      "sha256": "c593e08728fd5e448d9906fcdd959051612481b15cb938fd58d5f2f83cf015c3",
+      "bytes": 20963
     },
     {
       "sourceRoot": "/home/lumen/lumenpnp",
@@ -1462,6 +1462,20 @@
       "destination": "integrations/lumenpnp/automation/paste/analysis/ftp_paste_volume.py",
       "sha256": "db200c4bf2f4f1ec72f107c95443c85858e98e4a9d2de517e1200379e46d7809",
       "bytes": 5428
+    },
+    {
+      "sourceRoot": "/home/lumen/lumenpnp",
+      "sourcePath": "automation/paste/prepare-purge-wipe-recipe.py",
+      "destination": "integrations/lumenpnp/automation/paste/prepare-purge-wipe-recipe.py",
+      "sha256": "f714c30b3693b46c6b39dbb590d7b569a53ea31ede400d91f66ca23319110f56",
+      "bytes": 10065
+    },
+    {
+      "sourceRoot": "/home/lumen/lumenpnp",
+      "sourcePath": "automation/paste/analysis/test_prepare_purge_wipe_recipe.py",
+      "destination": "integrations/lumenpnp/automation/paste/analysis/test_prepare_purge_wipe_recipe.py",
+      "sha256": "57ddf682cffdefece4aaef9007fa957c30d5e99a5373b6b264d6c9f754baa24b",
+      "bytes": 2931
     }
   ],
   "manifestSelfHash": "Excluded to avoid a recursive digest; this manifest enumerates every other exported/generated file.",
