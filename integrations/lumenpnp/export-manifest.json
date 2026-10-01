@@ -1539,6 +1539,20 @@
       "destination": "integrations/lumenpnp/automation/paste/analysis/compare_coupon_images.py",
       "sha256": "04ee38755a358804e1a1e2bdcdb0d87c19627c00c726f72afda1b6fdc8b0dc87",
       "bytes": 6288
+    },
+    {
+      "sourceRoot": "/home/lumen/lumenpnp",
+      "sourcePath": "automation/paste/prepare-compensated-ftp-pair.py",
+      "destination": "integrations/lumenpnp/automation/paste/prepare-compensated-ftp-pair.py",
+      "sha256": "5458b477cc4c03f3a443124d126656212ea5a82c0ef6f95e291747c9c2332c78",
+      "bytes": 18861
+    },
+    {
+      "sourceRoot": "/home/lumen/lumenpnp",
+      "sourcePath": "automation/paste/test_prepare_compensated_ftp_pair.py",
+      "destination": "integrations/lumenpnp/automation/paste/test_prepare_compensated_ftp_pair.py",
+      "sha256": "99b1d9963881566041a9ba2812d0c78c6ff8211ab79632e90fc275d22483cb17",
+      "bytes": 7280
     }
   ],
   "manifestSelfHash": "Excluded to avoid a recursive digest; this manifest enumerates every other exported/generated file.",
