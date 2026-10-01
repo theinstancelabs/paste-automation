@@ -26,6 +26,7 @@ def node_previous(report,ledger,ledger_sha,captured_ms):
  except subprocess.CalledProcessError as e: err('Installed previous-report validator rejected evidence: '+(e.stderr or e.stdout).strip())
 def node_validate(q,preview,now=None):
  js="const P=require(process.argv[1]);const q=JSON.parse(require('fs').readFileSync(0,'utf8'));P.validateBatch(q,Date.now(),q.jvmStartMs,"+("true" if preview else "false")+");"
+ js+="if(q.applicationRestartEvidence){const C=require(require('path').join(require('path').dirname(process.argv[1]),'application-restart-continuity.cjs')),fs=require('fs'),crypto=require('crypto');const read=(e,json)=>{const b=fs.readFileSync(e.path);if(crypto.createHash('sha256').update(b).digest('hex')!==e.sha256)throw Error('continuity evidence hash mismatch');return json?JSON.parse(b):null;};C.validate(read(q.applicationRestartEvidence,true),q,read,Date.now());}"
  js+="const F=require(require('path').join(require('path').dirname(process.argv[1]),'ftp-two-pad.cjs'));if(F.isFtp(q))F.verifySources(q,(e,json)=>{const b=require('fs').readFileSync(e.path);if(require('crypto').createHash('sha256').update(b).digest('hex')!==e.sha256)throw Error('FTP source hash changed');return json?JSON.parse(b):null;});"
  try: subprocess.run(['node','-e',js,str(POLICY)],input=json.dumps(q),text=True,check=True,capture_output=True)
  except subprocess.CalledProcessError as e: err('Installed Node validateBatch rejected request: '+(e.stderr or e.stdout).strip())
@@ -38,6 +39,14 @@ def sha_evidence(e,label):
  got=evidence(e['path'])
  if got['sha256']!=e['sha256']: err(f'{label} SHA-256 mismatch')
  return got
+def restart_binding(path,session_id,config,jvm):
+ ref=evidence(path); record,_,_=read(ref['path']); transitions=record.get('transitions')
+ if record.get('sessionId')!=session_id or record.get('liveConfigurationSha256')!=config or not isinstance(transitions,list) or not transitions or transitions[-1].get('newJvmStartMs')!=jvm: err('Application-restart evidence must end at the exact current barrier JVM and match session/configuration')
+ allowed=[]
+ for tr in transitions:
+  for value in (tr.get('oldJvmStartMs'),tr.get('newJvmStartMs')):
+   if value not in allowed: allowed.append(value)
+ return ref,{'sessionId':record['sessionId'],'newJvmStartMs':transitions[-1]['newJvmStartMs'],'liveConfigurationSha256':record['liveConfigurationSha256'],'allowedJvmStartMs':allowed}
 
 def prepare(args):
  base,bp,_=read(args.template); barrier,bp2,_=read(args.barrier); recipe,rp,_=read(args.recipe)
@@ -70,11 +79,11 @@ def prepare(args):
   b=required_dict(bounds,k)
   if not isinstance(b.get('min'),(int,float)) or not isinstance(b.get('max'),(int,float)) or b['min']>b['max'] or not b['min']<=raw[k]<=b['max']: err(f'Initial {k} outside reviewed raw bounds')
  if ledger.get('status')!='verified' or ledger.get('sessionId')!=base.get('sessionId') or ledger.get('syringeId')!=base.get('syringeId') or ledger.get('primeLedgerSha256')!=base.get('primeLedgerSha256') or ledger.get('carryoverSha256')!=base.get('carryoverSha256'): err('Current ledger does not match immutable template identities')
- if report.get('status') not in ('completed-pre-dose-batch-reconciliation-no-motion','completed-commissioning-stroke-awaiting-observation','completed-dose-cycle-awaiting-observation','completed-contiguous-batch-awaiting-observation') or report.get('uncertainCompletion') is not False or report.get('completedLedgerSha256')!=hashlib.sha256(lb).hexdigest() or report.get('id')!=report.get('request',{}).get('id'): err('Previous report is not a successful report for exact current ledger')
+ if report.get('status') not in ('completed-partial-batch-ledger-reconciliation-no-motion','completed-pre-dose-batch-reconciliation-no-motion','completed-commissioning-stroke-awaiting-observation','completed-dose-cycle-awaiting-observation','completed-contiguous-batch-awaiting-observation') or report.get('uncertainCompletion') is not False or report.get('completedLedgerSha256')!=hashlib.sha256(lb).hexdigest() or report.get('id')!=report.get('request',{}).get('id'): err('Previous report is not a successful report for exact current ledger')
  node_previous(report,ledger,hashlib.sha256(lb).hexdigest(),captured)
  if not ledger.get('entries') or ledger['entries'][-1].get('status')!='verified' or report['id'] not in (ledger['entries'][-1].get('requestId'),ledger['entries'][-1].get('cycleId'),ledger['entries'][-1].get('batchId')): err('Previous report is not current verified ledger tail')
  stages=recipe.get('stages')
- if not isinstance(stages,list) or not 1<=len(stages)<=(96 if recipe.get('targetSurface') in ('scrap-conditioned-ftp-eight-pad','ftp-selected-pads') else 40): err('Recipe exceeds its reviewed scope stage limit')
+ if not isinstance(stages,list) or not 1<=len(stages)<=(64 if recipe.get('targetSurface')=='scrap-sequence-comparison' else 96 if recipe.get('targetSurface') in ('scrap-conditioned-ftp-eight-pad','ftp-selected-pads') else 40): err('Recipe exceeds its reviewed scope stage limit')
  start=copy.deepcopy(raw); built=[]
  for i,src in enumerate(stages):
   if not isinstance(src,dict) or src.get('axis') not in ('X','Y','Z','B') or not isinstance(src.get('target'),(int,float)): err(f'Invalid recipe stage {i}')
@@ -92,11 +101,21 @@ def prepare(args):
  q={'schema':1,'scope':'contiguous-native-scrap-batch-preview','enabled':False,'mode':mode,'stopPath':stop,'id':ident,'sessionId':base['sessionId'],'jvmStartMs':base['jvmStartMs'],'createdMs':now,'imageCapturedMs':captured,'reviewedImageMs':int(review['reviewedMs']),'liveConfigurationSha256':barrier['liveConfigurationSha256'],'expectedRaw':raw,'expectedDriver':driver,'expectedNativePoses':poses,'rawBounds':bounds,'headClearanceBounds':heads,'bothHeadsClearanceReview':True,'clearanceReviewEvidence':clear,'xyClearanceRawZ':recipe['xyClearanceRawZ'],'receivingProfile':receiving,'previewStages':built,'finalTargetRaw':start,
     'evidence':[],'previousReportEvidence':prev,'nativePreviewEvidence':None,'profileEvidence':profile_ev,'barrierEvidence':evidence(bp2),'reviewedImageEvidence':{'path':str(image),'sha256':imgsha},'previousLedgerSha256':hashlib.sha256(lb).hexdigest(),'syringeId':base['syringeId'],'primeLedgerSha256':base['primeLedgerSha256'],'carryoverSha256':base['carryoverSha256'],'budgetAmendmentEvidence':base.get('budgetAmendmentEvidence'),
     'primeLedgerEvidence':sha_evidence(base.get('primeLedgerEvidence'),'template primeLedgerEvidence'),'priorLedgerEvidence':sha_evidence(base.get('priorLedgerEvidence'),'template priorLedgerEvidence'),'carryoverEvidence':sha_evidence(base.get('carryoverEvidence'),'template carryoverEvidence')}
- if recipe.get('targetSurface') in ('cleaned-ftp-demo','scrap-conditioned-ftp-demo','scrap-conditioned-ftp-eight-pad','ftp-one-pad-cleanup','ftp-selected-pads'):
+ restart_ev=None
+ if args.application_restart_evidence:
+  restart_ev,restart_summary=restart_binding(args.application_restart_evidence,base.get('sessionId'),barrier.get('liveConfigurationSha256'),reqb.get('jvmStartMs'))
+  q['applicationRestartEvidence']={**restart_ev,**restart_summary}
+ amendment=q.get('budgetAmendmentEvidence')
+ if amendment:
+  amendment_record,_,_=read(amendment['path']); anchor_report,_,_=read(amendment_record['anchorReportEvidence']['path']); anchor_jvm=anchor_report.get('request',{}).get('jvmStartMs')
+  if anchor_jvm!=q['jvmStartMs'] and (not q.get('applicationRestartEvidence') or anchor_jvm not in q['applicationRestartEvidence']['allowedJvmStartMs']): err('A prior-JVM amendment anchor requires explicit application-restart evidence')
+ if recipe.get('targetSurface')=='scrap-sequence-comparison':
+  q.update(scope='contiguous-native-scrap-sequence-comparison-preview',targetSurface='scrap-sequence-comparison',sequenceProtocol=recipe.get('sequenceProtocol'))
+ elif recipe.get('targetSurface') in ('cleaned-ftp-demo','scrap-conditioned-ftp-demo','scrap-conditioned-ftp-eight-pad','ftp-one-pad-cleanup','ftp-selected-pads'):
   target_ev=sha_evidence(recipe.get('ftpTargetEvidence'),'ftpTargetEvidence'); target,_,_=read(target_ev['path'])
   q.update(scope='contiguous-native-ftp-one-pad-cleanup-preview' if recipe['targetSurface']=='ftp-one-pad-cleanup' else 'contiguous-native-ftp-selected-pads-preview' if recipe['targetSurface']=='ftp-selected-pads' else 'contiguous-native-ftp-conditioned-eight-pad-preview' if recipe['targetSurface']=='scrap-conditioned-ftp-eight-pad' else 'contiguous-native-ftp-conditioned-two-pad-preview' if recipe['targetSurface']=='scrap-conditioned-ftp-demo' else 'contiguous-native-ftp-two-pad-preview',ftpTargetEvidence=target_ev,ftpTargetRecord=target)
  elif recipe.get('targetSurface') not in (None,'scrap') or 'ftpTargetEvidence' in recipe: err('Explicit supported target surface required')
- q['evidence']=[q[k] for k in ('barrierEvidence','reviewedImageEvidence','profileEvidence','previousReportEvidence','primeLedgerEvidence','priorLedgerEvidence','carryoverEvidence')]+[{'path':str(lp),'sha256':q['previousLedgerSha256']},clear]
+ q['evidence']=[q[k] for k in ('barrierEvidence','reviewedImageEvidence','profileEvidence','previousReportEvidence','primeLedgerEvidence','priorLedgerEvidence','carryoverEvidence')]+[{'path':str(lp),'sha256':q['previousLedgerSha256']},clear]+([restart_ev] if restart_ev else [])
  amendment=q.get('budgetAmendmentEvidence')
  if amendment and amendment.get('newMaximumAbsoluteDegrees') in (3600,8400,11800):
   ceiling=amendment['newMaximumAbsoluteDegrees']
@@ -110,7 +129,7 @@ def prepare(args):
 
 def finalize(args):
  q,qp,_=read(args.request); pr,pp,pbytes=read(args.preview)
- if q.get('scope') not in ('contiguous-native-scrap-batch-preview','contiguous-native-ftp-two-pad-preview','contiguous-native-ftp-conditioned-two-pad-preview','contiguous-native-ftp-conditioned-eight-pad-preview','contiguous-native-ftp-one-pad-cleanup-preview','contiguous-native-ftp-selected-pads-preview') or q.get('enabled') is not False: err('Disabled preview request required')
+ if q.get('scope') not in ('contiguous-native-scrap-batch-preview','contiguous-native-scrap-sequence-comparison-preview','contiguous-native-ftp-two-pad-preview','contiguous-native-ftp-conditioned-two-pad-preview','contiguous-native-ftp-conditioned-eight-pad-preview','contiguous-native-ftp-one-pad-cleanup-preview','contiguous-native-ftp-selected-pads-preview') or q.get('enabled') is not False: err('Disabled preview request required')
  if pr.get('status')!='completed-model-only-contiguous-batch-preview' or pr.get('noControllerAccess') is not True or pr.get('noMotion') is not True or pr.get('id')!=q.get('id') or pr.get('jvmStartMs')!=q.get('jvmStartMs') or pr.get('liveConfigurationSha256')!=q.get('liveConfigurationSha256'): err('Matching no-controller/no-motion native preview required')
  if not same(pr.get('request'),q) or not isinstance(pr.get('stages'),list) or len(pr['stages'])!=len(q.get('previewStages',[])): err('Preview report request/stage count mismatch')
  q=copy.deepcopy(q); stages=[]
@@ -132,7 +151,7 @@ def finalize(args):
 
 def main():
  p=argparse.ArgumentParser(description=__doc__); sub=p.add_subparsers(dest='cmd',required=True)
- a=sub.add_parser('prepare'); a.add_argument('--template',required=True); a.add_argument('--barrier',required=True); a.add_argument('--image',required=True); a.add_argument('--recipe',required=True); a.add_argument('--output',required=True); a.set_defaults(fn=prepare)
+ a=sub.add_parser('prepare'); a.add_argument('--template',required=True); a.add_argument('--barrier',required=True); a.add_argument('--image',required=True); a.add_argument('--recipe',required=True); a.add_argument('--output',required=True); a.add_argument('--application-restart-evidence'); a.set_defaults(fn=prepare)
  b=sub.add_parser('finalize'); b.add_argument('--request',required=True); b.add_argument('--preview',required=True); b.set_defaults(fn=finalize)
  args=p.parse_args()
  try: args.fn(args)

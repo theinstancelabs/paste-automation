@@ -118,5 +118,13 @@ class RunnerTests(unittest.TestCase):
         M.run(self.prepared,True,self.root,self.invoke,self.terminal)
         self.assertEqual(len(self.calls),1)
 
+    def test_scrap_sequence_scope_is_allowed_and_gets_three_hundred_second_poll(self):
+        self.q['scope']='contiguous-native-scrap-sequence-comparison-preview';self.save()
+        preview=M.run(self.prepared,True,self.root,self.invoke,self.terminal)
+        self.assertTrue(preview['dispatchedThisInvocation'])
+        execute=M.run(self.prepared,False,self.root,self.invoke,self.terminal)
+        self.assertTrue(execute['dispatchedThisInvocation'])
+        self.assertEqual(len(self.calls),3)
+
 
 if __name__ == '__main__':unittest.main()

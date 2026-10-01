@@ -14,6 +14,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 SCOPES = {
     'contiguous-native-scrap-batch-preview',
+    'contiguous-native-scrap-sequence-comparison-preview',
     'contiguous-native-ftp-two-pad-preview',
     'contiguous-native-ftp-conditioned-two-pad-preview',
     'contiguous-native-ftp-conditioned-eight-pad-preview',
@@ -106,7 +107,7 @@ def run(prepared_dir, preview, root=ROOT, invoke=subprocess.run, wait=wait_repor
             plan = root / 'automation/plans' / (action + '-request.json')
             plan.write_bytes(runtime_bytes)
             invoke([sys.executable, str(root / 'automation/scripts/run_reviewed_action.py'), action, '--confirmed'], cwd=root, check=True, stdout=subprocess.DEVNULL)
-        seconds = 300 if q['scope'] in ('contiguous-native-ftp-conditioned-eight-pad-preview','contiguous-native-ftp-selected-pads-preview') else 60
+        seconds = 300 if q['scope'] in ('contiguous-native-scrap-sequence-comparison-preview','contiguous-native-ftp-conditioned-eight-pad-preview','contiguous-native-ftp-selected-pads-preview') else 60
         r = wait(report, q['id'], preview, seconds)
         summary = dict(report=str(report), id=q['id'], status=r['status'], existingIdObserved=existing, dispatchedThisInvocation=not existing)
         (prepared / ('runner-' + mode + '-result.json')).write_text(json.dumps(summary, indent=2) + '\n')
