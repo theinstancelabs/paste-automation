@@ -107,7 +107,7 @@ class CompensatedPairBuilderTests(unittest.TestCase):
                     linear_steps.append((stage['axis'], abs(stage['target'] - current[stage['axis']])))
             current[stage['axis']] = stage['target']
         self.assertEqual(deltas, [-2, -6, -6, 2, -2, -6, -6, 2, 20])
-        self.assertTrue(all(step <= (9.9 if axis in ('X', 'Y') else 4.9) + 1e-12 for axis, step in linear_steps))
+        self.assertTrue(all(step <= (9.9 if axis in ('X', 'Y') else 5.0) + 1e-12 for axis, step in linear_steps))
         self.assertTrue(all(abs(stage['target'] * 100 - round(stage['target'] * 100)) < 1e-9
                             for stage in stages if stage['axis'] in ('X', 'Y', 'Z')))
 
@@ -128,6 +128,24 @@ class CompensatedPairBuilderTests(unittest.TestCase):
             pad['rawPose']['Z'] = 58.46
         with self.assertRaisesRegex(ValueError, 'one stage no greater than 5.0'):
             MODULE.build_route(self.raw, self.poses, self.target, 53.45)
+
+    def test_z_segmentation_native_five_mm_boundary(self):
+        # Full recipes reject a >5 mm immediate lift; isolate the actual pure
+        # approach function to verify its 5.01 mm segmentation independently.
+        import ast
+        tree = ast.parse(SCRIPT.read_text())
+        route = next(n for n in tree.body if isinstance(n, ast.FunctionDef) and n.name == 'build_route')
+        move = next(n for n in route.body if isinstance(n, ast.FunctionDef) and n.name == 'move')
+        for end, expected_count in ((58.45, 1), (58.46, 2)):
+            at = {'Z': 53.45}; steps = []
+            def append(axis, value):
+                steps.append(value - at[axis]); at[axis] = value
+            namespace = dict(MODULE.__dict__, at=at, append=append, clearance=53.45)
+            exec(compile(ast.Module(body=[move], type_ignores=[]), '<isolated pure segmentation>', 'exec'), namespace)
+            namespace['move']('Z', end)
+            self.assertEqual(len(steps), expected_count)
+            self.assertTrue(all(abs(v) <= 5.0 + 1e-9 for v in steps))
+            self.assertEqual(at['Z'], end)
 
     def test_different_resistors_and_invalid_lift_are_rejected(self):
         self.add_pair('R40')

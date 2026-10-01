@@ -140,8 +140,8 @@ def build_route(raw, poses, target, clearance):
         if abs(value - q01(value)) > 1e-9:
             fail(f'{axis} endpoint must be on the controller 0.01 mm grid')
         start = at[axis]
-        max_step = 9.9 if axis in ('X', 'Y') else 4.9
-        count = max(1, math.ceil(abs(value - start) / max_step))
+        max_step = 9.9 if axis in ('X', 'Y') else 5.0
+        count = max(1, math.ceil(max(0.0, abs(value - start) - (1e-9 if axis == 'Z' else 0.0)) / max_step))
         while True:
             values = [q01(start + (value - start) * step / count)
                       for step in range(1, count)] + [value]

@@ -1544,15 +1544,15 @@
       "sourceRoot": "/home/lumen/lumenpnp",
       "sourcePath": "automation/paste/prepare-compensated-ftp-pair.py",
       "destination": "integrations/lumenpnp/automation/paste/prepare-compensated-ftp-pair.py",
-      "sha256": "a5bac0e627d8a1e41dceb14293769af064266e16b855565183309ec216c1e594",
-      "bytes": 18846
+      "sha256": "a5eb2db4a3a5991dc39770a1297ca77569ca6d7d6fcd8ced94de4ab7fe778557",
+      "bytes": 18889
     },
     {
       "sourceRoot": "/home/lumen/lumenpnp",
       "sourcePath": "automation/paste/test_prepare_compensated_ftp_pair.py",
       "destination": "integrations/lumenpnp/automation/paste/test_prepare_compensated_ftp_pair.py",
-      "sha256": "f27a6eea7ad3af508c64d2b7446b588a4c089afbb79dfc7b696626646ff7526c",
-      "bytes": 8248
+      "sha256": "d6a88a5659ef055a5b2df2099515bfd6562f98185cd4701f2e781255b8eecbf0",
+      "bytes": 9350
     },
     {
       "sourceRoot": "/home/lumen/lumenpnp",
