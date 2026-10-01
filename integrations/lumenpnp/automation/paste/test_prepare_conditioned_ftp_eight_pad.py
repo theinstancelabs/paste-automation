@@ -156,6 +156,22 @@ class EightPadBuilderTests(unittest.TestCase):
                 self.assertEqual(recipe12['stages'][a]['target']-recipe12['stages'][pad['restoreStageIndex']]['target'],-6)
                 self.assertEqual(recipe12['stages'][b]['target']-recipe12['stages'][a]['target'],-6)
                 self.assertEqual([recipe12['stages'][i]['dwellMilliseconds'] for i in (a,b)],[0,2000])
+            target['compensatedSequence']['retractDegrees']=3;fixture.json('eight-target.json',target)
+            args.output=str(fixture.root/'eight-out-r3-mismatch')
+            with self.assertRaisesRegex(ValueError,'Conditioner retraction'):
+                M.build(args)
+            fixture.exp['retractDegrees']=3;experiment.write_text(json.dumps(fixture.exp))
+            review.write_text(json.dumps({'reviewedBy':'reviewer','reviewedMs':now,'experimentEvidence':M.PREP.WIPE.evidence(experiment),'imageEvidence':M.PREP.WIPE.evidence(fixture.image)}))
+            profiledata['measurementEvidence']=M.PREP.WIPE.evidence(review);fixture.profile.write_text(json.dumps(profiledata));args.output=str(fixture.root/'eight-out-r3')
+            with patch.object(M.subprocess,'run',side_effect=offline_run):M.build(args)
+            r3=json.loads((fixture.root/'eight-out-r3'/'recipe.json').read_text());t3=json.loads((fixture.root/'eight-out-r3'/'targets.json').read_text())
+            self.assertEqual(r3['bAccounting']['grossChargedDegrees'],287);self.assertEqual(r3['bAccounting']['netDegrees'],-113)
+            self.assertEqual(len(r3['stages']),len(recipe12['stages']))
+            for pad in t3['pads']:
+                i=pad['restoreStageIndex'];j=pad['retractStageIndex']
+                prior_b=next(s['target'] for s in reversed(r3['stages'][:i]) if s['axis']=='B')
+                self.assertEqual(r3['stages'][i]['target']-prior_b,-3)
+                self.assertEqual(r3['stages'][j]['target']-r3['stages'][j-1]['target'],3)
         finally:fixture.tearDown()
         self.target['pads'][1]['padId']='R1.2';self.target['compensatedSequence']['doseDegrees']=5
         with self.assertRaises(ValueError):M.validate_eight(self.target)

@@ -30,18 +30,20 @@ def derive(q,load,now):
  if q.get('doseDegrees') not in (2,3,4,6,12,20) or type(q['doseDegrees']) is not int:fail('Dose must be an existing integer FTP dose: 2, 3, 4, 6, 12 or 20')
  dwell=q.get('dwellMilliseconds',200)
  if type(dwell) is not int or not 0 <= dwell <= 2000:fail('Forward dwell must be an integer from 0 through 2000 ms')
+ retract=q.get('retractDegrees',2)
+ if type(retract) is not int or retract not in (2,3):fail('Retraction must be integer2 or3 degrees')
  clear=q.get('xyClearanceRawZ');work=q.get('surfaceRawZ')
  if not finite(clear) or not finite(work) or clear>=work:fail('Explicit work/clearance Z required')
  surface=docs['surface'].get('surface');offset=docs['tipOffset'].get('cameraMinusTipXYMm')
  if not surface or surface.get('rawZ')!=work:fail('Selected surface Z must equal immutable surface evidence')
  if not isinstance(offset,list) or len(offset)!=2 or not all(finite(v) for v in offset):fail('Immutable selected tip offset required')
- exp=copy.deepcopy(docs['scrapExperiment']);exp.update(startRaw=copy.deepcopy(raw),doseDegrees=q['doseDegrees'],targetsXY=copy.deepcopy(q.get('scrapTargetsXY')))
+ exp=copy.deepcopy(docs['scrapExperiment']);exp.update(startRaw=copy.deepcopy(raw),doseDegrees=q['doseDegrees'],retractDegrees=retract,targetsXY=copy.deepcopy(q.get('scrapTargetsXY')))
  if exp.get('mode')!='transfer-preparation' or exp.get('workRawZ')!=raw['Z'] or not isinstance(exp['targetsXY'],list) or len(exp['targetsXY'])!=2:fail('Explicit transfer-preparation experiment and two scrap XY targets required')
  # Full emitted prefix is checked by the existing preparer; retain its authored amounts and waits.
  target=copy.deepcopy(docs['targetBase']);target.update(schema=1,scope='ftp-two-pad-commissioning-targets',reviewedBy=q['reviewedBy'],reviewedMs=stamp,**session)
  for k in ('boardCleaned','padsAvailable','boardUnmovedSinceRegistration'):target[k]=attest[k]
  target.update(registrationEvidence=copy.deepcopy(src['registration']),registrationRevalidationEvidence=copy.deepcopy(src['registrationRevalidation']),surfaceEvidence=copy.deepcopy(src['surface']),surface=copy.deepcopy(surface),tipOffsetEvidence=copy.deepcopy(src['tipOffset']),cameraMinusTipXYMm=copy.deepcopy(offset),provenance='commissioning-provisional',precisionCalibrated=False,flowCalibrated=False,quantizationMm=.01)
- target['compensatedSequence']={'schema':1,'protocol':'restore-dose-retract-lift-two-pad','doseDegrees':q['doseDegrees'],'retractDegrees':2,'dwellMilliseconds':dwell,'retractDwellMilliseconds':500,'idleReliefDegrees':40}
+ target['compensatedSequence']={'schema':1,'protocol':'restore-dose-retract-lift-two-pad','doseDegrees':q['doseDegrees'],'retractDegrees':retract,'dwellMilliseconds':dwell,'retractDwellMilliseconds':500,'idleReliefDegrees':40}
  pairs=q.get('pairReviews');registered={p['padId']:p for p in docs['registration'].get('resistorPadMachineXYTargets',[])}
  if not isinstance(pairs,list) or len(pairs)!=1:fail('One explicit pair review required')
  target['pairReferences']=[];target['pads']=[]

@@ -15,3 +15,5 @@ Optional input `dwellMilliseconds` accepts exactly integer 200, 1000 or 2000, de
 Dose 20 remains one existing −20 B stage per pad. The group-only cap is 96 stages; dose 12 uses exactly two −6 stages per pad with the selected wait only on the second. This admission does not establish deposited volume or physical qualification.
 
 The 12-degree option adds eight stages versus a single-part dose. The complete route must still fit 96 stages; longer routes are rejected. No single −12 native command or stroke admission is added. Standard conditioning plus eight 12-degree pads charges 270 gross degrees.
+
+Optional author input `retractDegrees` accepts integer 2 or 3, defaulting to 2. The selected value is copied into both the transfer conditioner and every FTP restore/retract. Retract wait stays 500 ms and final relief stays 40 degrees. A standard eight-pad 12-degree/R3 recipe charges 287 gross degrees with net −113.

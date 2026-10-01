@@ -32,7 +32,7 @@ def validate_eight(t):
             PREP.WIPE.checked_evidence(p.get('availabilityReportEvidence'),'availability report')
             if type(p.get('availabilityCapturedMs')) is not int:fail('Each pad needs camera-report capture time')
     c=t.get('compensatedSequence') or {}
-    if c.get('schema')!=1 or c.get('protocol')!='restore-dose-retract-lift-eight-pad' or c.get('doseDegrees') not in (4,6,12,20) or c.get('retractDegrees')!=2 or type(c.get('dwellMilliseconds')) is not int or c.get('dwellMilliseconds') not in (200,1000,2000) or c.get('retractDwellMilliseconds')!=500 or c.get('idleReliefDegrees')!=40:fail('Eight-pad sequence is fixed at dose4|6|12|20/R2/forward200|1000|2000ms/retract500ms/final40')
+    if c.get('schema')!=1 or c.get('protocol')!='restore-dose-retract-lift-eight-pad' or c.get('doseDegrees') not in (4,6,12,20) or type(c.get('retractDegrees')) is not int or c.get('retractDegrees') not in (2,3) or type(c.get('dwellMilliseconds')) is not int or c.get('dwellMilliseconds') not in (200,1000,2000) or c.get('retractDwellMilliseconds')!=500 or c.get('idleReliefDegrees')!=40:fail('Eight-pad sequence is fixed at dose4|6|12|20/R2|3/forward200|1000|2000ms/retract500ms/final40')
     return refs,pads
 
 def validate_availability_reports(pads, template, now):
@@ -81,6 +81,7 @@ def build(args):
     if PREP.WIPE.checked_evidence(review.get('experimentEvidence'),'review experiment')!=ee or PREP.WIPE.checked_evidence(review.get('imageEvidence'),'review image')!=ev(image) or PREP.WIPE.checked_evidence(profile.get('measurementEvidence'),'profile review')!=re:fail('Preparation experiment/review/profile evidence does not bind')
     if review.get('reviewedBy') is None or type(review.get('reviewedMs')) is not int or not captured<=review['reviewedMs']<=now:fail('Fresh authored complete-route review required')
     if not PREP.BATCH.same(experiment.get('startRaw'),start) or experiment.get('mode')!='transfer-preparation':fail('Transfer preparation must start at exact fresh barrier')
+    if experiment.get('retractDegrees')!=target['compensatedSequence'].get('retractDegrees'):fail('Conditioner retraction must match FTP restore/retract selection')
     if experiment.get('doseDegrees')!=target['compensatedSequence'].get('doseDegrees') or experiment.get('conditioningDoseDegrees')!=20:fail('Preparation experiment dose must match the selected FTP dose and retain conditioning dose20')
     gap=PREP.number(profile.get('estimatedGapMm'),'profile gap');unc=PREP.number(profile.get('gapUncertaintyMm'),'profile uncertainty')
     prefix,_,prep_accounting=PREP.stages_for(experiment,re,gap,unc)

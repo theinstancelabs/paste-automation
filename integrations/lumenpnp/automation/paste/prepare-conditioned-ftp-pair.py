@@ -89,6 +89,8 @@ def build(args):
         fail('Preparation profile must bind exact review')
     if not PREP.BATCH.same(experiment.get('startRaw'), start):
         fail('Preparation experiment startRaw differs from fresh barrier')
+    if experiment.get('retractDegrees') != (target.get('compensatedSequence') or {}).get('retractDegrees'):
+        fail('Conditioner retraction must match FTP restore/retract selection')
     if experiment.get('mode') != 'transfer-preparation':
         fail('Inline conditioning must use explicit transfer-preparation experiment')
     if review.get('reviewedBy') is None or type(review.get('reviewedMs')) is not int or not captured <= review['reviewedMs'] <= now:

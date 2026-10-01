@@ -162,5 +162,6 @@
       "capturedMs": null
     }
   ],
-  "dwellMilliseconds": 200
+  "dwellMilliseconds": 200,
+  "retractDegrees": 2
 }
