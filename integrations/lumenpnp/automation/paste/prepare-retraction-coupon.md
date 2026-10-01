@@ -1,0 +1,19 @@
+# Offline scrap retraction coupon recipe
+
+`prepare-retraction-coupon.py` writes one recipe. It reads supplied files and runs the existing offline batch preparation gate in a temporary directory, then discards that temporary request. It does not read a camera, query OpenPnP, dispatch, alter a machine plan, or supply review attestations.
+
+Provide `--experiment`, `--template`, `--barrier`, `--profile`, `--review`, `--image`, `--previous-report`, `--ledger`, and a new `--output` path. The template supplies the existing session/carryover identities; the barrier, reviewed image, provisional profile, latest completed report and current ledger must pass the existing preparation gates. Output creation is exclusive. Run the ordinary `prepare-contiguous-batch.py prepare` and native preview/finalization workflow separately before any reviewed physical execution.
+
+The explicitly authored experiment JSON contains:
+
+- `schema: 1`, `scope: "reviewed-scrap-retraction-coupon"`.
+- `startRaw: {X,Y,Z,A,B}`, exactly equal to the supplied barrier; `workRawZ` equal to start Z and `clearanceRawZ` exactly 5 mm smaller.
+- `targetsXY`: five distinct `{X,Y}` objects, ordered as the wipe endpoint, sacrificial conditioning point, and three test points. XY targets and work/clearance Z must lie on the 0.01 mm reporting grid. The wipe changes one XY axis by at most 2 mm; all later XY stages occur at clearance and each axis step is at most 10 mm.
+- `doseDegrees`: 6, 12 or 20; `retractDegrees`: 3 or 6.
+- Fixed values: `primeDegrees: 40`, `preWipeReliefDegrees: 20`, `idleReliefDegrees: 20`, `conditioningDoseDegrees: 20`, `dwellMilliseconds: 2000`.
+
+The authored review must hash-bind this exact experiment through `experimentEvidence: {path,sha256}`, and the supplied image through `imageEvidence`. It also supplies the existing reviewer, review time, clean-tip/prior-top image evidence and full raw-Z interval. The profile must hash-bind that same review through `measurementEvidence`; its gap estimate/uncertainty remain explicitly provisional. The builder does not select a surface, targets or physical gap.
+
+The sequence is prime twice by -20 degrees, dwell, +20 relief with 1-second dwell, named wipe, lift, one -20 conditioning deposit, then three test deposits. A 12-degree test dose is two consecutive -6-degree stages, with the 2-second dwell only after the second; no 12-degree native stage is introduced. Each conditioning/test deposit dwells for 2 seconds, retracts by the selected amount, then lifts. Before each test deposit the previous retraction is restored. The final +20 idle relief occurs at clearance. B retains speed 0.05 and XY/Z retain 1.0 through the existing batch preparation policy; no firmware pressure advance is added.
+
+Gross travel is `100 + 3*doseDegrees + 7*retractDegrees`: 139 degrees for 6/3, 157 for 12/3, 181 for 20/3, 160 for 6/6 and 202 for 20/6. The 6/3 trial is a 50% amount ratio, 12/3 is 25%, and 20/3 is 15%. Gross and net motor travel do not establish delivered volume. All reserved gross still counts on a fault; current ledger/hash and runtime policy checks remain authoritative.
