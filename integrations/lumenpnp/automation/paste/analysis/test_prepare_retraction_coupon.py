@@ -80,9 +80,33 @@ class RetractionCouponTests(unittest.TestCase):
             with self.assertRaises(ValueError):
                 M.stages_for(e, dict(path='/review', sha256=H), 1.1, 1)
 
+    def test_sixty_degree_prime_preserves_wipe_lift_and_charges_all_three_chunks(self):
+        e = experiment(20, 6); e['primeDegrees'] = 60
+        stages, poses, accounting = M.stages_for(e, dict(path='/review',sha256=H),1.1,1)
+        self.assertEqual(len(stages),34)
+        self.assertEqual(accounting['grossCommandedDegrees'],222)
+        self.assertEqual(accounting['netDegrees'],-94)
+        self.assertEqual(accounting['primeDegrees'],60)
+        self.assertEqual([s['axis'] for s in stages[:6]],['B','B','B','B','X','Z'])
+        self.assertEqual([s['dwellMilliseconds'] for s in stages[:4]],[0,0,2000,1000])
+        self.assertEqual([poses[i+1]['B']-poses[i]['B'] for i in range(4)],[-20,-20,-20,20])
+        for i,s in enumerate(stages):
+            if s['axis'] in ('X','Y') and poses[i]['Z'] != 53.25:
+                self.assertEqual(i,4); self.assertTrue(s['wipeReview'])
+        with tempfile.TemporaryDirectory() as d:
+            args = self.fixture(d)
+            Path(args.experiment).write_text(json.dumps(e))
+            review = json.loads(Path(args.review).read_text()); review['experimentEvidence'] = M.WIPE.evidence(args.experiment)
+            Path(args.review).write_text(json.dumps(review))
+            profile = json.loads(Path(args.profile).read_text()); profile['measurementEvidence'] = M.WIPE.evidence(args.review)
+            Path(args.profile).write_text(json.dumps(profile))
+            result = M.build(args)
+            self.assertEqual(len(result['stages']),34)
+            self.assertEqual(result['bAccounting']['grossCommandedDegrees'],222)
+
     def test_unsafe_or_unreviewed_parameters_rejected(self):
         edits = [lambda e: e.update(doseDegrees=3), lambda e: e.update(retractDegrees=20),
-                 lambda e: e.update(dwellMilliseconds=True), lambda e: e.update(primeDegrees=60),
+                 lambda e: e.update(dwellMilliseconds=True), lambda e: e.update(primeDegrees=80),
                  lambda e: e.update(clearanceRawZ=52), lambda e: e['targetsXY'][0].update(Y=201),
                  lambda e: e['targetsXY'][1].update(X=120), lambda e: e['targetsXY'][1].update(X=float('nan')),
                  lambda e: e['targetsXY'][1].update(X=104.004), lambda e: e['targetsXY'].pop(), lambda e: e.update(scope='cleaned-ftp-demo')]

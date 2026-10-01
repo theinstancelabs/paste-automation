@@ -32,11 +32,14 @@ def stages_for(experiment, review_evidence, gap, uncertainty):
     e = experiment
     if e.get('schema') != 1 or e.get('scope') != 'reviewed-scrap-retraction-coupon':
         raise ValueError('Explicit scrap retraction experiment required')
-    fixed = {'primeDegrees': 40, 'preWipeReliefDegrees': 20, 'idleReliefDegrees': 20,
+    fixed = {'preWipeReliefDegrees': 20, 'idleReliefDegrees': 20,
              'conditioningDoseDegrees': 20}
     for key, expected in fixed.items():
         if type(e.get(key)) is not int or e[key] != expected:
             raise ValueError('Fixed experiment parameter changed: ' + key)
+    prime = e.get('primeDegrees')
+    if type(prime) is not int or prime not in (40, 60):
+        raise ValueError('Prime must be 40 or 60 degrees')
     dwell = e.get('dwellMilliseconds', 2000)
     if type(dwell) is not int or dwell not in (200, 500, 2000):
         raise ValueError('Forward-dose dwell must be 200, 500 or 2000 milliseconds')
@@ -72,7 +75,7 @@ def stages_for(experiment, review_evidence, gap, uncertainty):
         raise ValueError('Named wipe must change exactly one XY axis')
     axis = changed[0]
     stages = WIPE.recipe_stages(raw, review_evidence, axis, targets[0][axis]-raw[axis],
-                               clear, gap, uncertainty, 40, 20, 0)
+                               clear, gap, uncertainty, prime, 20, 0)
     at = dict(raw)
     poses = [dict(at)]
     for stage in stages:
@@ -114,7 +117,7 @@ def stages_for(experiment, review_evidence, gap, uncertainty):
     gross = sum(abs(right['B']-left['B']) for left, right in zip(poses, poses[1:]))
     return stages, poses, {'grossCommandedDegrees': gross, 'netDegrees': at['B']-raw['B'],
                            'finalRaw': dict(at), 'doseDegrees': e['doseDegrees'],
-                           'retractDegrees': e['retractDegrees'], 'forwardDwellMilliseconds': dwell,
+                           'retractDegrees': e['retractDegrees'], 'primeDegrees': prime, 'forwardDwellMilliseconds': dwell,
                            'testRetractionRatio': e['retractDegrees']/e['doseDegrees']}
 
 
@@ -135,11 +138,11 @@ def build(args):
     gap = number(profile.get('estimatedGapMm'), 'profile gap')
     uncertainty = number(profile.get('gapUncertaintyMm'), 'profile uncertainty')
     stages, poses, accounting = stages_for(experiment, WIPE.evidence(rp), gap, uncertainty)
-    wipe = stages[3]
+    wipe = next(stage for stage in stages if stage.get('wipeReview') is True)
     # Reuse existing identity, reviewed image, provisional profile and current-ledger checks.
     recipe = WIPE.build(bp, pp, rp, args.previous_report, args.ledger, wipe['axis'],
                         wipe['target']-raw[wipe['axis']], experiment['clearanceRawZ'],
-                        gap, uncertainty, 40, 20, 0)
+                        gap, uncertainty, experiment['primeDegrees'], 20, 0)
     bounds = {axis: {'min': min(p[axis] for p in poses), 'max': max(p[axis] for p in poses)}
               for axis in ('X', 'Y', 'Z', 'B')}
     heads = {}
