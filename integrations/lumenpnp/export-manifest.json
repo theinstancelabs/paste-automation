@@ -1369,8 +1369,8 @@
       "sourceRoot": "/home/lumen/lumenpnp",
       "sourcePath": "automation/operations/paste-small-dot-trials-20260930.md",
       "destination": "integrations/lumenpnp/automation/operations/paste-small-dot-trials-20260930.md",
-      "sha256": "300e7310b045b8963926b9920181230317fd9c7a7a8181c9cb9c07052aac31a7",
-      "bytes": 2460
+      "sha256": "00bac859b0958e214c3ea269770206021820fd6e21668c5069055a81fd0198cf",
+      "bytes": 3506
     }
   ],
   "manifestSelfHash": "Excluded to avoid a recursive digest; this manifest enumerates every other exported/generated file."
