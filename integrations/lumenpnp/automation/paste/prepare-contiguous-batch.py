@@ -78,6 +78,7 @@ def prepare(args):
  start=copy.deepcopy(raw); built=[]
  for i,src in enumerate(stages):
   if not isinstance(src,dict) or src.get('axis') not in ('X','Y','Z','B') or not isinstance(src.get('target'),(int,float)): err(f'Invalid recipe stage {i}')
+  # The shared batch policy admits reviewed +/-3-degree stages; formatter and counts remain native.
   axis=src['axis']; target=copy.deepcopy(start); target[axis]=src['target']; stg={'axis':axis,'speedFraction':.05 if axis=='B' else 1,'startRaw':start,'targetRaw':target}
   for key in ('gapEvidence','estimatedGapMm','gapUncertaintyMm','wipeReview','wipeReviewEvidence','dwellMilliseconds'):
    if key in src: stg[key]=src[key]

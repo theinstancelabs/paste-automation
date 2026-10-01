@@ -76,3 +76,15 @@ test('reconciliation terminal binds the preserved ledger and next batch charges 
  const reserved=B.reserveBatch(next,q,carry(),context);assert.equal(reserved.totalAbsoluteDegrees,1788);assert.equal(reserved.lastVerifiedB,-1130);assert.deepEqual(reserved.entries.slice(0,next.entries.length),next.entries);assert.equal(B.finishBatch(B.markBatchStep(reserved,q,0,-1136),q,true).lastVerifiedB,-1136);
  assert.throws(()=>B.reserveBatch(next,{...q,id:faultId},carry(),context),/replay/);const changed=clone(next);changed.entries.at(-1).chargedUnexecutedDegrees=0;assert.throws(()=>B.reserveBatch(changed,q,carry(),context),/reconciliation/);
 });
+
+test('batch-only three-degree relief and restoration reserve gross, verify ordered positions, and cannot replay',()=>{
+ const q=request();q.rawBounds.B={min:-300,max:-200};q.previewStages=[];let at={...q.expectedRaw};
+ for(const delta of [-20,3,-3,-20,3]){const target={...at,B:at.B+delta};q.previewStages.push({axis:'B',speedFraction:.05,startRaw:at,targetRaw:target,gapEvidence:ev(),estimatedGapMm:.65,gapUncertaintyMm:.4,expandedCommands:['synthetic'],...ev()});at=target;}q.finalTargetRaw=at;
+ B.validateBatch(q,1000,1);B.validateBatch({...q,scope:'contiguous-native-scrap-batch-preview'},1000,1,true);
+ let l=B.reserveBatch(ledger(),q,carry());assert.equal(l.totalAbsoluteDegrees,49);assert.equal(B.finishBatch(l,q,false).totalAbsoluteDegrees,49);
+ q.previewStages.forEach((s,i)=>{l=B.markBatchStep(l,q,i,s.targetRaw.B);});l=B.finishBatch(l,q,true);assert.equal(l.lastVerifiedB,-277);
+ const next=request();next.id='22345678-1234-1234-1234-123456789abc';next.expectedRaw.B=-277;next.expectedDriver.B=-277;next.rawBounds.B={min:-300,max:-200};next.previewStages[0].startRaw={...next.expectedRaw};next.previewStages[0].targetRaw={...next.expectedRaw,B:-274};next.finalTargetRaw={...next.previewStages[0].targetRaw};assert.equal(B.reserveBatch(l,next,carry()).totalAbsoluteDegrees,52);
+ assert.throws(()=>B.reserveBatch(l,{...next,id:q.id},carry()),/replay/);const forged=clone(l);delete forged.entries[1].batchId;assert.throws(()=>B.reserveBatch(forged,next,carry()),/Malformed/);const wrongKey=clone(l);wrongKey.entries[1].requestId='unrelated';assert.throws(()=>B.reserveBatch(wrongKey,next,carry()),/Malformed/);
+ for(const delta of [-5,5,3.1]){const bad=clone(next);bad.previewStages[0].targetRaw.B=bad.expectedRaw.B+delta;bad.finalTargetRaw={...bad.previewStages[0].targetRaw};assert.throws(()=>B.validateBatch(bad,1000,1));}const faster=clone(next);faster.previewStages[0].speedFraction=.15;assert.throws(()=>B.validateBatch(faster,1000,1));
+ assert.equal(B.allowedSteps.includes(3),false);assert.equal(B.allowedSteps.includes(-3),false);
+});
