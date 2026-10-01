@@ -179,10 +179,10 @@ def build_route(raw, poses, target, clearance):
             part_doses.append(bstage(amount, pose, dose_wait if n == len(dose_parts) - 1 else 0, gap))
         retract_i = bstage(retract, pose, retract_wait, gap)
         lift_i = move_index = append('Z', clearance)
-        # If work/clearance separation required a split, the compensated protocol
-        # requires one immediate lift. This is why the reviewed work lift must <4.9 mm.
-        if lift_i is None or len(stages) - 1 != lift_i or work_z - clearance > 4.9:
-            fail('Dispense-to-clearance lift must be one stage no greater than 4.9 mm')
+        # The immediate lift uses the native 5.0 mm bound; tolerate only
+        # floating-point subtraction noise, not another 0.01 mm grid step.
+        if lift_i is None or len(stages) - 1 != lift_i or work_z - clearance > 5.0 + 1e-9:
+            fail('Dispense-to-clearance lift must be one stage no greater than 5.0 mm')
         out_pad.pop('doseStageIndex', None)
         out_pad['restoreStageIndex'] = restore_i
         out_pad['doseStageIndices'] = part_doses

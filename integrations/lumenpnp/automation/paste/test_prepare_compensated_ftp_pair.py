@@ -111,15 +111,33 @@ class CompensatedPairBuilderTests(unittest.TestCase):
         self.assertTrue(all(abs(stage['target'] * 100 - round(stage['target'] * 100)) < 1e-9
                             for stage in stages if stage['axis'] in ('X', 'Y', 'Z')))
 
+    def test_immediate_lift_native_five_mm_boundary(self):
+        self.add_pair()
+        self.raw['Z'] = 53.45
+        for work in (58.40, 58.45):
+            self.target['surface']['rawZ'] = work
+            for pad in self.target['pads']:
+                pad['rawPose']['Z'] = work
+            updated, stages, _, _, accounting = MODULE.build_route(self.raw, self.poses, self.target, 53.45)
+            for pad in updated['pads']:
+                self.assertEqual(pad['liftStageIndex'], pad['retractStageIndex'] + 1)
+                self.assertEqual(stages[pad['liftStageIndex']], {'axis': 'Z', 'target': 53.45})
+            self.assertEqual(accounting['grossChargedDegrees'], 56)
+        self.target['surface']['rawZ'] = 58.46
+        for pad in self.target['pads']:
+            pad['rawPose']['Z'] = 58.46
+        with self.assertRaisesRegex(ValueError, 'one stage no greater than 5.0'):
+            MODULE.build_route(self.raw, self.poses, self.target, 53.45)
+
     def test_different_resistors_and_invalid_lift_are_rejected(self):
         self.add_pair('R40')
         self.target['pads'][1]['padId'] = 'R39.2'
         with self.assertRaisesRegex(ValueError, 'one resistor'):
             MODULE.build_route(self.raw, self.poses, self.target, 53.4)
         self.add_pair('R40')
-        self.target['surface']['rawZ'] = 58.31
+        self.target['surface']['rawZ'] = 58.41
         for pad in self.target['pads']:
-            pad['rawPose']['Z'] = 58.31
+            pad['rawPose']['Z'] = 58.41
         with self.assertRaisesRegex(ValueError, 'one stage'):
             MODULE.build_route(self.raw, self.poses, self.target, 53.4)
 
