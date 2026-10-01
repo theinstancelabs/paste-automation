@@ -39,11 +39,14 @@ class ShortDwellCouponTests(unittest.TestCase):
 
     def test_explicit_4_4_4_repeat_recipe_charges_every_restore_and_retract(self):
         stages, gross, final_raw = M.build_stages(self.raw, self.targets, {'path': '/review', 'sha256': 'a' * 64}, .4, .3, [4, 4, 4])
-        cur = self.raw['B']; deltas = []
+        cur = self.raw['B']; z = self.raw['Z']; deltas = []; b_stage_z = []
         for stage in stages:
             if stage['axis'] == 'B':
                 deltas.append(stage['target'] - cur)
+                b_stage_z.append(z)
                 cur = stage['target']
+            elif stage['axis'] == 'Z':
+                z = stage['target']
         self.assertEqual(deltas, [-20, -20, -20, 20, -20, 6] + [-6, -4, 6] * 3 + [20, 20])
         self.assertEqual(gross, 194)
         self.assertEqual(final_raw['B'] - self.raw['B'], -26)
@@ -64,6 +67,38 @@ class ShortDwellCouponTests(unittest.TestCase):
         for bad in ('', '6,4', '6,4,2,2', '6,3,2', '6.0,4,2'):
             with self.assertRaises(M.InputError):
                 M.parse_doses(bad)
+
+    def test_retraction_sweep_restores_each_prior_return_before_next_fixed_dose(self):
+        retractions = M.parse_retractions('2,3,6')
+        stages, gross, final_raw = M.build_stages(
+            self.raw, self.targets, {'path': '/review', 'sha256': 'a' * 64}, .4, .3,
+            [4, 4, 4], retractions)
+        cur = self.raw['B']; z = self.raw['Z']; deltas = []; b_stage_z = []
+        for stage in stages:
+            if stage['axis'] == 'B':
+                deltas.append(stage['target'] - cur)
+                b_stage_z.append(z)
+                cur = stage['target']
+            elif stage['axis'] == 'Z':
+                z = stage['target']
+        self.assertEqual(
+            deltas,
+            [-20, -20, -20, 20, -20, 6, -6, -4, 2, -2, -4, 3, -3, -4, 6, 20, 20],
+        )
+        self.assertEqual(gross, 180)
+        self.assertEqual(final_raw['B'] - self.raw['B'], -26)
+        self.assertEqual(len(stages), 32)
+        self.assertEqual([b_stage_z[i] for i in (6, 9, 12)], [M.WORK_Z] * 3)
+        self.assertLessEqual(gross, 240)
+
+    def test_retraction_default_preserves_existing_r6_recipe_and_parser_is_closed(self):
+        self.assertEqual(M.parse_retractions('6,6,6'), [6, 6, 6])
+        stages, gross, _ = M.build_stages(
+            self.raw, self.targets, {'path': '/review', 'sha256': 'a' * 64}, .4, .3, [4, 4, 4])
+        self.assertEqual(gross, 194)
+        for bad in ('', '2,3', '2,3,6,6', '1,3,6', '2.0,3,6'):
+            with self.assertRaises(M.InputError):
+                M.parse_retractions(bad)
 
 
 if __name__ == '__main__':

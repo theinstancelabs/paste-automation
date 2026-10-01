@@ -1971,15 +1971,29 @@
       "sourceRoot": "/home/lumen/lumenpnp",
       "sourcePath": "automation/paste/author-short-dwell-6degree-coupon.py",
       "destination": "integrations/lumenpnp/automation/paste/author-short-dwell-6degree-coupon.py",
-      "sha256": "513676b99b960b30b4e58c0b0fd980075a7ed8f0cbae457a915d896d8b63132f",
-      "bytes": 12395
+      "sha256": "58838d363d7376e4fa1ebfcfb3e340e8466b14ee5447f09e602d543d9dccc8f7",
+      "bytes": 13813
     },
     {
       "sourceRoot": "/home/lumen/lumenpnp",
       "sourcePath": "automation/paste/test_author_short_dwell_6degree_coupon.py",
       "destination": "integrations/lumenpnp/automation/paste/test_author_short_dwell_6degree_coupon.py",
-      "sha256": "97cb298a0740cd5a52b98c199e1211e1c83aa5fb91912e978b9777d953a51268",
-      "bytes": 3465
+      "sha256": "447f0c4fa88379d2dff814fa693622eb4094ceb5e1d6dee975153750d89d11ed",
+      "bytes": 5149
+    },
+    {
+      "sourceRoot": "/home/lumen/lumenpnp",
+      "sourcePath": "automation/paste/analysis/compare_pad_footprints.py",
+      "destination": "integrations/lumenpnp/automation/paste/analysis/compare_pad_footprints.py",
+      "sha256": "04e93962448baa120ebf1b31e2c0e06282af3478b1d249ea105156ffc883f839",
+      "bytes": 6229
+    },
+    {
+      "sourceRoot": "/home/lumen/lumenpnp",
+      "sourcePath": "automation/paste/analysis/test_compare_pad_footprints.py",
+      "destination": "integrations/lumenpnp/automation/paste/analysis/test_compare_pad_footprints.py",
+      "sha256": "6f86abc57825dc2ae0ec168e9bf8b009055e281c0cf711601c79b7ba69fd7e02",
+      "bytes": 2530
     }
   ],
   "manifestSelfHash": "Excluded to avoid a recursive digest; this manifest enumerates every other exported/generated file.",

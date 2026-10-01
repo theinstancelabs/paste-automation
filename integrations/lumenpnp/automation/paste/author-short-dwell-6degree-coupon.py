@@ -13,7 +13,7 @@ from pathlib import Path
 
 WORK_Z = 58.45
 CLEAR_Z = 53.45
-ALLOWED_B = (-20, -6, -4, -2, 6, 20)
+ALLOWED_B = (-20, -6, -4, -3, -2, 2, 3, 4, 6, 20)
 
 
 class InputError(ValueError):
@@ -59,7 +59,17 @@ def parse_doses(value):
     return doses
 
 
-def build_stages(raw, targets, gap_evidence, gap, uncertainty, doses):
+def parse_retractions(value):
+    try:
+        retractions = [int(item.strip()) for item in value.split(',')]
+    except (AttributeError, ValueError):
+        raise InputError('--retractions must be comma-separated whole degrees from 2,3,4,6')
+    require(len(retractions) == 3 and all(r in (2, 3, 4, 6) for r in retractions),
+            '--retractions must specify exactly three explicit values from 2,3,4,6')
+    return retractions
+
+
+def build_stages(raw, targets, gap_evidence, gap, uncertainty, doses, retractions=None):
     require(raw.get('Z') == WORK_Z and raw.get('A') == 720,
             'Fresh barrier must be at raw Z58.45 and A720')
     require(number(gap, 'estimated gap') - number(uncertainty, 'gap uncertainty') >= 0.1,
@@ -72,6 +82,10 @@ def build_stages(raw, targets, gap_evidence, gap, uncertainty, doses):
     require(len(tests) == 3, 'Exactly three test points are required')
     require(len(doses) == 3 and all(type(d) is int and d in (2, 4, 6) for d in doses),
             'Exactly three explicit 2,4,6 degree doses are required')
+    if retractions is None:
+        retractions = [6, 6, 6]
+    require(len(retractions) == 3 and all(type(r) is int and r in (2, 3, 4, 6) for r in retractions),
+            'Exactly three explicit 2,3,4,6 degree retractions are required')
     points = [wipe, conditioner] + tests
     require(len({(p['X'], p['Y']) for p in points}) == 5, 'All five reviewed positions must be distinct')
     changed = [axis for axis in ('X', 'Y') if wipe[axis] != raw[axis]]
@@ -128,16 +142,20 @@ def build_stages(raw, targets, gap_evidence, gap, uncertainty, doses):
     stroke(6, 500)
     add('Z', CLEAR_Z)
 
-    for point, dose in zip(tests, doses):
+    for index, (point, dose, retract) in enumerate(zip(tests, doses, retractions)):
+        # The conditioner retracts six degrees. At WORK_Z, undo it before
+        # test one; at WORK_Z before tests two and three, undo the previous
+        # retraction. The net dose advance accumulates across test points.
         move(point)
         add('Z', WORK_Z)
-        stroke(-6)
+        stroke(-6 if index == 0 else -retractions[index - 1])
         stroke(-dose, 200)
-        stroke(6, 500)
+        stroke(retract, 500)
         add('Z', CLEAR_Z)
     stroke(20)
     stroke(20, 2000)
-    require(gross == 182 + sum(doses), 'Internal gross accounting changed')
+    expected_gross = 152 + sum(doses) + sum(retractions) + sum(retractions[:2])
+    require(gross == expected_gross, 'Internal gross accounting changed')
     require(len(stages) <= 40, 'Recipe exceeds the existing generic contiguous-batch 40-stage limit')
     return stages, gross, current
 
@@ -151,6 +169,7 @@ def make_parser():
     p.add_argument('--reviewer', required=True)
     p.add_argument('--review', required=True, help='human-reviewed experimental question and route basis')
     p.add_argument('--doses', required=True, help='comma-separated per-pad degrees, for example 6,4,2')
+    p.add_argument('--retractions', default='6,6,6', help='comma-separated per-pad return degrees (default 6,6,6)')
     return p
 
 
@@ -213,22 +232,25 @@ def build_recipe(args, now_ms=None):
 
     clear_ev = evidence(review_path)
     doses = parse_doses(args.doses)
-    stages, gross, final_raw = build_stages(raw, targets, clear_ev, gap, uncertainty, doses)
+    retractions = parse_retractions(args.retractions)
+    stages, gross, final_raw = build_stages(raw, targets, clear_ev, gap, uncertainty, doses, retractions)
     require(gross <= 238, 'Route exceeds requested gross ceiling')
     output = Path(args.output).resolve()
     require(not output.exists(), 'Refusing to overwrite existing output')
     recipe = {
         'mode': 'wet', 'targetSurface': 'scrap',
-        'experimentQuestion': 'At the same reviewed scrap positions and work height, what footprints result from explicit 6, 4, and 2 degree deposits after the 20-degree conditioner, using R6 and 200 ms dwell?',
+        'experimentQuestion': 'At fixed 4-degree dose, 200 ms dispense dwell, 500 ms retract dwell, and fixed 58.45 mm work height, compare explicit per-pad retract degrees while restoring each prior retraction before the next dose.',
         'doseDegrees': doses,
+        'retractionDegrees': retractions,
         'routeReview': {'reviewer': args.reviewer.strip(), 'basis': args.review.strip(), 'reviewedMs': now_ms},
         'stages': stages, 'rawBounds': bounds, 'headClearanceBounds': head_bounds, 'xyClearanceRawZ': CLEAR_Z,
         'clearanceReviewEvidence': clear_ev, 'profileEvidence': evidence(profile_path),
         'previousReportEvidence': evidence(previous_path), 'previousLedgerPath': str(ledger_path),
         'targetsEvidence': evidence(args.targets), 'templateEvidence': evidence(template_path),
         'sourceBarrierEvidence': evidence(barrier_path),
-        'routeAccounting': {'prefixGrossDegrees': 106, 'testR6GrossDegrees': gross - 146,
-                            'finalIdleReliefGrossDegrees': 40, 'doseDegrees': doses, 'grossDegrees': gross,
+        'routeAccounting': {'prefixGrossDegrees': 106, 'testSequenceGrossDegrees': gross - 146,
+                            'finalIdleReliefGrossDegrees': 40, 'doseDegrees': doses,
+                            'retractionDegrees': retractions, 'grossDegrees': gross,
                             'netBDegrees': final_raw['B'] - raw['B'], 'stageCount': len(stages),
                             'finalRaw': final_raw}
     }
