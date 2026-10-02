@@ -32,9 +32,9 @@ function validate(q,now,jvm){
  }else fail('Only registered references or the reviewed scrap camera target are allowed');
  var route= q.routeSteps;if(!Array.isArray(route)||route.length>32)fail('At most 32 bounded XY route steps allowed');
  var cursor={x:q.expectedRaw.X,y:q.expectedRaw.Y},total=0,captures=[];
- route.forEach(function(s,i){object(s,'Route step');if(s.index!==i||!Array.isArray(s.captureReferences))fail('Ordered route step required');var x=finite(s.x,'route X'),y=finite(s.y,'route Y'),dist=Math.sqrt((x-cursor.x)*(x-cursor.x)+(y-cursor.y)*(y-cursor.y));if(dist<.0001||dist>10.0001)fail('Each native camera step must move 0–10 mm in XY only');if(s.z!==q.expectedRaw.Z||s.a!==q.expectedRaw.A||s.b!==q.expectedRaw.B)fail('Route may not change Z, A or B');total+=dist;cursor={x:x,y:y};s.captureReferences.forEach(function(ref){captures.push(ref);});});
+ route.forEach(function(s,i){object(s,'Route step');if(s.index!==i||!Array.isArray(s.captureReferences))fail('Ordered route step required');var x=finite(s.x,'route X'),y=finite(s.y,'route Y');if(Math.abs(x-Math.round(x*100)/100)>.000001||Math.abs(y-Math.round(y*100)/100)>.000001)fail('Route waypoints must use firmware 0.01 mm reporting grid');var dist=Math.sqrt((x-cursor.x)*(x-cursor.x)+(y-cursor.y)*(y-cursor.y));if(dist<.0001||dist>10.0001)fail('Each native camera step must move 0–10 mm in XY only');if(s.z!==q.expectedRaw.Z||s.a!==q.expectedRaw.A||s.b!==q.expectedRaw.B)fail('Route may not change Z, A or B');total+=dist;cursor={x:x,y:y};s.captureReferences.forEach(function(ref){captures.push(ref);});});
  if(total>120.0001||total>q.maxTotalTravelMm+.0001)fail('Camera route exceeds reviewed travel ceiling');
- if(q.mode==='registered-references'){if(captures.join(',')!==q.references.join(','))fail('Route captures must match selected references in order');route.forEach(function(step){step.captureReferences.forEach(function(ref){var t=q.targets.filter(function(x){return x.reference===ref;})[0];if(!t||Math.abs(step.x-t.x)>.0001||Math.abs(step.y-t.y)>.0001)fail('Reference capture waypoint must equal hash-bound registered target');});});}
+ if(q.mode==='registered-references'){if(captures.join(',')!==q.references.join(','))fail('Route captures must match selected references in order');route.forEach(function(step){step.captureReferences.forEach(function(ref){var t=q.targets.filter(function(x){return x.reference===ref;})[0];if(!t||Math.abs(step.x-t.x)>.0051||Math.abs(step.y-t.y)>.0051)fail('Reference capture waypoint must equal hash-bound registered target');});});}
  if(q.mode==='reviewed-scrap-camera'&&(route.length!==0||total!==0))fail('Reviewed current-position scrap capture must not move');
  q.plannedDistanceMm=total;return q;
 }
@@ -42,7 +42,7 @@ function validate(q,now,jvm){
 
 function verifySourceReport(source,q){
  object(source,'Source report');var statuses=['completed-contiguous-air-batch-awaiting-observation','completed-contiguous-batch-awaiting-observation','completed-camera-survey-awaiting-image-review'];
- if(statuses.indexOf(source.status)<0||source.motionSubmitted!==true||source.controllerPositionVerified!==true||source.uncertainCompletion!==false||source.transportUncertain===true||source.id!==q.sourceReport.id)fail('Certain terminal source report required');
+ if(statuses.indexOf(source.status)<0||(source.status!=='completed-camera-survey-awaiting-image-review'&&source.motionSubmitted!==true)||(source.motionSubmitted!==true&&source.motionSubmitted!==false)||source.controllerPositionVerified!==true||source.uncertainCompletion!==false||source.transportUncertain===true||source.id!==q.sourceReport.id)fail('Certain terminal source report required');
  var req=source.request||{};if(req.id!==source.id||req.jvmStartMs!==q.jvmStartMs||req.liveConfigurationSha256!==q.liveConfigurationSha256)fail('Source must bind same JVM and live configuration');
  var snap=source.afterQuerySnapshot||{};axes(snap.raw,'Source raw');axes(snap.driver,'Source driver');Object.keys(q.expectedRaw).forEach(function(k){close(snap.raw[k],q.expectedRaw[k],0,'source raw '+k);close(snap.driver[k],q.expectedDriver[k],0,'source driver '+k);});
  object(snap.nativePoses,'Source native poses');['N1','N2','top','bottom'].forEach(function(n){object(snap.nativePoses[n],n+' source pose');['x','y','z','rotation'].forEach(function(k){close(snap.nativePoses[n][k],q.expectedNativePoses[n][k],0,n+' source '+k);});});return true;
@@ -54,6 +54,20 @@ function verifyStep(q,before,step,model,reported){
  close(reported.X,step.x,.02,'M114 X');close(reported.Y,step.y,.02,'M114 Y');close(reported.Z,q.expectedRaw.Z,.02,'M114 Z');close(reported.A,q.expectedRaw.A,.3,'M114 A');close(reported.B,q.expectedRaw.B,.3,'M114 B');
  Object.keys(q.expectedNativePoses).forEach(function(n){var a=before.nativePoses[n],b=model.nativePoses[n];object(a,'before '+n);object(b,'after '+n);if(n==='bottom'){close(b.x,a.x,.0001,n+' fixed X');close(b.y,a.y,.0001,n+' fixed Y');}else{close(b.x,a.x+dx,.02,n+' expected X');close(b.y,a.y+dy,.02,n+' expected Y');}close(b.z,a.z,.0001,n+' unchanged Z');close(b.rotation,a.rotation,.0001,n+' unchanged rotation');});return true;
 }
+
+function executeRoute(q,adapter){
+ object(adapter,'Route adapter');if(typeof adapter.snapshot!=='function'||typeof adapter.move!=='function'||typeof adapter.query!=='function')fail('Route adapter needs snapshot, move and query');
+ var cursor={X:q.expectedRaw.X,Y:q.expectedRaw.Y},result=[];
+ for(var i=0;i<q.routeSteps.length;i++){
+  var step=q.routeSteps[i],before=adapter.snapshot();object(before,'Before step '+i);
+  Object.keys(q.expectedRaw).forEach(function(k){var want=(k==='X'?cursor.X:k==='Y'?cursor.Y:q.expectedRaw[k]);close(before.raw[k],want,0,'route cursor '+k);close(before.driver[k],before.raw[k],0,'route driver '+k);});
+  if(adapter.beforeMove)adapter.beforeMove(step,i,before);
+  adapter.move(step,i);var model=adapter.snapshot(),reported=adapter.query();verifyStep(q,before,step,model,reported);
+  cursor={X:step.x,Y:step.y};result.push({step:step,index:i,model:model,reported:reported});
+  if(adapter.afterStep)adapter.afterStep(step,i,model,reported);
+ }
+ return result;
+}
 function installationPolicy(policy,installationLock,action){
  object(policy,'Camera inspection policy');object(installationLock,'Installation lock');
  if(policy.schema!==1||policy.scope!=='camera-only-inspection-under-paste-installation-lock'||policy.enabled!==true||policy.action!==action||action!=='paste-fast-camera-inspection')fail('Dedicated camera inspection policy rejects action');
@@ -61,5 +75,5 @@ function installationPolicy(policy,installationLock,action){
  if(policy.requiresInstallationLockPreserved!==true||policy.noPasteActuation!==true||policy.topCameraXYOnly!==true||policy.n2Quarantined!==true)fail('Camera inspection may not relax paste installation restrictions');
  return true;
 }
-var api={validate:validate,verifyStep:verifyStep,verifySourceReport:verifySourceReport,installationPolicy:installationPolicy};if(typeof module!=='undefined')module.exports=api;else root.PasteFastCameraInspection=api;
+var api={validate:validate,verifyStep:verifyStep,verifySourceReport:verifySourceReport,executeRoute:executeRoute,installationPolicy:installationPolicy};if(typeof module!=='undefined')module.exports=api;else root.PasteFastCameraInspection=api;
 })(this);

@@ -16,6 +16,7 @@ JOB=ROOT/'automation/jobs/ftp-inspection-registered-1790920936515.job.xml'
 MAX_SEGMENT=10.0
 MAX_TOTAL=120.0
 MAX_STEPS=32
+def report_grid(value:float)->float:return math.floor(float(value)*100.0+0.5)/100.0
 TERMINAL_SOURCE_STATUSES={'completed-contiguous-air-batch-awaiting-observation','completed-contiguous-batch-awaiting-observation','completed-camera-survey-awaiting-image-review'}
 
 def sha(path:Path)->str:return hashlib.sha256(path.read_bytes()).hexdigest()
@@ -64,14 +65,17 @@ def build(source_path=SOURCE,registration_path=REG,job_path=JOB,references=None,
             target_list.append({'reference':ref,'x':xy[0],'y':xy[1], 'pads':[{'padId':ref+'.1','x':float(p1[0]),'y':float(p1[1])},{'padId':ref+'.2','x':float(p2[0]),'y':float(p2[1])}]})
     cursor=(raw['X'],raw['Y']);total=0.;steps=[]
     for target in target_list:
-        end=(target['x'],target['y']);distance=math.sqrt((end[0]-cursor[0])**2+(end[1]-cursor[1])**2)
+        end=(report_grid(target['x']),report_grid(target['y']));distance=math.sqrt((end[0]-cursor[0])**2+(end[1]-cursor[1])**2)
         if distance < .0001:
             if mode=='reviewed-scrap-camera':continue
-            fail('Registered target is already at the current camera position; use the reviewed scrap-camera mode for an in-place capture')
+            fail('Registered target rounds to the current camera position; use reviewed in-place scrap capture')
         count=math.ceil(distance/MAX_SEGMENT)
         for i in range(1,count+1):
-            f=i/count;x=cursor[0]+(end[0]-cursor[0])*f;y=cursor[1]+(end[1]-cursor[1])*f
-            d=math.sqrt((x-(steps[-1]['x'] if steps else cursor[0]))**2+(y-(steps[-1]['y'] if steps else cursor[1]))**2)
+            f=i/count;x=report_grid(cursor[0]+(end[0]-cursor[0])*f);y=report_grid(cursor[1]+(end[1]-cursor[1])*f)
+            prior=(steps[-1]['x'],steps[-1]['y']) if steps else cursor
+            d=math.sqrt((x-prior[0])**2+(y-prior[1])**2)
+            if d < .0001:continue
+            if d>MAX_SEGMENT+1e-9:fail('Report-grid quantization exceeds segment travel ceiling')
             step={'index':len(steps),'x':x,'y':y,'z':raw['Z'],'a':raw['A'],'b':raw['B'],'captureReferences':[target['reference']] if i==count and mode=='registered-references' else []}
             steps.append(step);total+=d
         cursor=end

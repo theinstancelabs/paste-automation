@@ -19,6 +19,10 @@ class FastCameraPolicyTests(unittest.TestCase):
    with self.assertRaises(RuntimeError):module.check_paste_installation_lock(root,'paste-fast-camera-inspection')
  def test_terminal_source_allowlist_supports_chaining_only_certain_report_families(self):
   self.assertEqual(builder.TERMINAL_SOURCE_STATUSES,{'completed-contiguous-air-batch-awaiting-observation','completed-contiguous-batch-awaiting-observation','completed-camera-survey-awaiting-image-review'})
+ def test_firmware_reporting_grid_quantization(self):
+  self.assertEqual(builder.report_grid(10.0049),10.0)
+  self.assertEqual(builder.report_grid(10.005),10.01)
+  self.assertEqual(builder.report_grid(-10.0049),-10.0)
  def test_existing_global_lock_remains_locked(self):
   module.check_paste_installation_lock(ROOT.parent,'paste-fast-camera-inspection')
  def test_nashorn_policy_uses_synthetic_stubs_only(self):
