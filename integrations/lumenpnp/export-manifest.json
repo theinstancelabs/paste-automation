@@ -285,15 +285,15 @@
       "sourceRoot": "/home/lumen/lumenpnp",
       "sourcePath": "automation/paste/application-restart-continuity.cjs",
       "destination": "integrations/lumenpnp/automation/paste/application-restart-continuity.cjs",
-      "sha256": "89be1ae1da4e3c449f0920457532571b1bb04acc0830eddb56cdee6543f9b65c",
-      "bytes": 10077
+      "sha256": "b44f828c8b8cba379999512b418af73a850f290bfab354735be0da8d2ce15d2e",
+      "bytes": 15104
     },
     {
       "sourceRoot": "/home/lumen/lumenpnp",
       "sourcePath": "automation/paste/application-restart-continuity.test.cjs",
       "destination": "integrations/lumenpnp/automation/paste/application-restart-continuity.test.cjs",
-      "sha256": "ad100cce3797cda71c79ebb512a4635f7b393b4e6a05ee74d3452547ce197e64",
-      "bytes": 5402
+      "sha256": "827d393e6d25ee96eb331da71858c3e4e0ac6e9c91a92c5a1b55c52089b51c56",
+      "bytes": 8568
     },
     {
       "sourceRoot": "/home/lumen/lumenpnp",
@@ -1650,8 +1650,8 @@
       "sourceRoot": "/home/lumen/lumenpnp",
       "sourcePath": "automation/scripts/Commission_Paste_Contiguous_Batch.js",
       "destination": "integrations/lumenpnp/automation/scripts/Commission_Paste_Contiguous_Batch.js",
-      "sha256": "f49b634c1b52a3f2a16a3cbbe923bee28fde0d621af2163b443d448213c18fab",
-      "bytes": 41565
+      "sha256": "7b29df5458ced82e9729726dd645f8700534a50ff65e37a83c79a2c5d4f7dedd",
+      "bytes": 41654
     },
     {
       "sourceRoot": "/home/lumen/lumenpnp",
@@ -2318,6 +2318,13 @@
       "destination": "integrations/lumenpnp/automation/tests/test_preview_evidence_cache_nashorn.py",
       "sha256": "1c1d6d3a116f72bc539dc27d78dfffc621b9ef3833976b5f8f1aec7fe006ad06",
       "bytes": 1126
+    },
+    {
+      "sourceRoot": "/home/lumen/lumenpnp",
+      "sourcePath": "automation/paste/prepare-application-restart-continuity.py",
+      "destination": "integrations/lumenpnp/automation/paste/prepare-application-restart-continuity.py",
+      "sha256": "08c9ed3a64cf404e513a432172d0cc17b48c1c2b0253453326c94f08655a13b1",
+      "bytes": 7865
     }
   ],
   "manifestSelfHash": "Excluded to avoid a recursive digest; this manifest enumerates every other exported/generated file.",

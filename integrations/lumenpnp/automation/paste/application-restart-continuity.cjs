@@ -22,6 +22,21 @@ function validate(record,q,reader,now){
   if(old.status==='failed-no-retry-no-recovery-motion'){
    if(old.request.mode!=='air'||old.motionSubmitted!==false||old.controllerQuerySubmitted!==true||old.uncertainCompletion!==false)fail('Failed old position report must be pre-motion AIR');
    oldRaw=old.request.expectedRaw;oldM114=countLine(old.before&&old.before.responses,'old AIR M114');exact(oldM114.raw,old.before.reported,'old AIR parsed/raw');exact(oldM114.raw,oldRaw,'old AIR request/response');
+  }else if(old.scope==='camera-only-registered-fast-inspection'&&old.status==='executor-quarantined-after-uncertain-failure'){
+   if(old.request.mode!=='registered-references'||old.motionSubmitted!==true||old.controllerPositionVerified!==true||old.uncertainCompletion!==false||old.nativeMotionCompletionReported!==true||old.error!=='Error: Existing top camera stream is not open')fail('Old camera evidence must be the exact terminal capture failure with verified motion position');
+   if(old.request.jvmStartMs!==t.oldJvmStartMs||old.request.liveConfigurationSha256!==record.liveConfigurationSha256)fail('Old camera endpoint JVM/configuration differs');
+   oldRaw=old.afterReported;if(!oldRaw||Object.keys(oldRaw).sort().join(',')!=='A,B,X,Y,Z')fail('Fast-camera endpoint must report all five axes');
+   exact(old.afterQuerySnapshot&&old.afterQuerySnapshot.raw,oldRaw,'fast-camera endpoint raw');exact(old.afterQuerySnapshot&&old.afterQuerySnapshot.driver,oldRaw,'fast-camera endpoint driver');
+   exact(old.beforeQuerySnapshot&&old.beforeQuerySnapshot.raw,old.request.expectedRaw,'fast-camera start/request');
+   var route=old.request.routeSteps,active=old.activeStep;if(!Array.isArray(route)||route.length<1||active!==route.length-1)fail('Fast-camera terminal route step must be the verified endpoint');
+   route.forEach(function(s,i){if(!s||s.index!==i||s.a!==oldRaw.A||s.b!==oldRaw.B||s.z!==oldRaw.Z)fail('Fast-camera route must preserve Z/A/B throughout');});
+   var end=route[active];if(end.x!==oldRaw.X||end.y!==oldRaw.Y)fail('Fast-camera terminal route target differs from queried endpoint');
+   var anchorRef=evidence(t.rotaryCountAnchorEvidence,'pre-route rotary count anchor'),anchor=read(anchorRef,reader,'pre-route rotary count anchor');
+   if(anchor.status!=='completed-read-only-position-barrier'||anchor.request.scope!=='read-only-native-position-barrier'||anchor.request.jvmStartMs!==t.oldJvmStartMs||anchor.request.liveConfigurationSha256!==record.liveConfigurationSha256||anchor.noMotionCommandSubmitted!==true||anchor.controllerPositionVerified!==true||anchor.uncertainCompletion!==false)fail('Fast-camera continuity requires same-JVM pre-route read-only position/count barrier');
+   var anchorM114=countLine(anchor.position&&anchor.position.responses,'pre-route M114 count anchor');exact(anchorM114.raw,anchor.position.reported,'pre-route parsed/raw');exact(anchor.position.saved&&anchor.position.saved.raw,anchorM114.raw,'pre-route snapshot/raw');
+   if(anchorM114.raw.A!==oldRaw.A||anchorM114.raw.B!==oldRaw.B)fail('Pre-route controller rotary coordinates differ from terminal fast-camera endpoint');
+   var anchorDone=Date.parse(anchor.finishedAt),cameraStart=Date.parse(old.startedAt);if(!isFinite(anchorDone)||!isFinite(cameraStart)||anchorDone>cameraStart)fail('Rotary count anchor must precede the fast-camera route');
+   oldM114={raw:oldRaw,counts:anchorM114.counts};
   }else if(old.status==='completed-read-only-position-barrier'){
    if(old.request.scope!=='read-only-native-position-barrier'||old.noMotionCommandSubmitted!==true||old.controllerPositionVerified!==true||old.uncertainCompletion!==false)fail('Old barrier must be completed read-only position evidence');oldRaw=old.afterQuerySnapshot&&old.afterQuerySnapshot.raw;oldM114=countLine(old.position&&old.position.responses,'old position barrier M114');exact(oldM114.raw,old.position.reported,'old barrier parsed/raw');exact(oldM114.raw,oldRaw,'old barrier request/response');
   }else fail('Old position evidence must be a completed read-only barrier or pre-motion failed AIR report');
@@ -41,7 +56,20 @@ function validate(record,q,reader,now){
  });
  var last=record.transitions[record.transitions.length-1];if(!q||q.sessionId!==record.sessionId||q.jvmStartMs!==last.newJvmStartMs||q.liveConfigurationSha256!==record.liveConfigurationSha256||q.createdMs<record.reviewedMs)fail('Request must match the final reviewed restart transition');
  if(!q.applicationRestartEvidence||!q.applicationRestartEvidence.path||!/^[a-f0-9]{64}$/.test(q.applicationRestartEvidence.sha256)||q.applicationRestartEvidence.sessionId!==record.sessionId||q.applicationRestartEvidence.newJvmStartMs!==q.jvmStartMs||q.applicationRestartEvidence.liveConfigurationSha256!==record.liveConfigurationSha256||!Array.isArray(q.applicationRestartEvidence.allowedJvmStartMs)||q.applicationRestartEvidence.allowedJvmStartMs.slice().sort(function(a,b){return a-b;}).join(',')!==allowedJvmStartMs.slice().sort(function(a,b){return a-b;}).join(','))fail('Request continuity evidence reference/summary differs');
- return {sessionId:record.sessionId,oldJvmStartMs:record.transitions[0].oldJvmStartMs,newJvmStartMs:last.newJvmStartMs,allowedJvmStartMs:allowedJvmStartMs,liveConfigurationSha256:record.liveConfigurationSha256};
+ // An application restart can continue accounting from a historical budget
+ // anchor only when an old, independently validated manual-home continuation
+ // proof binds the exact current ledger prefix. Never infer this from JVM IDs.
+ var historical=null,hb=record.historicalBudgetAnchorContinuity;
+ if(hb){
+  evidence(hb.requestEvidence,'historical continuation request');evidence(hb.proofEvidence,'historical continuation proof');
+  var oldQ=read(hb.requestEvidence,reader,'historical continuation request'),proof=read(hb.proofEvidence,reader,'historical continuation proof');
+  if(!oldQ||oldQ.sessionId!==q.sessionId||oldQ.syringeId!==q.syringeId||oldQ.liveConfigurationSha256!==record.liveConfigurationSha256||oldQ.previousLedgerSha256!==q.previousLedgerSha256||oldQ.jvmStartMs!==proof.currentJvmStartMs||!oldQ.manualHomeLedgerAnchorEvidence||oldQ.manualHomeLedgerAnchorEvidence.path!==hb.proofEvidence.path||oldQ.manualHomeLedgerAnchorEvidence.sha256!==hb.proofEvidence.sha256)fail('Historical continuation must bind the same session, syringe, config and exact current ledger');
+  var mh=root.PasteManualHomeLedgerAnchor||(typeof module!=='undefined'&&module.exports?require('./manual-home-ledger-anchor.cjs'):null);if(!mh||!mh.validate)fail('Manual-home continuation validator unavailable');
+  var validated=mh.validate(proof,oldQ,function(ref,json){return reader(ref,json);},now);
+  if(validated.currentLedgerSha256!==q.previousLedgerSha256||validated.sessionId!==q.sessionId||validated.syringeId!==q.syringeId||validated.currentConfigurationSha256!==record.liveConfigurationSha256)fail('Historical continuation does not reach the exact current ledger/configuration');
+  historical={scope:'manual-home-ledger-anchor-continuity',sessionId:validated.sessionId,syringeId:validated.syringeId,currentLedgerSha256:validated.currentLedgerSha256,currentJvmStartMs:q.jvmStartMs,currentConfigurationSha256:record.liveConfigurationSha256,oldConfigurationSha256:validated.oldConfigurationSha256,historicalAnchorReports:validated.historicalAnchorReports};
+ }
+ var result={sessionId:record.sessionId,oldJvmStartMs:record.transitions[0].oldJvmStartMs,newJvmStartMs:last.newJvmStartMs,allowedJvmStartMs:allowedJvmStartMs,liveConfigurationSha256:record.liveConfigurationSha256};if(historical)result.manualHomeLedgerContinuity=historical;return result;
 }
 var api={validate:validate,countLine:countLine};if(typeof module!=='undefined'&&module.exports)module.exports=api;else root.PasteApplicationRestartContinuity=api;
 })(this);
