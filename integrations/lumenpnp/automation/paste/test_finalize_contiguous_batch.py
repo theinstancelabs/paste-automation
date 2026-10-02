@@ -16,12 +16,15 @@ class SelectedFinalizeTests(unittest.TestCase):
             root=Path(td)
             review=root/'review.json';review.write_text(json.dumps({'scope':'reviewed-reduced15'}))
             travel=M.evidence(review)
-            amendment_path=root/'budget-amendment.json';amendment_path.write_text(json.dumps({'newMaximumAbsoluteDegrees':14410,'travelReviewEvidence':travel}))
+            superseded=root/'budget-amendment-14050.json';superseded.write_text(json.dumps({'newMaximumAbsoluteDegrees':14050}))
+            supersedes=M.evidence(superseded)
+            amendment_path=root/'budget-amendment.json';amendment_path.write_text(json.dumps({'newMaximumAbsoluteDegrees':14410,'travelReviewEvidence':travel,'supersedesEvidence':supersedes}))
             q={'budgetAmendmentEvidence':{**M.evidence(amendment_path),'newMaximumAbsoluteDegrees':14410,'travelReviewEvidence':travel},'evidence':[]}
             self.assertEqual(M.add_amendment_travel_evidence(q),travel)
             self.assertIn(travel,q['evidence'])
+            self.assertIn(supersedes,q['evidence'])
             self.assertEqual(M.add_amendment_travel_evidence(q),travel)
-            self.assertEqual(q['evidence'],[travel])
+            self.assertEqual(q['evidence'],[travel,supersedes])
 
     def test_selected_pad_native_preview_finalizes_with_preserved_scope(self):
         with tempfile.TemporaryDirectory() as td:

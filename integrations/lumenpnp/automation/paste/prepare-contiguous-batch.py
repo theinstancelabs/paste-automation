@@ -35,7 +35,12 @@ def add_amendment_travel_evidence(q):
  amend_ev=sha_evidence(amendment,f'{ceiling}-degree amendment');record,_,_=read(amend_ev['path'])
  travel=sha_evidence(record.get('travelReviewEvidence'),'travelReviewEvidence')
  if record.get('newMaximumAbsoluteDegrees')!=ceiling or not same(amendment.get('travelReviewEvidence'),travel):err(f'{ceiling}-degree amendment travel review must match request envelope')
- if not any(same(item,travel) for item in q.get('evidence',[])):q.setdefault('evidence',[]).append(travel)
+ evidence=q.setdefault('evidence',[])
+ if not any(same(item,travel) for item in evidence):evidence.append(travel)
+ supersedes=record.get('supersedesEvidence')
+ if supersedes:
+  supersedes_ref=sha_evidence(supersedes,'superseded budget amendment evidence')
+  if not any(same(item,supersedes_ref) for item in evidence):evidence.append(supersedes_ref)
  return travel
 
 def node_previous(report,ledger,ledger_sha,captured_ms):
