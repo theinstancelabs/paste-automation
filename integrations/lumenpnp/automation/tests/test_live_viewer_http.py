@@ -209,7 +209,7 @@ class LiveViewerHttpTest(unittest.TestCase):
         self.assertEqual(status,200);self.assertFalse(readiness['executionAuthorized'])
         self.assertEqual([stage['id'] for stage in readiness['stages']],['cad-plan','geometry-review','flow-calibration','board-registration','machine-session','native-openpnp-job'])
         flow=next(stage for stage in readiness['stages'] if stage['id']=='flow-calibration')
-        self.assertEqual(flow['status'],'required');self.assertIn('not verified physical calibration',flow['detail'])
+        self.assertEqual(flow['status'],'required');self.assertIn('unverified absent a measured-evidence binding',flow['detail'])
         status,data,headers=self.request_with_headers('GET',result['previewUrl'],headers=self.private_headers())
         self.assertEqual(status,200);self.assertEqual(headers['content-type'],'image/svg+xml; charset=utf-8')
         self.assertIn(b'CAD preview (not registered)',data);self.assertIn(b'FID1',data)
@@ -246,6 +246,15 @@ class LiveViewerHttpTest(unittest.TestCase):
         job['board']['outline'][0]={'type':'gr_arc','geometryStatus':'review-required-degenerate-arc'}
         svg=live_viewer.render_paste_job_svg(job).decode()
         self.assertIn('Outline review required: review-required-degenerate-arc',svg)
+
+    def test_svg_renders_line_candidate_as_dashed_review_overlay(self):
+        job={'board':{'fileName':'rows.kicad_pcb','side':'F.Cu','boundsMm':[0,0,4,2]},
+          'finePitchGroups':[{'id':'fp-abc','kind':'fine-pitch-row','proposedLine':{'polylineMm':[[1,1],[2,1],[3,1]]}}]}
+        svg=live_viewer.render_paste_job_svg(job).decode()
+        self.assertIn('stroke="#ff9b4a"',svg)
+        self.assertIn('stroke-dasharray="8 6"',svg)
+        self.assertIn('individual pad deposits remain the default',svg)
+        self.assertIn('Orange dashed lines are geometry candidates only',live_viewer.PAGE.decode())
 
     def test_paste_status_derives_live_stage_progress_without_exposing_report_path(self):
         with tempfile.TemporaryDirectory() as td:

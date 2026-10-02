@@ -139,10 +139,14 @@ def inspect_image(image_path, pads, *, paste_rgb, tolerance=35, min_component_pi
         else:
             kind='incomplete-or-unresolved-row'
         recipe_ok=_recipe_matches(process_recipe,group.get('id'))
+        proposal_contained=group.get('cadProposalContainedInProjectedRowEnvelope')
+        geometry_ok=proposal_contained is not False
         rows.append({'id':group.get('id'),'padIds':ids,'classification':kind,
           'cadGroupReviewRequired':True,'continuousLineRecipeValidated':recipe_ok,
-          'continuousLineProposalEligible':bool(thin and recipe_ok),
-          'reason':'Image shape alone cannot establish paste volume or process validity.'})
+          'cadProposalContainedInProjectedRowEnvelope':proposal_contained,
+          'lineProposalValidationStatus':group.get('lineProposalValidationStatus'),
+          'continuousLineProposalEligible':bool(thin and recipe_ok and geometry_ok),
+          'reason':'Projected line geometry must fit the pad-row envelope; image shape alone cannot establish paste volume or process validity.'})
     total=sum(r['pasteLikePixels'] for r in results)
     projection={'imageSizePx':[w,h],'pads':[{'id':pid,'polygonPx':[[x,y] for x,y in poly]} for pid,poly in normalized]}
     projection_hash=hashlib.sha256(json.dumps(projection,sort_keys=True,separators=(',',':')).encode()).hexdigest()
