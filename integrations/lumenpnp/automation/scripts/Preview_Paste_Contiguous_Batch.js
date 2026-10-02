@@ -17,6 +17,7 @@
  eval(read(root+'automation/paste/ftp-two-pad.cjs'));
  eval(read(root+'automation/paste/commissioning-stroke.cjs'));
  eval(read(root+'automation/paste/position-barrier.cjs'));
+ eval(read(root+'automation/paste/application-restart-continuity.cjs'));
  eval(read(root+'automation/paste/manual-home-ledger-anchor.cjs'));
  var q=JSON.parse(read(root+'automation/plans/paste-contiguous-batch-preview-request.json'));
  var jvm=Number(Java.type('java.lang.management.ManagementFactory').getRuntimeMXBean().getStartTime()),now=Number(java.lang.System.currentTimeMillis());

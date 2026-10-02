@@ -15,18 +15,37 @@ function motionContinuation(record,q,read,now,validationContext){
  var baseRef=evidence(c.baselineManualHomeProofEvidence,'original manual-home proof');
  if(q.manualHomeLedgerAnchorEvidence&&baseRef.sha256===q.manualHomeLedgerAnchorEvidence.sha256)fail('Continuation must delegate to a distinct immutable original manual-home proof');
  var reports=c.verifiedBMotionReports;if(!Array.isArray(reports)||!reports.length)fail('Verified post-home B report chain required');
- var firstRef=evidence(reports[0].reportEvidence,'first post-home B report'),first=read(firstRef,true),base=read(baseRef,true),baseQ=first&&first.request;
- if(!baseQ||!same(baseQ.manualHomeLedgerAnchorEvidence,baseRef))fail('First wet report must bind the exact immutable original manual-home proof');
+ var firstRef=evidence(reports[0].reportEvidence,'first post-home B report'),first=read(firstRef,true),base=read(baseRef,true),firstQ=first&&first.request,baseQ=firstQ,restartBridge=null;
+ if(!firstQ)fail('First post-home wet report request required');
+ if(!same(firstQ.manualHomeLedgerAnchorEvidence,baseRef)){
+  var restartRef=evidence(firstQ.applicationRestartEvidence,'first wet report application-restart continuity'),restart=read(restartRef,true),hb=restart&&restart.historicalBudgetAnchorContinuity;
+  if(!hb||!same(evidence(hb.proofEvidence,'restart historical manual-home proof'),baseRef))fail('First wet report must bind the original proof directly or through its application-restart history');
+  var oldQ=read(evidence(hb.requestEvidence,'restart historical continuation request'),true),app=root.PasteApplicationRestartContinuity||(typeof require==='function'?require('./application-restart-continuity.cjs'):null);
+  if(!app||!app.validate||!oldQ||!same(oldQ.manualHomeLedgerAnchorEvidence,baseRef))fail('Restart bridge must delegate to the exact original proof and request');
+  restartBridge=app.validate(restart,firstQ,function(ref,json){return read(ref,json);},now);
+  if(!restartBridge.manualHomeLedgerContinuity)fail('Restart bridge must return validated historical manual-home continuity');
+  baseQ=oldQ;
+ }else if(!same(firstQ.barrierEvidence,base.currentBarrierEvidence))fail('First wet report must start from original manual-home barrier/proof');
  var baseLedgerRef=evidence(base.currentLedgerEvidence,'original manual-home ledger'),currentRef=evidence(record.currentLedgerEvidence,'continued current ledger'),currentForPrefix=read(currentRef,true),firstId=first.id;
  if(!Array.isArray(currentForPrefix.entries))fail('Current ledger entries required to prove exact historical prefix');
  var cut=-1;for(var ci=0;ci<currentForPrefix.entries.length;ci++){if(currentForPrefix.entries[ci]&&currentForPrefix.entries[ci].batchId===firstId){cut=ci;break;}}if(cut<0)fail('Current ledger does not contain first post-home wet batch');
- var reconstructed=JSON.parse(JSON.stringify(currentForPrefix));reconstructed.entries=reconstructed.entries.slice(0,cut);reconstructed.lastVerifiedB=baseQ.expectedRaw.B;reconstructed.totalAbsoluteDegrees=reconstructed.entries.reduce(function(sum,e){return sum+e.absoluteDegrees;},0);reconstructed.status='verified';delete reconstructed.activeBatchId;
- var reconstructedBytes=JSON.stringify(reconstructed,null,2)+'\n',reconstructedSha=sha256(reconstructedBytes),declaration=c.reconstructedBaseLedger;
+ var declaration=c.reconstructedBaseLedger,baseLedger=null;
+ try{baseLedger=read(baseLedgerRef,true);}catch(baseLedgerReadError){
+  // Some historical proofs named the live commissioning ledger path, which
+  // was later advanced. Recover those exact bytes only when the continuation
+  // itself hash-binds an immutable later ledger and an exact prefix length.
+  if(!declaration||!same(declaration.sourceLedgerEvidence,currentRef)||declaration.prefixEntryCount!==cut)throw baseLedgerReadError;
+  baseLedger=JSON.parse(JSON.stringify(currentForPrefix));baseLedger.entries=baseLedger.entries.slice(0,cut);baseLedger.lastVerifiedB=baseQ.expectedRaw.B;baseLedger.totalAbsoluteDegrees=baseLedger.entries.reduce(function(sum,e){return sum+e.absoluteDegrees;},0);baseLedger.status='verified';delete baseLedger.activeBatchId;
+  var recoveredBytes=JSON.stringify(baseLedger,null,2)+'\n';if(sha256(recoveredBytes)!==baseLedgerRef.sha256)fail('Recovered historical ledger prefix does not match its original hash');
+ }
+ var reconstructed=JSON.parse(JSON.stringify(currentForPrefix));reconstructed.entries=reconstructed.entries.slice(0,cut);reconstructed.lastVerifiedB=baseQ.expectedRaw.B;var reconstructedGross=reconstructed.entries.reduce(function(sum,e){return sum+e.absoluteDegrees;},0);if(!baseLedger||!Array.isArray(baseLedger.entries)||!same(reconstructed.entries,baseLedger.entries)||Math.abs(reconstructedGross-baseLedger.totalAbsoluteDegrees)>1e-7)fail('Reconstructed ledger entries differ from immutable historical ledger');reconstructed.totalAbsoluteDegrees=baseLedger.totalAbsoluteDegrees;reconstructed.status='verified';delete reconstructed.activeBatchId;
+ var reconstructedBytes=JSON.stringify(reconstructed,null,2)+'\n',reconstructedSha=sha256(reconstructedBytes);
  if(!declaration||!same(declaration.sourceLedgerEvidence,currentRef)||declaration.prefixEntryCount!==cut||declaration.sha256!==reconstructedSha||reconstructedSha!==baseLedgerRef.sha256)fail('Original manual-home ledger must reconstruct byte-identically from the verified current ledger prefix');
  function baselineRead(e,json){if(e&&e.path===baseLedgerRef.path&&e.sha256===baseLedgerRef.sha256)return json?reconstructed:reconstructedBytes;return read(e,json);}
  var baseProof=validateInternal(base,baseQ,baselineRead,now,validationContext),ledger=reconstructed,ledgerHash=baseLedgerRef.sha256,lastReportRef=evidence(base.latestTerminalReportEvidence,'pre-motion terminal report'),lastReport=read(lastReportRef,true);
  var originalFresh=read(evidence(base.currentBarrierEvidence,'original same-B barrier'),true),prevLine=line(originalFresh.position&&originalFresh.position.responses,'Original same-B barrier');
- if(baseProof.currentJvmStartMs!==q.jvmStartMs||baseProof.currentConfigurationSha256!==q.liveConfigurationSha256)fail('Continuation cannot cross another JVM or configuration change');
+ if(baseProof.currentConfigurationSha256!==q.liveConfigurationSha256)fail('Continuation cannot cross a machine configuration change');
+ if(baseProof.currentJvmStartMs!==q.jvmStartMs){if(!restartBridge||restartBridge.newJvmStartMs!==q.jvmStartMs||restartBridge.manualHomeLedgerContinuity.currentLedgerSha256!==baseLedgerRef.sha256||restartBridge.manualHomeLedgerContinuity.sessionId!==q.sessionId||restartBridge.manualHomeLedgerContinuity.syringeId!==q.syringeId||restartBridge.manualHomeLedgerContinuity.currentConfigurationSha256!==q.liveConfigurationSha256)fail('Continuation cannot cross an unproven application restart or ledger boundary');}
  reports.forEach(function(item,index){
   var rr=evidence(item.reportEvidence,'verified wet B report'),r=read(rr,true),lr=evidence(item.ledgerEvidence,'verified wet B ledger'),next=read(lr,true),rq=r&&r.request;
   if(!r||r.status!=='completed-contiguous-batch-awaiting-observation'||r.uncertainCompletion!==false||r.controllerPositionVerified!==true||r.countsVerified!==true||!r.motionSubmitted||!rq||rq.mode!=='wet'||rq.enabled!==false||rq.sessionId!==base.sessionId||rq.syringeId!==base.syringeId||rq.jvmStartMs!==q.jvmStartMs||rq.liveConfigurationSha256!==q.liveConfigurationSha256||rq.id!==r.id||rq.previousLedgerSha256!==ledgerHash||r.completedLedgerSha256!==lr.sha256||typeof r.ledgerPath!=='string')fail('Each continuation item must be an exact completed same-JVM wet report and ledger');
@@ -37,7 +56,7 @@ function motionContinuation(record,q,read,now,validationContext){
    close(bb.raw.B,ledger.lastVerifiedB,'Intervening AIR start B');close(be.raw.B,ledger.lastVerifiedB,'Intervening AIR end B');if(bb.counts.B!==lastB.counts.B||be.counts.B!==lastB.counts.B)fail('Intervening AIR report changed verified B controller count');lastReportRef=bridgeRef;lastReport=bridge;
   }
   if(!same(rq.previousReportEvidence,lastReportRef))fail('Wet report chain must link the immediately preceding terminal report');
-  if(index===0){if(!same(rq.manualHomeLedgerAnchorEvidence,baseRef)||!same(rq.barrierEvidence,base.currentBarrierEvidence))fail('First wet report must start from original manual-home barrier/proof');}
+  if(index===0){if(restartBridge){if(!same(rq.applicationRestartEvidence,firstQ.applicationRestartEvidence)||rq.previousLedgerSha256!==baseLedgerRef.sha256||!same(rq.previousReportEvidence,lastReportRef))fail('First wet report must preserve the hash-bound restart, original ledger, and terminal-report links');}else if(!same(rq.manualHomeLedgerAnchorEvidence,baseRef)||!same(rq.barrierEvidence,base.currentBarrierEvidence))fail('First wet report must start from original manual-home barrier/proof');}
   else {
    var priorRef=evidence(rq.manualHomeLedgerAnchorEvidence,'prior continuation proof'),prior=read(priorRef,true);
    if(!prior||prior.scope!=='manual-home-ledger-anchor-continuation'||!same(prior.continuationEvidence.baselineManualHomeProofEvidence,baseRef))fail('Each later wet report must delegate to a prior continuation anchored to original manual home');

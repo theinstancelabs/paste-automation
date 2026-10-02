@@ -768,8 +768,8 @@
       "sourceRoot": "/home/lumen/lumenpnp",
       "sourcePath": "automation/paste/manual-home-ledger-anchor.cjs",
       "destination": "integrations/lumenpnp/automation/paste/manual-home-ledger-anchor.cjs",
-      "sha256": "0342519bb05487e834656b0ca2798beba01a99d537861a014602566033e1ad6f",
-      "bytes": 26173
+      "sha256": "d4a71cc0a0c7923e343196a9e69219117dc42e5155672b28aea4bce758df5ba5",
+      "bytes": 29368
     },
     {
       "sourceRoot": "/home/lumen/lumenpnp",
@@ -1734,8 +1734,8 @@
       "sourceRoot": "/home/lumen/lumenpnp",
       "sourcePath": "automation/scripts/Preview_Paste_Contiguous_Batch.js",
       "destination": "integrations/lumenpnp/automation/scripts/Preview_Paste_Contiguous_Batch.js",
-      "sha256": "c62c3afe2c7d150e7cc482ca77025540e3e755c8cc7dbd5cb437f1ed612ec23d",
-      "bytes": 15130
+      "sha256": "028c962f39c23c98d5638116b6d5416ad6e3b047912371f7efc9fc22bbb242f5",
+      "bytes": 15203
     },
     {
       "sourceRoot": "/home/lumen/lumenpnp",
