@@ -15,4 +15,6 @@ for(const mutate of [r=>r.afterQuerySnapshot.raw.B+=1,r=>r.afterQuerySnapshot.dr
  const r=fixture();mutate(r);assert.throws(()=>F.verifyCalibrationReport(r,'FID1'));
 }
 assert.throws(()=>F.verifyCalibrationReport(fixture(),'FID2'));
+var reference=fixture();reference.request.mode='registered-references';reference.request.references=['R1'];reference.request.targets=[{reference:'R1',x:100.1,y:200,pads:[{padId:'R1.1',x:99.2,y:200},{padId:'R1.2',x:100.1,y:200}]}];reference.request.routeSteps[0].captureReferences=['R1'];reference.frames[0].reference='R1';assert.strictEqual(F.verifyCalibrationReport(reference,'R1'),true);
+var duplicateReference=fixture();duplicateReference.request.mode='registered-references';duplicateReference.request.references=['R1'];duplicateReference.request.targets=[{reference:'R1',x:100.1,y:200,pads:[{padId:'R1.1',x:99.2,y:200},{padId:'R1.1',x:100.1,y:200}]}];duplicateReference.request.routeSteps[0].captureReferences=['R1'];assert.throws(()=>F.verifyCalibrationReport(duplicateReference,'R1'));
 console.log('fast-camera-inspection.test.cjs: passed');

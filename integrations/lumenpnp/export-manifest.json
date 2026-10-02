@@ -2225,8 +2225,8 @@
       "sourceRoot": "/home/lumen/lumenpnp",
       "sourcePath": "automation/paste/fast-camera-inspection.cjs",
       "destination": "integrations/lumenpnp/automation/paste/fast-camera-inspection.cjs",
-      "sha256": "cd593c728e3885ca6aa182e7a5419410506c23d25c9d5b677d8d2a67ea309b3e",
-      "bytes": 20269
+      "sha256": "014e7fad987ff1546e6f08b117b1864cee444cd950c6e6d430291c2b069b2c7b",
+      "bytes": 20622
     },
     {
       "sourceRoot": "/home/lumen/lumenpnp",
@@ -2288,8 +2288,8 @@
       "sourceRoot": "/home/lumen/lumenpnp",
       "sourcePath": "automation/paste/fast-camera-inspection.test.cjs",
       "destination": "integrations/lumenpnp/automation/paste/fast-camera-inspection.test.cjs",
-      "sha256": "f67d4f92c4eff88db7df2cff059ada8ed781838acc013f71d9508573cc1936fd",
-      "bytes": 2373
+      "sha256": "829c827d98a7b95d1af94f421fa66ddf8a60692e28857b71c72922d47a9efdfa",
+      "bytes": 3166
     },
     {
       "sourceRoot": "/home/lumen/lumenpnp",
