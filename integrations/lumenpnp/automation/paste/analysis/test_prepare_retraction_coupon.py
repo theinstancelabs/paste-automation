@@ -196,6 +196,41 @@ class RetractionCouponTests(unittest.TestCase):
                 self.assertEqual(recipe['stages'][-2]['dwellMilliseconds'],wait)
                 self.assertEqual(recipe['stages'][-1]['axis'],'Z')
 
+    def test_transfer_preparation_supports_three_distinct_conditioning_dots_with_restore(self):
+        e=experiment(6,3);e.update(mode='transfer-preparation',maximumTransferElapsedMilliseconds=120000,
+            conditioningDoseDegrees=6,retractDwellMilliseconds=500)
+        e['targetsXY']=[dict(X=98,Y=200),dict(X=104,Y=201),dict(X=103,Y=202),dict(X=102,Y=203)]
+        stages,poses,accounting=M.stages_for(e,dict(path='/review',sha256=H),.4,.3)
+        strokes=[(poses[i+1]['B']-poses[i]['B'],stages[i]['dwellMilliseconds'])
+                 for i,s in enumerate(stages) if s['axis']=='B']
+        self.assertEqual(strokes,[(-20,0),(-20,2000),(20,1000),(-6,2000),(3,500),
+                                  (-3,0),(-6,2000),(3,500),(-3,0),(-6,2000),(3,500)])
+        self.assertEqual(accounting['conditioningDepositCount'],3)
+        self.assertEqual(accounting['grossCommandedDegrees'],93)
+        self.assertEqual(accounting['conditioningRetractionStageIndex'],len(stages)-2)
+        self.assertEqual(accounting['conditioningLiftStageIndex'],len(stages)-1)
+        condition_xy={(104,201),(103,202),(102,203)}
+        self.assertTrue(all(poses[i]['Z']==58.25 and (poses[i]['X'],poses[i]['Y']) in condition_xy
+                            for i,s in enumerate(stages) if s['axis']=='B' and (poses[i]['X'],poses[i]['Y']) in condition_xy))
+        for points in (e['targetsXY'][:1],e['targetsXY']+[dict(X=110,Y=204)]):
+            bad=copy.deepcopy(e);bad['targetsXY']=points
+            with self.assertRaises(ValueError):M.stages_for(bad,dict(path='/review',sha256=H),.4,.3)
+
+    def test_fractional_conditioning_retraction_is_step_quantized_and_restored(self):
+        e=experiment(6,3);e.update(mode='transfer-preparation',maximumTransferElapsedMilliseconds=120000,
+            conditioningDoseDegrees=6,conditioningRetractDegrees=1.5,retractDwellMilliseconds=500)
+        e['targetsXY']=[dict(X=98,Y=200),dict(X=104,Y=201),dict(X=103,Y=202),dict(X=102,Y=203)]
+        stages,poses,accounting=M.stages_for(e,dict(path='/review',sha256=H),.4,.3)
+        events=accounting['conditioningRetractEvents']
+        self.assertEqual(len(events),3)
+        self.assertTrue(all(x['requestedDegrees']==1.5 and x['controllerSteps']==7 and x['actualDegrees']==7/4.44 for x in events))
+        self.assertTrue(all(abs(x['rawDelta']-1.5)<=.4 for x in events))
+        b_indices=[i for i,s in enumerate(stages) if s['axis']=='B']
+        b_deltas=[poses[i+1]['B']-poses[i]['B'] for i in b_indices]
+        self.assertEqual([round(x,2) for x in b_deltas[-8:]],[-6,events[0]['rawDelta'],-events[0]['rawDelta'],-6,events[1]['rawDelta'],-events[1]['rawDelta'],-6,events[2]['rawDelta']])
+        bad=copy.deepcopy(e);bad['conditioningRetractDegrees']=1.2
+        with self.assertRaises(ValueError):M.stages_for(bad,dict(path='/review',sha256=H),.4,.3)
+
     def test_low_doses_and_selected_retraction_restore_accounting(self):
         for dose in (2, 3, 4, 6, 12, 20):
             for retract in (2, 3, 4, 6):

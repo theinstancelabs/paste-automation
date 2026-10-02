@@ -145,13 +145,17 @@ class SelectedPadsBuilderTests(unittest.TestCase):
 
     def test_minimum_travel_pair_carry_route_retracts_only_after_each_second_pad(self):
         experiment={**self.experiment,'conditioningDoseDegrees':6,'conditioningRestoreDegrees':0,'primeDegrees':60,'dwellMilliseconds':2000,'retractDegrees':3,'retractDwellMilliseconds':500,'idleReliefDegrees':40,'startRaw':self.raw}
-        ef=self.json('minimum-travel-experiment.json',experiment)
-        review=self.json('minimum-travel-review.json',{'reviewedBy':'reviewer','reviewedMs':self.now,'experimentEvidence':M.ev(ef),'imageEvidence':M.ev(self.image)})
-        prof=json.loads(self.profile.read_text());prof['measurementEvidence']=M.ev(review);pf=self.json('minimum-travel-profile.json',prof)
         def generic(cmd,**kwargs):
             out=Path(cmd[cmd.index('--output')+1]);out.mkdir(parents=True);(out/'preview-request.json').write_text('{"enabled":false}\n');return SimpleNamespace(stdout='/tmp/preview-request.json')
         with patch.object(M.subprocess,'run',side_effect=generic):
             for case,(percent,first_ref) in enumerate(zip((15,20,25,30),(21,25,29,17))):
+                case_experiment=dict(experiment)
+                if percent==25:
+                    case_experiment['conditioningRetractDegrees']=1.5
+                    case_experiment['targetsXY']=[{'X':2.0,'Y':0.0},{'X':3.0,'Y':0.0},{'X':4.0,'Y':0.0},{'X':5.0,'Y':0.0}]
+                ef=self.json(f'minimum-travel-experiment-{percent}.json',case_experiment)
+                review=self.json(f'minimum-travel-review-{percent}.json',{'reviewedBy':'reviewer','reviewedMs':self.now,'experimentEvidence':M.ev(ef),'imageEvidence':M.ev(self.image)})
+                prof=json.loads(self.profile.read_text());prof['measurementEvidence']=M.ev(review);pf=self.json(f'minimum-travel-profile-{percent}.json',prof)
                 refs=[f'R{first_ref+i}' for i in range(4)];pads=[];reg=[];requested=6*percent/100
                 for ref_i,reference in enumerate(refs):
                     for side,x in ((1,10.0+ref_i*3.0),(2,10.7+ref_i*3.0)):

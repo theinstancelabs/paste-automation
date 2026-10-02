@@ -6,6 +6,7 @@ import importlib.util
 import io
 import json
 import math
+import struct
 import tempfile
 from pathlib import Path
 from types import SimpleNamespace
@@ -26,6 +27,24 @@ def number(value, label):
     if type(value) not in (int, float) or not math.isfinite(value):
         raise ValueError(label + ' must be finite numeric')
     return value
+
+
+def controller_steps(raw_b):
+    f=lambda x: struct.unpack('f',struct.pack('f',float(x)))[0]
+    v=f(f(raw_b)*f(4.44))
+    return int(math.floor(v+0.5)) if v>=0 else -int(math.floor(abs(v)+0.5))
+
+
+def fractional_retract_delta(start_b, requested):
+    wanted=int(math.floor(requested*4.44+0.5)); candidates=[]
+    for cents in range(max(1,round((requested-.40)*100)),round((requested+.40)*100)+1):
+        amount=cents/100; target=round((start_b+amount)*100)/100
+        if abs(controller_steps(target)-controller_steps(start_b))==wanted:
+            candidates.append((abs(amount-requested),amount,wanted))
+    if not candidates:
+        raise ValueError('No 0.01-degree raw B target reaches the reviewed conditioning retract controller count')
+    _,amount,steps=min(candidates)
+    return amount,steps
 
 
 def stages_for(experiment, review_evidence, gap, uncertainty):
@@ -76,6 +95,11 @@ def stages_for(experiment, review_evidence, gap, uncertainty):
         raise ValueError('Dose must be 2, 3, 4, 6, 12 or 20 degrees')
     if type(e.get('retractDegrees')) is not int or e['retractDegrees'] not in (2, 3, 4, 6):
         raise ValueError('Retraction must be 2, 3, 4 or 6 degrees')
+    conditioning_retract = e.get('conditioningRetractDegrees', e['retractDegrees'])
+    if type(conditioning_retract) not in (int,float) or conditioning_retract not in (1.5,2,3,4,6):
+        raise ValueError('Conditioning retraction must be 1.5, 2, 3, 4 or 6 degrees')
+    if conditioning_retract == 1.5 and (mode != 'transfer-preparation' or conditioning_dose != 6 or e['retractDegrees'] != 3 or retract_dwell != 500):
+        raise ValueError('Fractional conditioning retraction1.5 requires the reviewed transfer-preparation 6-degree conditioner and R3/500 pad recipe')
     raw = e.get('startRaw')
     if not isinstance(raw, dict) or set(raw) != {'X', 'Y', 'Z', 'A', 'B'}:
         raise ValueError('Exact five-axis startRaw required')
@@ -97,8 +121,10 @@ def stages_for(experiment, review_evidence, gap, uncertainty):
         if not clear < value <= work:
             raise ValueError('Test working Z must be below common clearance and no deeper than conditioning Z')
     targets = e.get('targetsXY')
-    if not isinstance(targets, list) or len(targets) != (2 if mode == 'transfer-preparation' else 5):
-        raise ValueError('Ordered XY targets required: wipe end, conditioning point, and three tests only in coupon mode')
+    if not isinstance(targets, list) or (mode == 'transfer-preparation' and not 2 <= len(targets) <= 4) or (mode == 'coupon' and len(targets) != 5):
+        raise ValueError('Transfer preparation requires a wipe point and one to three distinct conditioning points; coupon mode requires wipe, conditioner, and three tests')
+    if conditioning_retract == 1.5 and len(targets) != 4:
+        raise ValueError('Conditioning retraction1.5 is reserved for an explicit three-dummy transfer-preparation sequence')
     for target in targets:
         if not isinstance(target, dict) or set(target) != {'X', 'Y'}:
             raise ValueError('Each target must contain exactly X and Y')
@@ -138,25 +164,50 @@ def stages_for(experiment, review_evidence, gap, uncertainty):
             estimatedGapMm=gap+(work-at['Z']), gapUncertaintyMm=uncertainty,
             dwellMilliseconds=dwell)
 
+    conditioning_retract_index = None
+    conditioning_lift_index = None
+    last_condition_retract_delta = None
+    last_condition_retract_steps = None
+    last_condition_retract_stage_index = None
+    conditioning_retract_events = []
+    conditioning_restore_events = []
     for index, target in enumerate(targets[1:]):
         add('X', target['X'])
         add('Y', target['Y'])
-        add('Z', work if index == 0 else test_work[index-1])
-        if index:
+        add('Z', work if mode == 'transfer-preparation' or index == 0 else test_work[index-1])
+        if index and mode == 'transfer-preparation':
+            # Return the preceding conditioner retract to the same controller
+            # count before depositing at the next reviewed scrap point.
+            restore_source_index=last_condition_retract_stage_index
+            restore_start_b=at['B']
+            stroke(-last_condition_retract_delta)
+            conditioning_restore_events.append({'stageIndex':len(stages)-1,'reversalOfStageIndex':restore_source_index,
+                'rawDelta':at['B']-restore_start_b,'controllerSteps':controller_steps(at['B'])-controller_steps(restore_start_b)})
+        elif index:
             stroke(-e['retractDegrees'])
         if index == 0 and restore:
             stroke(-restore)
-        dose = conditioning_dose if index == 0 else e['doseDegrees']
+        dose = conditioning_dose if mode == 'transfer-preparation' or index == 0 else e['doseDegrees']
         # Twelve degrees uses two existing -6 stages, with dwell only after the second.
         if dose == 12:
             stroke(-6)
             stroke(-6, conditioning_dwell if index == 0 else dwell)
         else:
-            stroke(-dose, conditioning_dwell if index == 0 else dwell)
-        stroke(e['retractDegrees'], retract_dwell)
-        if index == 0 and final_wipe:
+            stroke(-dose, conditioning_dwell if mode == 'transfer-preparation' or index == 0 else dwell)
+        if mode == 'transfer-preparation' and conditioning_retract == 1.5:
+            last_condition_retract_delta,last_condition_retract_steps=fractional_retract_delta(at['B'],conditioning_retract)
+        else:
+            last_condition_retract_delta=conditioning_retract
+            last_condition_retract_steps=abs(controller_steps(at['B']+conditioning_retract)-controller_steps(at['B']))
+        stroke(last_condition_retract_delta, retract_dwell)
+        last_condition_retract_stage_index=len(stages)-1
+        conditioning_retract_events.append({'requestedDegrees':conditioning_retract,'rawDelta':last_condition_retract_delta,
+            'controllerSteps':last_condition_retract_steps,'actualDegrees':last_condition_retract_steps/4.44,'stageIndex':last_condition_retract_stage_index})
+        conditioning_retract_index = len(stages) - 1 if mode == 'transfer-preparation' else conditioning_retract_index
+        if index == len(targets[1:])-1 and final_wipe:
             add('X', round(at['X']+final_wipe,2), wipeReview=True, wipeReviewEvidence=review_evidence, estimatedGapMm=gap, gapUncertaintyMm=uncertainty)
         add('Z', clear)
+        conditioning_lift_index = len(stages) - 1 if mode == 'transfer-preparation' else conditioning_lift_index
     if mode == 'coupon':
         for index in range(idle//20):
             stroke(20, 2000 if index == idle//20-1 else 0)
@@ -164,7 +215,16 @@ def stages_for(experiment, review_evidence, gap, uncertainty):
     return stages, poses, {'grossCommandedDegrees': gross, 'netDegrees': at['B']-raw['B'],
                            'finalRaw': dict(at), 'doseDegrees': e['doseDegrees'],
                            'retractDegrees': e['retractDegrees'], 'primeDegrees': prime, 'forwardDwellMilliseconds': dwell,
-                           'testRetractionRatio': e['retractDegrees']/e['doseDegrees']}
+                           'testRetractionRatio': e['retractDegrees']/e['doseDegrees'],
+                           'conditioningDepositCount': len(targets)-1 if mode == 'transfer-preparation' else 1,
+                           'conditioningRetractionStageIndex': conditioning_retract_index,
+                           'conditioningLiftStageIndex': conditioning_lift_index,
+                           'requestedConditioningRetractDegrees': conditioning_retract,
+                           'actualConditioningRetractRawDelta': last_condition_retract_delta,
+                           'actualConditioningRetractControllerSteps': last_condition_retract_steps,
+                           'actualConditioningRetractDegrees': last_condition_retract_steps/4.44,
+                           'conditioningRetractEvents': conditioning_retract_events,
+                           'conditioningRestoreEvents': conditioning_restore_events}
 
 
 def build(args):

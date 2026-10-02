@@ -139,11 +139,16 @@ def build(args):
         read_availability(p,template,target['boardId'],target['reviewedMs'],now,snaps,900000 if wide or comparison or minimum_travel else 300000)
     gap=PREP.number(profile.get('estimatedGapMm'),'conditioning profile gap');unc=PREP.number(profile.get('gapUncertaintyMm'),'conditioning uncertainty')
     prefix,_,prep_accounting=PREP.stages_for(experiment,re,gap,unc)
+    if minimum_travel:
+        requested_condition_retract=experiment.get('conditioningRetractDegrees',3)
+        if prep_accounting.get('requestedConditioningRetractDegrees')!=requested_condition_retract or requested_condition_retract==1.5 and (c.get('retractPercent')!=25 or prep_accounting.get('conditioningDepositCount')!=3):
+            fail('Fractional 25% conditioner retraction requires an explicitly reviewed three-dummy sequence; legacy conditioning remains R3')
     group_prefixes=[prefix]
     if comparison:
         for g in target['retractionComparison']['groups'][1:]:
             gx=copy.deepcopy(experiment);gx['startRaw']=dict(raw,X=g['primeRawXY'][0],Y=g['primeRawXY'][1]);gx['targetsXY']=copy.deepcopy(g['scrapTargetsXY']);gp,_,_=PREP.stages_for(gx,re,gap,unc);group_prefixes.append(gp)
-    retract_i=len(prefix)-2-(1 if experiment.get('conditioningFinalWipeMm',0) else 0)
+    retract_i=prep_accounting.get('conditioningRetractionStageIndex') if minimum_travel else len(prefix)-2-(1 if experiment.get('conditioningFinalWipeMm',0) else 0)
+    lift_i=prep_accounting.get('conditioningLiftStageIndex') if minimum_travel else len(prefix)-1
     if retract_i<0 or prefix[retract_i].get('axis')!='B' or prefix[-1].get('axis')!='Z': fail('Conditioner must finish with selected retract/wipe then clearance lift')
     at=copy.deepcopy(raw)
     for s in prefix: at[s['axis']]=s['target']
@@ -187,10 +192,13 @@ def build(args):
         elif minimum_travel:
             p['componentReference']=ids[pi].rsplit('.',1)[0];p['pairOrder']=int(ids[pi].rsplit('.',1)[1]);p['retractPercent']=c['retractPercent'];p['requestedRetractionDegrees']=c['requestedRetractionDegrees']
             if p['pairOrder']==1:
-                if pi==0: restore_target=at['B']-3.0;p['restoreSourceStageIndex']=retract_i
+                if pi==0:
+                    cond_delta=prep_accounting.get('actualConditioningRetractRawDelta',3.0);cond_steps=prep_accounting.get('actualConditioningRetractControllerSteps',round(cond_delta*4.44))
+                    restore_target=at['B']-cond_delta;p['restoreSourceStageIndex']=retract_i
                 else:
                     previous=pads[pi-1];restore_target=previous['retractRestoreTargetB'];p['restoreSourceStageIndex']=previous['retractStageIndex']
-                expected_restore_steps=-round(3*4.44) if pi==0 else -previous['actualRetractControllerSteps']
+                    cond_steps=None
+                expected_restore_steps=-cond_steps if pi==0 else -previous['actualRetractControllerSteps']
                 if controller_steps(restore_target)-controller_steps(at['B'])!=expected_restore_steps: fail('Pair-start restore must reverse the exact conditioner or preceding fractional retract count')
                 p['restoreStageIndex']=len(stages);p['restoreTargetB']=restore_target;at=append(stages,at,'B',restore_target,gapEvidence=p['surfaceEvidence'],estimatedGapMm=surf['estimatedGapMm'],gapUncertaintyMm=surf['gapUncertaintyMm'],dwellMilliseconds=0)
             else:
@@ -224,7 +232,7 @@ def build(args):
     c.pop('finalIdleStageIndex',None) if idle==40 else None
     if len(stages)>(400 if wide or comparison else 96): fail('Selected-pad route exceeds its native stage cap')
     target['pads']=pads
-    target['inlineConditioning']={'schema':1,'protocol':'scrap-condition-transit-retraction-comparison' if comparison else 'scrap-condition-transit-minimum-travel-eight-pad' if minimum_travel else 'scrap-condition-transit-selected-pads','experiment':copy.deepcopy(experiment),'experimentEvidence':ee,'maximumTransferMilliseconds':15000,'prefixStageCount':len(prefix),'retractionStageIndex':retract_i,'liftStageIndex':len(prefix)-1,'comparisonGroupPrefixes':[{'group':i+1,'prefixStageCount':len(x)} for i,x in enumerate(group_prefixes)] if comparison else None}
+    target['inlineConditioning']={'schema':1,'protocol':'scrap-condition-transit-retraction-comparison' if comparison else 'scrap-condition-transit-minimum-travel-eight-pad' if minimum_travel else 'scrap-condition-transit-selected-pads','experiment':copy.deepcopy(experiment),'experimentEvidence':ee,'maximumTransferMilliseconds':15000,'prefixStageCount':len(prefix),'retractionStageIndex':retract_i,'liftStageIndex':lift_i,'conditioningDepositCount':prep_accounting.get('conditioningDepositCount',1),'requestedConditioningRetractDegrees':prep_accounting.get('requestedConditioningRetractDegrees'),'actualConditioningRetractRawDelta':prep_accounting.get('actualConditioningRetractRawDelta'),'actualConditioningRetractControllerSteps':prep_accounting.get('actualConditioningRetractControllerSteps'),'actualConditioningRetractDegrees':prep_accounting.get('actualConditioningRetractDegrees'),'conditioningRetractEvents':prep_accounting.get('conditioningRetractEvents',[]),'comparisonGroupPrefixes':[{'group':i+1,'prefixStageCount':len(x)} for i,x in enumerate(group_prefixes)] if comparison else None}
     route=[copy.deepcopy(raw)];cur=copy.deepcopy(raw)
     for s in stages:cur=copy.deepcopy(cur);cur[s['axis']]=s['target'];route.append(cur)
     bounds={a:{'min':min(x[a] for x in route),'max':max(x[a] for x in route)} for a in 'XYZB'};heads={}

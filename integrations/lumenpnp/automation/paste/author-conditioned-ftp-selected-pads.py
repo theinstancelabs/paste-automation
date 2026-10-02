@@ -97,10 +97,12 @@ def derive(q,load,now):
   target['compensatedSequence']={'schema':1,'protocol':'restore-dose-retract-lift-retraction-comparison','doseDegrees':6,'retractDegrees':3,'conditioningRetractDegrees':3,'dwellMilliseconds':dwell,'retractDwellMilliseconds':500,'idleReliefDegrees':40}
  else:target['compensatedSequence']={'schema':1,'protocol':'restore-dose-retract-lift-selected-pads','doseDegrees':dose,'retractDegrees':retract,'dwellMilliseconds':dwell,'retractDwellMilliseconds':500,'idleReliefDegrees':40}
  exp=copy.deepcopy(docs['scrapExperiment']);exp.update(startRaw=copy.deepcopy(raw),doseDegrees=dose,retractDegrees=retract,conditioningDoseDegrees=conditioning,conditioningRestoreDegrees=restore,conditioningFinalWipeMm=final_wipe,targetsXY=copy.deepcopy(q.get('scrapTargetsXY')))
+ if minimum_travel and 'conditioningRetractDegrees' in q: exp['conditioningRetractDegrees']=q['conditioningRetractDegrees']
  if comparison:
   exp['targetsXY']=copy.deepcopy(target['retractionComparison']['groups'][0]['scrapTargetsXY']);exp['comparisonGroupTargetsXY']=[{'group':g['group'],'primeRawXY':g['primeRawXY'],'targetsXY':g['scrapTargetsXY']} for g in target['retractionComparison']['groups']]
   if raw['X']!=target['retractionComparison']['groups'][0]['primeRawXY'][0] or raw['Y']!=target['retractionComparison']['groups'][0]['primeRawXY'][1]:fail('Barrier must be prepositioned at first reviewed conditioning lane')
- if exp.get('mode')!='transfer-preparation' or exp.get('workRawZ')!=raw['Z'] or not isinstance(exp.get('targetsXY'),list) or len(exp['targetsXY'])!=2:fail('Explicit transfer-preparation experiment with two reviewed scrap targets required')
+ expected_condition_targets = (2 <= len(exp.get('targetsXY',[])) <= 4) if minimum_travel else (len(exp.get('targetsXY',[])) == 2)
+ if exp.get('mode')!='transfer-preparation' or exp.get('workRawZ')!=raw['Z'] or not isinstance(exp.get('targetsXY'),list) or not expected_condition_targets:fail('Explicit transfer-preparation experiment requires a wipe and reviewed conditioning target(s); minimum-travel batches allow one to three distinct dummy dots')
  if final_wipe:exp['conditioningFinalWipeReviewed']=True
  else:exp.pop('conditioningFinalWipeReviewed',None)
  review={'mode':'wet','reviewedBy':q['reviewedBy'],'reviewedMs':stamp,'imageEvidence':copy.deepcopy(src['stationaryImage']),'cleanTipImage':copy.deepcopy(src['tipImage']),'rawZRange':q.get('conditioningRawZRange'),'basis':q['reviewBasis'],'attestations':copy.deepcopy(attest)}
