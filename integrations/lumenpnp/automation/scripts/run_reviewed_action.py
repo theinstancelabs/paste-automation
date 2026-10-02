@@ -17,7 +17,7 @@ import sys
 import time
 from pathlib import Path
 
-ACTION_ALLOWLIST = ['paste-batch-reconcile', 'paste-batch-release', 'paste-batch-audit', 'paste-air-count-audit', 'paste-air-count-release', 'paste-contiguous-batch-preview', 'paste-contiguous-batch', 'paste-startup-quarantine', 'paste-waste-prime', 'paste-waste-prime-preview', 'paste-commissioning-stroke', 'paste-commissioning-stroke-preview', 'paste-dose-cycle', 'paste-dose-cycle-preview', 'paste-fiducial-vision', 'paste-top-exposure', 'paste-bottom-exposure', 'paste-camera-led', 'paste-b-current', 'paste-home-finalize', 'paste-reset-home', 'paste-reset-clearance', 'paste-reset-connect', 'paste-reset-invalidate', 'paste-model-state', 'paste-vacuum-probe', 'paste-b-config', 'paste-z-observe', 'paste-position-barrier', 'paste-error-latch', 'paste-vacuum-baseline', 'paste-survey-release', 'paste-prime-release', 'paste-prime-audit', 'paste-survey-audit', 'paste-survey', 'paste-measure', 'paste-connect-inspect', 'paste-quarantine', 'paste-air', 'paste-state', 'vacuum', 'adopt', 'discover', 'home','load','register', 'probe', 'reconcile', 'state', 'registration', 'index', 'opening',
+ACTION_ALLOWLIST = ['paste-batch-reconcile', 'paste-batch-release', 'paste-batch-audit', 'paste-air-count-audit', 'paste-air-count-release', 'paste-air-no-motion-expiry-audit', 'paste-air-no-motion-expiry-release', 'paste-contiguous-batch-preview', 'paste-contiguous-batch', 'paste-startup-quarantine', 'paste-waste-prime', 'paste-waste-prime-preview', 'paste-commissioning-stroke', 'paste-commissioning-stroke-preview', 'paste-dose-cycle', 'paste-dose-cycle-preview', 'paste-fiducial-vision', 'paste-top-exposure', 'paste-bottom-exposure', 'paste-camera-led', 'paste-b-current', 'paste-home-finalize', 'paste-reset-home', 'paste-reset-clearance', 'paste-reset-connect', 'paste-reset-invalidate', 'paste-model-state', 'paste-vacuum-probe', 'paste-b-config', 'paste-z-observe', 'paste-position-barrier', 'paste-error-latch', 'paste-vacuum-baseline', 'paste-survey-release', 'paste-prime-release', 'paste-prime-audit', 'paste-survey-audit', 'paste-survey', 'paste-fast-camera-inspection', 'paste-measure', 'paste-connect-inspect', 'paste-quarantine', 'paste-air', 'paste-state', 'vacuum', 'adopt', 'discover', 'home','load','register', 'probe', 'reconcile', 'state', 'registration', 'index', 'opening',
                     'center', 'pick', 'place', 'record', 'review', 'empty', 'seal', 'recover']
 PROCESS_MARKER = b'install4j.org.openpnp.Main'
 EVIDENCE_WAIT_ACTIONS = {'index', 'pick', 'place', 'record', 'center', 'recover'}
@@ -262,11 +262,26 @@ def selected_reference(root):
     return reference if isinstance(reference, str) and re.fullmatch(r'R\d+', reference) else None
 
 
-PASTE_INSTALLATION_ACTIONS = {'paste-batch-reconcile', 'paste-batch-release', 'paste-batch-audit', 'paste-air-count-audit', 'paste-air-count-release', 'paste-contiguous-batch-preview', 'paste-contiguous-batch', 'paste-b-current', 'paste-startup-quarantine', 'paste-waste-prime', 'paste-waste-prime-preview', 'paste-commissioning-stroke', 'paste-commissioning-stroke-preview', 'paste-dose-cycle', 'paste-dose-cycle-preview', 'paste-fiducial-vision', 'paste-top-exposure', 'paste-bottom-exposure', 'paste-camera-led', 'paste-b-current', 'paste-home-finalize', 'paste-reset-home', 'paste-reset-clearance', 'paste-reset-connect', 'paste-reset-invalidate', 'paste-model-state', 'paste-vacuum-probe', 'paste-b-config', 'paste-z-observe', 'paste-position-barrier', 'paste-error-latch', 'paste-vacuum-baseline', 'paste-survey-release', 'paste-prime-release', 'paste-prime-audit', 'paste-survey-audit', 'paste-survey', 'paste-measure', 'paste-connect-inspect', 'paste-state', 'paste-quarantine', 'paste-air'}
+PASTE_INSTALLATION_ACTIONS = {'paste-batch-reconcile', 'paste-batch-release', 'paste-batch-audit', 'paste-air-count-audit', 'paste-air-count-release', 'paste-air-no-motion-expiry-audit', 'paste-air-no-motion-expiry-release', 'paste-contiguous-batch-preview', 'paste-contiguous-batch', 'paste-b-current', 'paste-startup-quarantine', 'paste-waste-prime', 'paste-waste-prime-preview', 'paste-commissioning-stroke', 'paste-commissioning-stroke-preview', 'paste-dose-cycle', 'paste-dose-cycle-preview', 'paste-fiducial-vision', 'paste-top-exposure', 'paste-bottom-exposure', 'paste-camera-led', 'paste-b-current', 'paste-home-finalize', 'paste-reset-home', 'paste-reset-clearance', 'paste-reset-connect', 'paste-reset-invalidate', 'paste-model-state', 'paste-vacuum-probe', 'paste-b-config', 'paste-z-observe', 'paste-position-barrier', 'paste-error-latch', 'paste-vacuum-baseline', 'paste-survey-release', 'paste-prime-release', 'paste-prime-audit', 'paste-survey-audit', 'paste-survey', 'paste-fast-camera-inspection', 'paste-measure', 'paste-connect-inspect', 'paste-state', 'paste-quarantine', 'paste-air'}
 
 
 def check_paste_installation_lock(root, action):
-    """Installation suspends legacy motion without changing calibrated workflows."""
+    """Installation suspends legacy motion; camera inspection uses its own strict policy."""
+    if action == 'paste-fast-camera-inspection':
+        lock_path = root / 'automation/paste/installation-lock.json'
+        policy_path = root / 'automation/paste/camera-inspection-policy.json'
+        try:
+            lock, policy = json.loads(lock_path.read_text()), json.loads(policy_path.read_text())
+        except (OSError, json.JSONDecodeError) as exc:
+            raise RuntimeError('Camera inspection policy and installation lock must both be intact') from exc
+        if (not isinstance(lock, dict) or lock.get('schema') != 1 or type(lock.get('locked')) is not bool
+                or not isinstance(policy, dict) or policy != {
+                    'schema': 1, 'scope': 'camera-only-inspection-under-paste-installation-lock',
+                    'enabled': True, 'action': action, 'requiresInstallationLockPreserved': True,
+                    'noPasteActuation': True, 'topCameraXYOnly': True, 'n2Quarantined': True,
+                    'maxSegmentMm': 10, 'maxTotalTravelMm': 120}):
+            raise RuntimeError('Dedicated camera-only policy rejects action; paste installation lock remains in force')
+        return
     if action in PASTE_INSTALLATION_ACTIONS:
         return
     path = root / 'automation/paste/installation-lock.json'

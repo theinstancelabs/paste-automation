@@ -1,0 +1,12 @@
+{
+  "schema": 1,
+  "scope": "camera-only-inspection-under-paste-installation-lock",
+  "enabled": true,
+  "action": "paste-fast-camera-inspection",
+  "requiresInstallationLockPreserved": true,
+  "noPasteActuation": true,
+  "topCameraXYOnly": true,
+  "n2Quarantined": true,
+  "maxSegmentMm": 10,
+  "maxTotalTravelMm": 120
+}
