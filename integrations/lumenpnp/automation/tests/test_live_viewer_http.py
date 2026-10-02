@@ -10,6 +10,8 @@ import threading
 import time
 import types
 import unittest
+import zipfile
+from io import BytesIO
 from unittest import mock
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'scripts'))
@@ -127,6 +129,123 @@ class LiveViewerHttpTest(unittest.TestCase):
             'updatedAt': '2026-10-01T20:00:00Z'})
         self.assertNotIn('extra', body or {})
         self.assertIn("el('message').textContent=s.message||''", live_viewer.PAGE.decode())
+
+    def test_r33_repeat_result_and_images_are_authenticated_aliases_without_paths(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            result_dir=Path(tmp)
+            observation={'scope':'R33-recipe-four-pad-repeat-observation','status':'visual-candidate-not-qualified',
+              'executionSeconds':58.26,'pads':['R19.1','R19.2','R18.1','R18.2'],
+              'boardProgress':{'resistorPadsTouched':45,'resistorPadsTotal':80,'priorMixedQualityDepositsRemain':True},
+              'physicalAcceptanceEstablished':False}
+            (result_dir/'repeat-observation.json').write_text(json.dumps(observation))
+            for family,values in [('R19',[.9777,.9770]),('R18',[1.0,.9945])]:
+                (result_dir/(family+'-cv-measurements.json')).write_text(json.dumps({'scope':'conventional-before-after-paste-coverage',
+                  'pads':[{'brightPadCoverageFraction':v,'equivalentChangedDiameterMm':1.0615+i*.05} for i,v in enumerate(values)]}))
+            (result_dir/'after-R19.1.png').write_bytes(b'\x89PNG\r\n\x1a\nR19')
+            (result_dir/'after-R18.1.png').write_bytes(b'\x89PNG\r\n\x1a\nR18')
+            with mock.patch.object(live_viewer,'R33_RESULT_DIR',result_dir):
+                status, _ = self.request('GET', '/paste-results/latest')
+                self.assertEqual(status, 403)
+                status, payload = self.request('GET', '/paste-results/latest', headers=self.private_headers())
+                self.assertEqual(status, 200)
+                image_status, data, headers = self.request_with_headers('GET', payload['imageUrls']['R19.1'], headers=self.private_headers())
+        self.assertEqual(status, 200)
+        self.assertEqual(payload['padIds'], ['R19.1', 'R19.2', 'R18.1', 'R18.2'])
+        self.assertEqual(payload['boardProgress'], {'touched': 45, 'total': 80, 'priorMixedQualityDepositsRemain': True})
+        self.assertFalse(payload['physicalAcceptanceEstablished'])
+        self.assertEqual(payload['coveragePercentRange'], [97.7, 100.0])
+        self.assertEqual(payload['equivalentChangedDiameterMmRange'], [1.06, 1.11])
+        encoded=json.dumps(payload)
+        self.assertNotIn('/home/', encoded)
+        self.assertEqual(image_status, 200)
+        self.assertEqual(headers['content-type'], 'image/png')
+        self.assertTrue(data.startswith(b'\x89PNG'))
+        self.assertIn('loadR33Result', live_viewer.PAGE.decode())
+
+    def test_existing_r33_job_status_is_authenticated_read_only_descriptor(self):
+        descriptor={'jobId':'a'*64,'preparedId':'b'*64,'action':'observe','stage':'completed',
+          'boardSha256':'c'*64,'executionAuthorized':False,'reportStatus':'completed-contiguous-batch-awaiting-observation',
+          'controllerPositionVerified':True,'uncertainCompletion':False,'nativePreviewPassed':True,
+          'photos':[{'view':'top','name':'top-after-raw.png'}],
+          'detail':'Read-only descriptor; no machine action.'}
+        with mock.patch.object(live_viewer,'known_r33_service_status',return_value=descriptor):
+            status,_=self.request('GET','/paste-jobs/known-r33/status')
+            self.assertEqual(status,403)
+            status,payload=self.request('GET','/paste-jobs/known-r33/status',headers=self.private_headers())
+        self.assertEqual(status,200);self.assertEqual(payload['action'],'observe')
+        self.assertFalse(payload['executionAuthorized']);self.assertTrue(payload['controllerPositionVerified'])
+        self.assertNotIn('/home/',json.dumps(payload))
+        self.assertIn('loadKnownJobStatus',live_viewer.PAGE.decode())
+
+    def test_private_kicad_planner_saves_job_and_svg_without_enabling_execution(self):
+        boundary='----viewer-board-test'
+        board=b'''(kicad_pcb (version 20240108) (net 0 "")
+          (gr_rect (start 0 0) (end 10 5) (layer "Edge.Cuts"))
+          (footprint "Test:FP" (layer "F.Cu") (at 2 2)
+            (property "Reference" "U1") (property "Value" "test")
+            (pad "1" smd rect (at 0 0) (size 1 1) (layers "F.Cu" "F.Paste") (net 0 "")))
+          (footprint "Fiducial:F" (layer "F.Cu") (at 8 3)
+            (property "Reference" "FID1") (property "Value" "fid")))'''
+        parts=[]
+        def part(name,value,filename=None,content_type=None):
+            header=f'--{boundary}\r\nContent-Disposition: form-data; name="{name}"'
+            if filename:header+=f'; filename="{filename}"'
+            header+='\r\n'
+            if content_type:header+=f'Content-Type: {content_type}\r\n'
+            parts.append(header.encode()+b'\r\n'+value+b'\r\n')
+        part('board',board,'demo.kicad_pcb','application/octet-stream')
+        part('side',b'F.Cu');part('pasteThicknessMm',b'0.1');part('apertureScaling',b'1')
+        body=b''.join(parts)+f'--{boundary}--\r\n'.encode()
+        headers=self.private_headers(True,'planner-upload-0001')
+        headers['Content-Type']='multipart/form-data; boundary='+boundary
+        status,result=self.request('POST','/paste-jobs/plan',body,headers)
+        self.assertEqual(status,201)
+        self.assertEqual((result['fileName'],result['padCount'],result['footprintCount'],result['fiducialCount']),('demo.kicad_pcb',1,2,1))
+        self.assertFalse(result['executionAuthorized'])
+        self.assertTrue(result['jobUrl'].endswith(result['jobId']))
+        status,job=self.request('GET',result['jobUrl'],headers=self.private_headers())
+        self.assertEqual(status,200);self.assertEqual(job['scope'],'offline-kicad-paste-job');self.assertFalse(job['executionAuthorized'])
+        status,readiness=self.request('GET',result['readinessUrl'],headers=self.private_headers())
+        self.assertEqual(status,200);self.assertFalse(readiness['executionAuthorized'])
+        self.assertEqual([stage['id'] for stage in readiness['stages']],['cad-plan','geometry-review','flow-calibration','board-registration','machine-session','native-openpnp-job'])
+        flow=next(stage for stage in readiness['stages'] if stage['id']=='flow-calibration')
+        self.assertEqual(flow['status'],'required');self.assertIn('not verified physical calibration',flow['detail'])
+        status,data,headers=self.request_with_headers('GET',result['previewUrl'],headers=self.private_headers())
+        self.assertEqual(status,200);self.assertEqual(headers['content-type'],'image/svg+xml; charset=utf-8')
+        self.assertIn(b'CAD preview (not registered)',data);self.assertIn(b'FID1',data)
+        status,data,headers=self.request_with_headers('GET',result['reviewBundleUrl'],headers=self.private_headers())
+        self.assertEqual(status,200);self.assertEqual(headers['content-type'],'application/zip')
+        with zipfile.ZipFile(BytesIO(data)) as archive:
+            self.assertEqual(set(archive.namelist()),{'job.json','preview.svg','readiness.json','README.txt'})
+            self.assertIn(b'not an OpenPnP machine job',archive.read('README.txt'))
+        self.assertIn('Start paste — blocked',live_viewer.PAGE.decode())
+
+    def test_kicad_planner_upload_requires_auth_and_rejects_non_board_files(self):
+        boundary='----viewer-board-invalid';body=(f'--{boundary}\r\nContent-Disposition: form-data; name="board"; filename="bad.txt"\r\n\r\nhello\r\n--{boundary}--\r\n').encode()
+        headers=self.private_headers(True,'planner-invalid-0001');headers['Content-Type']='multipart/form-data; boundary='+boundary
+        status,_=self.request('POST','/paste-jobs/plan',body,{'Content-Type':headers['Content-Type']})
+        self.assertEqual(status,403)
+        status,result=self.request('POST','/paste-jobs/plan',body,headers)
+        self.assertEqual(status,400);self.assertIn('.kicad_pcb',result['error'])
+
+    def test_cad_labels_are_escaped_in_svg_preview(self):
+        job={'board':{'fileName':'<script>alert(1)</script>.kicad_pcb','side':'F.Cu','boundsMm':[0,0,2,2]},
+             'footprints':[{'reference':'<img src=x onerror=alert(1)>','centerMm':[1,1]}],
+             'pads':[{'id':'<script>bad</script>','centerMm':[1,1],'sizeMm':[.5,.5],'doseStatus':'needs-calibration'}],
+             'fiducials':[{'reference':'<svg onload=alert(1)>','boardXYmm':[1,1]}]}
+        preview=live_viewer.render_paste_job_svg(job).decode()
+        self.assertNotIn('<script>',preview);self.assertNotIn('<img ',preview);self.assertNotIn('<svg onload',preview)
+        self.assertIn('&lt;script&gt;',preview)
+
+    def test_svg_renders_exact_arc_and_marks_unresolved_outline(self):
+        job={'board':{'fileName':'arc.kicad_pcb','side':'F.Cu','boundsMm':[0,0,2,2],
+                      'outline':[{'type':'gr_arc','geometryStatus':'exact-circular-arc','centerMm':[1,1],
+                                  'radiusMm':1,'startAngleDeg':0,'sweepAngleDeg':90}]}}
+        svg=live_viewer.render_paste_job_svg(job).decode()
+        self.assertIn('<path d="M 860.00 450.00 A 410.00 410.00 0 0 0 450.00 40.00"',svg)
+        job['board']['outline'][0]={'type':'gr_arc','geometryStatus':'review-required-degenerate-arc'}
+        svg=live_viewer.render_paste_job_svg(job).decode()
+        self.assertIn('Outline review required: review-required-degenerate-arc',svg)
 
     def test_paste_status_derives_live_stage_progress_without_exposing_report_path(self):
         with tempfile.TemporaryDirectory() as td:

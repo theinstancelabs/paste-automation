@@ -998,8 +998,8 @@
       "sourceRoot": "/home/lumen/lumenpnp",
       "sourcePath": "automation/scripts/live_viewer.py",
       "destination": "integrations/lumenpnp/automation/scripts/live_viewer.py",
-      "sha256": "0a031597b194d4eb310b742156123c1ca886f1e79dfe66e0edf083729519832f",
-      "bytes": 29902
+      "sha256": "bc10e6216915fcd4e79ce1095ffe848635b8bcead6e3e835654a194b50121f5d",
+      "bytes": 59089
     },
     {
       "sourceRoot": "/home/lumen/lumenpnp",
@@ -1068,8 +1068,8 @@
       "sourceRoot": "/home/lumen/lumenpnp",
       "sourcePath": "automation/tests/test_live_viewer_http.py",
       "destination": "integrations/lumenpnp/automation/tests/test_live_viewer_http.py",
-      "sha256": "1e2bcd626ab455984077d6f519d21cd99d9bf75ca5510021ebd08bd696c702cd",
-      "bytes": 13403
+      "sha256": "a28541bf8f0e6c1454b66863f97570735cc11c6acf08ddd89e1158e1ac60fcfd",
+      "bytes": 22519
     },
     {
       "sourceRoot": "/home/lumen/lumenpnp",
@@ -2057,6 +2057,62 @@
       "destination": "integrations/lumenpnp/automation/scripts/Release_Paste_Air_Count_Origin_Stop.js",
       "sha256": "d6903f452974d34b23941385a9d994fb5508a7c832776093ffbcd6a05d461734",
       "bytes": 9422
+    },
+    {
+      "sourceRoot": "/home/lumen/lumenpnp",
+      "sourcePath": "automation/paste/job_planner.py",
+      "destination": "integrations/lumenpnp/automation/paste/job_planner.py",
+      "sha256": "2eb6002b2bf242b261c39ad766a3876b6382f93e78374fdaf86458cf8abca098",
+      "bytes": 13828
+    },
+    {
+      "sourceRoot": "/home/lumen/lumenpnp",
+      "sourcePath": "automation/paste/job_service.py",
+      "destination": "integrations/lumenpnp/automation/paste/job_service.py",
+      "sha256": "a25cefb37737176e755c22ede1d4b599a8d928b4090dc5f8c351595db6179924",
+      "bytes": 11718
+    },
+    {
+      "sourceRoot": "/home/lumen/lumenpnp",
+      "sourcePath": "automation/paste/test_job_planner.py",
+      "destination": "integrations/lumenpnp/automation/paste/test_job_planner.py",
+      "sha256": "7a51760a8857538d387936b8e6eba03cab1899124f4f82f33f17eb13d0f1ec9d",
+      "bytes": 5414
+    },
+    {
+      "sourceRoot": "/home/lumen/lumenpnp",
+      "sourcePath": "automation/paste/test_job_service.py",
+      "destination": "integrations/lumenpnp/automation/paste/test_job_service.py",
+      "sha256": "8f221fa13c20cfb4d663451ef79970111dfe4201967bb817330ac28d13cf6f73",
+      "bytes": 4282
+    },
+    {
+      "sourceRoot": "/home/lumen/lumenpnp",
+      "sourcePath": "automation/paste/measure_paste_repeat.py",
+      "destination": "integrations/lumenpnp/automation/paste/measure_paste_repeat.py",
+      "sha256": "141f9325cfd85479e1efa7d53342efaa7c18840eaed920cdce8202e17ea1dcdd",
+      "bytes": 3413
+    },
+    {
+      "sourceRoot": "/home/lumen/lumenpnp",
+      "sourcePath": "automation/paste/test_measure_paste_repeat.py",
+      "destination": "integrations/lumenpnp/automation/paste/test_measure_paste_repeat.py",
+      "sha256": "e39bf1da36fb99432dbe52bca690a64c3f732827d2a0e5dd263296e06e44320f",
+      "bytes": 1609
+    },
+    {
+      "sourceRoot": "/home/lumen/lumenpnp",
+      "sourcePath": "automation/paste/pad_inspection.py",
+      "destination": "integrations/lumenpnp/automation/paste/pad_inspection.py",
+      "sha256": "c0a9f5f750fe79eef3e680ea4f5bebd1ef9531aedba5e356e91e9ebbb7c78a89",
+      "bytes": 10698
+    },
+    {
+      "sourceRoot": "/home/lumen/lumenpnp",
+      "sourcePath": "automation/paste/test_pad_inspection.py",
+      "destination": "integrations/lumenpnp/automation/paste/test_pad_inspection.py",
+      "sha256": "67d492101b4087b0f39473a02adf22249003adea1d3b1c680041cbf24749dc9d",
+      "bytes": 5347
     }
   ],
   "manifestSelfHash": "Excluded to avoid a recursive digest; this manifest enumerates every other exported/generated file.",
