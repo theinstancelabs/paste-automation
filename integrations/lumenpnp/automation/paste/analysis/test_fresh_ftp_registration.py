@@ -90,6 +90,48 @@ class FreshFtpRegistrationTests(unittest.TestCase):
                 topImageSha256=image['sha256'],padIdentityReviewed=True,centerMeasurementReviewed=True,observedCenterPixel=[127.5,127.5]))
         return request
 
+    def fast_camera_fixture(self, root):
+        request, _ = self.fixture(root)
+        for i, ref in enumerate(('FID1', 'FID2', 'FID3')):
+            item=request['measurements'][ref];path=Path(item['report']);report=json.loads(path.read_text());q=report['request']
+            raw=report['afterQuerySnapshot']['raw'];raw['X']=round(raw['X'],2);raw['Y']=round(raw['Y'],2)
+            driver=report['afterQuerySnapshot']['driver'];driver.update(X=raw['X'],Y=raw['Y'])
+            poses=report['afterQuerySnapshot']['nativePoses']
+            for pose in poses.values():pose.update(x=raw['X'],y=raw['Y'])
+            start=dict(raw);start['X']-=.1;start_poses=json.loads(json.dumps(poses))
+            for name,pose in start_poses.items():
+                if name!='bottom':pose['x']-=.1
+            report['after']['reported'].update(X=raw['X'],Y=raw['Y'])
+            fid_q={'schema':1,'scope':'camera-only-registered-fast-inspection','enabled':True,'id':q['id'],'jvmStartMs':1,
+              'liveConfigurationSha256':'a'*64,'mode':'registered-fiducials','references':[ref],
+              'targets':[{'reference':ref,'x':raw['X'],'y':raw['Y'],'pads':[]}], 'operatorReviewed':True,'reviewedBy':'test',
+              'speedFraction':1,'speedOverPrecision':True,'maxSegmentMm':10,'maxTotalTravelMm':120,'plannedDistanceMm':.1,
+              'completionScope':'Camera frames and XY position reports only; no paste, calibration, or placement acceptance.',
+              'expectedRaw':start,'expectedDriver':start,'expectedNativePoses':start_poses,
+              'routeSteps':[{'index':0,'x':raw['X'],'y':raw['Y'],'z':raw['Z'],'a':raw['A'],'b':raw['B'],'captureReferences':[ref]}]}
+            report.update(scope='camera-only-registered-fast-inspection',request=fid_q,motionSubmitted=True,
+                          nativeMotionCompletionReported=True,physicalAcceptanceEstablished=False,calibrationEstablished=False,
+                          beforeQuerySnapshot={'raw':start,'driver':start,'nativePoses':start_poses},beforeReported=start,
+                          afterReported=raw,transitions=[{'status':'route-step-0-verified'}],
+                          frames=[{'reference':ref,'path':'top.png','width':64,'height':64,'rawAxes':raw,'nativePose':poses['top']}])
+            report_bytes=json.dumps(report).encode();path.write_bytes(report_bytes)
+            item['reportSha256']=hashlib.sha256(report_bytes).hexdigest()
+        return request
+
+    def test_fast_camera_report_family_is_bound_without_relabeling(self):
+        with tempfile.TemporaryDirectory() as td:
+            request=self.fast_camera_fixture(Path(td));result=analyze(request,now_ms=1000)
+            self.assertTrue(result['acceptance']['passed'])
+            self.assertEqual(len(result['resistorPadMachineXYTargets']),80)
+            self.assertTrue(all(m['report']['path'].endswith('report.json') for m in result['measurements'].values()))
+            for edit in (lambda r:r['request'].update(scope='camera-survey-single-raw-XY-axis'),
+                         lambda r:r['afterQuerySnapshot']['driver'].update(B=42),
+                         lambda r:r['afterReported'].update(X=-1),
+                         lambda r:r['request']['routeSteps'][0].update(b=43),
+                         lambda r:r['frames'][0].update(reference='FID2')):
+                bad=json.loads(json.dumps(request));ref='FID1';p=Path(bad['measurements'][ref]['report']);report=json.loads(p.read_text());edit(report);changed=json.dumps(report).encode();p.write_bytes(changed);bad['measurements'][ref]['reportSha256']=hashlib.sha256(changed).hexdigest()
+                with self.assertRaises(ValueError):analyze(bad,now_ms=1000)
+
     def test_affine_candidate_requires_three_independent_held_out_pads(self):
         with tempfile.TemporaryDirectory() as td:
             q=self.affine_fixture(Path(td)); accepted=analyze(q,now_ms=1000)

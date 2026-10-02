@@ -17,6 +17,7 @@ MIN_SCALE, MAX_SCALE, MAX_THIRD_RESIDUAL_MM = 0.99, 1.01, 0.08
 AFFINE_MODEL = 'three-fiducial-affine'
 MAX_AFFINE_SKEW_DEGREES = 0.3
 HELD_OUT_PADS = ('R1.2', 'R16.1', 'R40.1')
+FAST_CAMERA_SCOPE = 'camera-only-registered-fast-inspection'
 
 
 def finite_pair(value, label):
@@ -25,6 +26,14 @@ def finite_pair(value, label):
     if any(type(v) not in (int, float) or not math.isfinite(v) for v in value):
         raise ValueError(f'{label} must be finite')
     return [float(value[0]), float(value[1])]
+
+
+def exact_axes(value, label):
+    if not isinstance(value, dict) or set(value) != {'X', 'Y', 'Z', 'A', 'B'}:
+        raise ValueError(f'{label} must bind exactly X/Y/Z/A/B')
+    if any(type(value[k]) not in (int, float) or not math.isfinite(value[k]) for k in value):
+        raise ValueError(f'{label} contains a nonfinite axis')
+    return value
 
 
 def iso_ms(value):
@@ -127,6 +136,188 @@ def camera_evidence(report_ev, image_ev, session, now):
     with Image.open(io.BytesIO(data)) as im:
         size = list(im.size)
     return r, rp, ip, raw, xy, size
+
+
+def verified_centering_xy(report, ref, fast_request, now):
+    """Resolve a fast-route FID target from its original native CV evidence."""
+    from PIL import Image
+    import io
+    center = fast_request.get('fiducialCenteringReport')
+    if not isinstance(center, dict) or center.get('reference') != ref:
+        raise ValueError(f'{ref} centered fast-camera route needs its hash-bound native centering report')
+    native, native_prov = checked_json({'path': center.get('path'), 'sha256': center.get('sha256')}, 'native FID centering report')
+    if (native_prov['path'] != center.get('path') or native.get('schema') != 1
+            or native.get('scope') != 'native-current-pose-fiducial-vision'
+            or native.get('status') != 'completed-native-fiducial-detection-awaiting-review'
+            or native.get('requestId') != center.get('id') or native.get('reference') != ref
+            or native.get('noMotion') is not True or native.get('noActuation') is not True
+            or native.get('noVacuum') is not True or native.get('jobSaved') is not False
+            or native.get('configurationSaved') is not False
+            or native.get('physicalRegistrationEstablished') is not False):
+        raise ValueError(f'{ref} native centering report is not a completed no-motion CV observation')
+    finished = iso_ms(native.get('finishedAt'))
+    if finished > now or now-finished > MAX_REPORT_AGE_MS or center.get('finishedAt') != native.get('finishedAt'):
+        raise ValueError(f'{ref} native centering evidence is stale or has a changed timestamp')
+    if (center.get('jvmStartMs') != fast_request.get('jvmStartMs')
+            or center.get('liveConfigurationSha256') != fast_request.get('liveConfigurationSha256')):
+        raise ValueError(f'{ref} native centering evidence belongs to another controller session')
+    expected_zab = [fast_request.get('expectedRaw', {}).get(k) for k in ('Z', 'A', 'B')]
+    if center.get('fixedRawZAB') != expected_zab or native.get('jvmStartMs') != center.get('jvmStartMs') or native.get('liveConfigurationBeforeSha256') != center.get('liveConfigurationSha256'):
+        raise ValueError(f'{ref} native centering Z/A/B or configuration differs from fast-camera request')
+    detection = native.get('nativeFiducialDetection', {})
+    detected = finite_pair(detection.get('detectedMachineXYMm'), f'{ref} detected FID center')
+    if detection.get('reference') != ref or finite_pair(center.get('detectedMachineXYMm'), f'{ref} request detected center') != detected:
+        raise ValueError(f'{ref} centering target is not the native CV detected fiducial')
+    location = native.get('expectedCameraLocationMm', {})
+    if (finite_pair([location.get('x'), location.get('y')], f'{ref} centering camera location') !=
+            finite_pair([native.get('nativePose', {}).get('cameraLocationMm', {}).get('x'), native.get('nativePose', {}).get('cameraLocationMm', {}).get('y')], f'{ref} centering terminal camera pose')):
+        raise ValueError(f'{ref} centering image was not acquired at the reviewed native camera pose')
+    request_ev = native.get('requestEvidence', {})
+    request, _ = checked_json(request_ev, 'native FID request')
+    if (request.get('scope') != 'native-current-pose-fiducial-vision-request'
+            or request.get('id') != native.get('requestId') or request.get('reference') != ref
+            or request.get('sourceBarrier') != native.get('sourceBarrier')):
+        raise ValueError(f'{ref} native centering request/source barrier binding is invalid')
+    barrier, _ = checked_json(native.get('sourceBarrier'), 'native FID source barrier')
+    snap = native.get('sourceBarrierSnapshot', {})
+    barrier_snap = barrier.get('afterQuerySnapshot', {})
+    if (barrier.get('id') != native.get('sourceBarrierId')
+            or barrier.get('status') != 'completed-read-only-position-barrier'
+            or barrier.get('controllerPositionVerified') is not True
+            or barrier.get('noMotionCommandSubmitted') is not True
+            or barrier.get('uncertainCompletion') is not False
+            or barrier.get('liveConfigurationSha256') != center.get('liveConfigurationSha256')
+            or snap != barrier_snap
+            or snap.get('raw') != snap.get('driver')
+            or [snap.get('raw', {}).get(k) for k in ('Z','A','B')] != expected_zab):
+        raise ValueError(f'{ref} native centering source barrier does not bind the unchanged controller pose')
+    image = native.get('images', {}).get('raw', {})
+    image_ev = center.get('image', {})
+    if (image.get('path') != image_ev.get('path') or image.get('sha256') != image_ev.get('sha256')
+            or type(image.get('width')) is not int or type(image.get('height')) is not int):
+        raise ValueError(f'{ref} native centering image binding is malformed')
+    img_path = Path(image['path']).resolve(strict=True)
+    if img_path.parent != Path(native_prov['path']).parent:
+        raise ValueError(f'{ref} native centering image must remain beside its report')
+    img_data, img_prov = bound(img_path)
+    if img_prov['sha256'] != image['sha256']:
+        raise ValueError(f'{ref} native centering image hash changed')
+    with Image.open(io.BytesIO(img_data)) as im:
+        if list(im.size) != [image['width'], image['height']]:
+            raise ValueError(f'{ref} native centering image dimensions changed')
+    return detected
+
+
+def fast_camera_source(report, ref, report_path, allow_fiducial_offset=False, now=None):
+    """Validate a completed fast-camera route as a genuine fiducial sample.
+
+    This is deliberately a second evidence adapter, not a status/scope rewrite:
+    the original request, route, terminal report, frame, and all five axes stay
+    hash-bound to their camera-inspection report.
+    """
+    q = report.get('request', {})
+    snap0, snap1 = report.get('beforeQuerySnapshot', {}), report.get('afterQuerySnapshot', {})
+    raw0, driver0 = exact_axes(snap0.get('raw'), 'fast-camera initial raw'), exact_axes(snap0.get('driver'), 'fast-camera initial driver')
+    raw, driver = exact_axes(snap1.get('raw'), 'fast-camera terminal raw'), exact_axes(snap1.get('driver'), 'fast-camera terminal driver')
+    fiducial = bool(re.fullmatch(r'FID[123]', ref))
+    expected_mode = 'registered-fiducials' if fiducial else 'registered-references'
+    if (report.get('scope') != FAST_CAMERA_SCOPE or report.get('status') != 'completed-camera-survey-awaiting-image-review'
+            or q.get('scope') != FAST_CAMERA_SCOPE or q.get('mode') != expected_mode
+            or report.get('id') != q.get('id') or report.get('motionSubmitted') is not True
+            or report.get('controllerPositionVerified') is not True or report.get('nativeMotionCompletionReported') is not True
+            or report.get('uncertainCompletion') is not False or report.get('error')
+            or report.get('physicalAcceptanceEstablished') is not False or report.get('calibrationEstablished') is not False):
+        raise ValueError(f'{ref} must be a successful fast-camera fiducial route, not a relabeled survey')
+    if (type(q.get('jvmStartMs')) is not int or not isinstance(q.get('liveConfigurationSha256'), str)
+            or len(q['liveConfigurationSha256']) != 64 or q.get('enabled') is not True
+            or q.get('operatorReviewed') is not True or not isinstance(q.get('reviewedBy'), str) or not q['reviewedBy'].strip()
+            or q.get('speedFraction') != 1 or q.get('speedOverPrecision') is not True
+            or q.get('maxSegmentMm') != 10 or type(q.get('maxTotalTravelMm')) not in (int, float)
+            or q['maxTotalTravelMm'] > 120 or q.get('completionScope') != 'Camera frames and XY position reports only; no paste, calibration, or placement acceptance.'):
+        raise ValueError(f'{ref} fast-camera policy/session fields are incomplete')
+    if q.get('references') != [ref] or len(q.get('targets', [])) != 1 or q['targets'][0].get('reference') != ref:
+        raise ValueError(f'{ref} fast-camera report must target only its identified reference')
+    target = q['targets'][0]
+    if fiducial:
+        if target.get('pads') != [] or q.get('fiducialSample') not in (None, 'base', 'xplus', 'yplus') or (not allow_fiducial_offset and q.get('fiducialSample') not in (None, 'base')):
+            raise ValueError(f'{ref} fitted fiducial sample must be centered base evidence')
+        if q.get('fiducialSample') in ('xplus', 'yplus') and not allow_fiducial_offset:
+            raise ValueError(f'{ref} offset sample may not be used as a fitted fiducial')
+        if q.get('fiducialCenteringReport') is not None:
+            detected = verified_centering_xy(report, ref, q, now if now is not None else int(datetime.datetime.now(datetime.timezone.utc).timestamp()*1000))
+            offset = {'base': [0.0, 0.0], 'xplus': [1.0, 0.0], 'yplus': [0.0, 1.0]}[q['fiducialSample']]
+            if (target.get('sample') != q['fiducialSample'] or target.get('offsetXYMm') != offset
+                    or target.get('pads') != [] or abs(target.get('x', math.inf)-(detected[0]+offset[0])) > 1e-6
+                    or abs(target.get('y', math.inf)-(detected[1]+offset[1])) > 1e-6):
+                raise ValueError(f'{ref} fast-camera target differs from its native detected center and named offset')
+            target_xy = [target['x'], target['y']]
+        else:
+            target_xy = None
+    elif q.get('targetMode') != 'pad2' or not isinstance(target.get('pads'), list) or len(target['pads']) != 2 or any(p.get('padId') != f'{ref}.{i+1}' for i,p in enumerate(target['pads'])):
+        raise ValueError(f'{ref} held-out fast-camera report must target its registered pad2')
+    if raw0 != driver0 or raw != driver:
+        raise ValueError(f'{ref} fast-camera raw and driver axes differ')
+    if (raw0 != q.get('expectedRaw') or driver0 != q.get('expectedDriver')
+            or report.get('beforeReported') != raw0 or report.get('afterReported') != raw):
+        raise ValueError(f'{ref} fast-camera M114/controller endpoints differ from its request')
+    if [raw[k] for k in ('Z', 'A', 'B')] != [raw0[k] for k in ('Z', 'A', 'B')]:
+        raise ValueError(f'{ref} fast-camera route changed Z/A/B')
+    before_poses, after_poses = snap0.get('nativePoses'), snap1.get('nativePoses')
+    if not isinstance(before_poses, dict) or set(before_poses) != {'N1', 'N2', 'top', 'bottom'} or q.get('expectedNativePoses') != before_poses:
+        raise ValueError(f'{ref} fast-camera initial native poses differ from the request')
+    dx, dy = raw['X'] - raw0['X'], raw['Y'] - raw0['Y']
+    for name in ('N1', 'N2', 'top', 'bottom'):
+        before, after = before_poses.get(name), after_poses.get(name) if isinstance(after_poses, dict) else None
+        if not isinstance(before, dict) or not isinstance(after, dict):
+            raise ValueError(f'{ref} fast-camera native pose {name} is missing')
+        ex, ey = (before['x'], before['y']) if name == 'bottom' else (before['x'] + dx, before['y'] + dy)
+        if (any(type(after.get(k)) not in (int, float) or not math.isfinite(after[k]) for k in ('x', 'y', 'z', 'rotation'))
+                or abs(after['x'] - ex) > .02 or abs(after['y'] - ey) > .02
+                or after['z'] != before['z'] or after['rotation'] != before['rotation']):
+            raise ValueError(f'{ref} fast-camera end native pose {name} differs from XY-only route')
+    route = q.get('routeSteps')
+    if not isinstance(route, list) or not 1 <= len(route) <= 32:
+        raise ValueError(f'{ref} fast-camera route must contain 1–32 verified XY steps')
+    previous = raw0
+    total = 0.0
+    captures = []
+    for i, step in enumerate(route):
+        if (not isinstance(step, dict) or step.get('index') != i
+                or any(type(step.get(k)) not in (int, float) or not math.isfinite(step[k]) for k in ('x', 'y', 'z', 'a', 'b'))
+                or any(step[k] != previous[axis] for k, axis in (('z', 'Z'), ('a', 'A'), ('b', 'B')))
+                or abs(step['x'] * 100 - round(step['x'] * 100)) > 1e-6
+                or abs(step['y'] * 100 - round(step['y'] * 100)) > 1e-6):
+            raise ValueError(f'{ref} fast-camera step {i} is not a report-grid XY-only move')
+        distance = math.hypot(step['x'] - previous['X'], step['y'] - previous['Y'])
+        if not 0 < distance <= 10.0001:
+            raise ValueError(f'{ref} fast-camera step {i} exceeds the 10 mm XY bound')
+        total += distance
+        if not isinstance(step.get('captureReferences'), list):
+            raise ValueError(f'{ref} fast-camera capture binding is malformed')
+        captures.extend(step['captureReferences'])
+        previous = {'X': step['x'], 'Y': step['y'], 'Z': step['z'], 'A': step['a'], 'B': step['b']}
+    if total > 120.0001 or abs(total - q.get('plannedDistanceMm', math.inf)) > 1e-5:
+        raise ValueError(f'{ref} fast-camera route distance does not match its bounded request')
+    expected_target = target_xy if target_xy else [target.get('x', math.inf), target.get('y', math.inf)]
+    if (captures != [ref] or [raw[k] for k in ('X', 'Y', 'Z', 'A', 'B')] != [previous[k] for k in ('X', 'Y', 'Z', 'A', 'B')]
+            or abs(raw['X'] - expected_target[0]) > .0051 or abs(raw['Y'] - expected_target[1]) > .0051):
+        raise ValueError(f'{ref} fast-camera endpoint does not capture its hash-bound fiducial target')
+    verified = [t.get('status') for t in report.get('transitions', []) if isinstance(t, dict) and isinstance(t.get('status'), str)]
+    if any(verified.count(f'route-step-{i}-verified') != 1 for i in range(len(route))):
+        raise ValueError(f'{ref} fast-camera report lacks one verified transition per route step')
+    frames = report.get('frames')
+    if not isinstance(frames, list) or len(frames) != 1:
+        raise ValueError(f'{ref} fast-camera report must contain exactly one identified frame')
+    frame = frames[0]
+    snap_top = snap1.get('nativePoses', {}).get('top', {})
+    if (frame.get('reference') != ref or frame.get('rawAxes') != raw
+            or frame.get('nativePose') != snap_top or frame.get('path') != report.get('afterImages', {}).get('top', {}).get('path')
+            or type(frame.get('width')) is not int or type(frame.get('height')) is not int):
+        raise ValueError(f'{ref} fast-camera image is not bound to its terminal pose/frame')
+    image_path = (Path(report_path).parent / frame['path']).resolve(strict=True)
+    if image_path.parent != Path(report_path).parent:
+        raise ValueError(f'{ref} fast-camera frame must remain beside its report')
+    return q['jvmStartMs'], q['liveConfigurationSha256'], raw, snap1.get('nativePoses', {})
 
 
 def inverse(matrix):
@@ -248,9 +439,12 @@ def analyze(request, now_ms=None):
         finished = iso_ms(report.get('finishedAt'))
         if finished > now or now - finished > MAX_REPORT_AGE_MS:
             raise ValueError(f'{ref} survey must be no more than 30 minutes old')
-        kind, source_jvm, source_config, raw, _driver, poses = source.source_snapshot(report)
-        if kind != 'successful-survey' or report.get('request', {}).get('axis') not in ('X', 'Y'):
-            raise ValueError(f'{ref} must come from a verified single-axis XY camera survey')
+        if report.get('request', {}).get('scope') == FAST_CAMERA_SCOPE:
+            source_jvm, source_config, raw, poses = fast_camera_source(report, ref, report_path, now=now)
+        else:
+            kind, source_jvm, source_config, raw, _driver, poses = source.source_snapshot(report)
+            if kind != 'successful-survey' or report.get('request', {}).get('axis') not in ('X', 'Y'):
+                raise ValueError(f'{ref} must come from a verified single-axis XY camera survey')
         source_fixed = tuple(raw[k] for k in ('Z', 'A', 'B'))
         source_plane = (poses['top']['z'], poses['top']['rotation'])
         if config is None:
