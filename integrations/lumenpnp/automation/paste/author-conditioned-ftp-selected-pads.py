@@ -85,7 +85,7 @@ def derive(q,load,now):
   target['pairReferences']=refs
   target['minimumTravelPolicy']={'schema':1,'protocol':'same-component-pair-no-interim-retract','retractPercent':minimum_retract_percent,'pairReferences':refs,'plan':travel,'orderedPadIds':[p['padId'] for p in pads]}
   condition_retract=q.get('conditioningRetractDegrees',3)
-  review_target={'compensatedSequence':{'retractPercent':minimum_retract_percent,'doseDegrees':6,'preWipeReliefDegrees':q.get('preWipeReliefDegrees',20),'conditioningRetractDegrees':condition_retract}}
+  review_target={'pairReferences':refs,'compensatedSequence':{'retractPercent':minimum_retract_percent,'doseDegrees':6,'preWipeReliefDegrees':q.get('preWipeReliefDegrees',20),'conditioningRetractDegrees':condition_retract}}
   reviewed15=minimum_retract_percent==15 and P.reviewed_fifteen_trial(docs['template'],review_target)
   expected_condition_retract=1.5 if minimum_retract_percent in (20,25) or reviewed15 else 3
   if condition_retract!=expected_condition_retract:fail('Minimum-travel conditioner must match the exact reviewed 20%/25% or dedicated 15% comparison; other cases remain R3')

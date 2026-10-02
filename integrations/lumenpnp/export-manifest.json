@@ -341,8 +341,8 @@
       "sourceRoot": "/home/lumen/lumenpnp",
       "sourcePath": "automation/paste/author-conditioned-ftp-selected-pads.py",
       "destination": "integrations/lumenpnp/automation/paste/author-conditioned-ftp-selected-pads.py",
-      "sha256": "59bfcae23d6b7c03dc2b90f2f5a2f7cf5e51bd5b4ff392ca6724576017192444",
-      "bytes": 19379
+      "sha256": "dbab7490592ffb3977e8dd81af6f49b143a328b526e2a369220e9a8a8aedb87f",
+      "bytes": 19401
     },
     {
       "sourceRoot": "/home/lumen/lumenpnp",
