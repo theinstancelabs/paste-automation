@@ -14,6 +14,8 @@ class TerminalWaitSecondsTest(unittest.TestCase):
     def test_wide_authoring_scope_has_longer_observation_window(self):
         self.assertEqual(runner.terminal_wait_seconds('contiguous-native-ftp-selected-pads-up-to-40-preview'), 600)
         self.assertEqual(runner.terminal_wait_seconds('contiguous-native-ftp-selected-pads-preview'), 300)
+        self.assertEqual(runner.terminal_wait_seconds('contiguous-native-scrap-batch'), 300)
+        self.assertEqual(runner.terminal_wait_seconds('contiguous-native-scrap-batch-preview'), 300)
         self.assertEqual(runner.terminal_wait_seconds('unknown-scope'), 60)
 
 class ExecuteImageFreshnessTest(unittest.TestCase):
