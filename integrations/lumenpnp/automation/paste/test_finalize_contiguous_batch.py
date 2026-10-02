@@ -11,6 +11,11 @@ SPEC=importlib.util.spec_from_file_location('prepare_contiguous_batch',SCRIPT)
 M=importlib.util.module_from_spec(SPEC);SPEC.loader.exec_module(M)
 
 class SelectedFinalizeTests(unittest.TestCase):
+    def test_node_validation_clock_must_be_a_nonnegative_integer(self):
+        for invalid in (-1, True, 1.5, '123'):
+            with self.subTest(invalid=invalid), self.assertRaisesRegex(ValueError, 'nonnegative integer'):
+                M.node_validate({}, False, now=invalid)
+
     def test_14410_amendment_attaches_hash_bound_travel_review_evidence(self):
         with tempfile.TemporaryDirectory() as td:
             root=Path(td)

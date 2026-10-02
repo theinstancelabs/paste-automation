@@ -49,12 +49,15 @@ def node_previous(report,ledger,ledger_sha,captured_ms):
  try: subprocess.run(['node','-e',js,str(POLICY)],input=json.dumps(data),text=True,check=True,capture_output=True)
  except subprocess.CalledProcessError as e: err('Installed previous-report validator rejected evidence: '+(e.stderr or e.stdout).strip())
 def node_validate(q,preview,now=None):
- js="const P=require(process.argv[1]);const q=JSON.parse(require('fs').readFileSync(0,'utf8'));P.validateBatch(q,Date.now(),q.jvmStartMs,"+("true" if preview else "false")+");"
- js+="if(q.applicationRestartEvidence){const C=require(require('path').join(require('path').dirname(process.argv[1]),'application-restart-continuity.cjs')),fs=require('fs'),crypto=require('crypto');const read=(e,json)=>{const b=fs.readFileSync(e.path);if(crypto.createHash('sha256').update(b).digest('hex')!==e.sha256)throw Error('continuity evidence hash mismatch');return json?JSON.parse(b):b.toString('utf8');};C.validate(read(q.applicationRestartEvidence,true),q,read,Date.now());}"
- js+="if(q.manualHomeLedgerAnchorEvidence){const C=require(require('path').join(require('path').dirname(process.argv[1]),'manual-home-ledger-anchor.cjs')),fs=require('fs'),crypto=require('crypto');const read=(e,json)=>{const b=fs.readFileSync(e.path);if(crypto.createHash('sha256').update(b).digest('hex')!==e.sha256)throw Error('manual-home evidence hash mismatch');return json?JSON.parse(b):b.toString('utf8');};C.validate(read(q.manualHomeLedgerAnchorEvidence,true),q,read,Date.now());}"
- js+="const F=require(require('path').join(require('path').dirname(process.argv[1]),'ftp-two-pad.cjs'));if(F.isFtp(q))F.verifySources(q,(e,json)=>{const b=require('fs').readFileSync(e.path);if(require('crypto').createHash('sha256').update(b).digest('hex')!==e.sha256)throw Error('FTP source hash changed');return json?JSON.parse(b):null;});"
- try: subprocess.run(['node','-e',js,str(POLICY)],input=json.dumps(q),text=True,check=True,capture_output=True)
+ validation_now=int(time.time()*1000) if now is None else now
+ if type(validation_now)is not int or validation_now<0:err('Validation clock must be a nonnegative integer millisecond timestamp')
+ js="const path=require('path'),base=path.dirname(process.argv[1]),P=require(process.argv[1]),fs=require('fs'),crypto=require('crypto'),readerFactory=require(path.join(base,'evidence-json-cache.cjs'));const input=JSON.parse(fs.readFileSync(0,'utf8')),q=input.q,validationNow=input.validationNow;const readEvidence=readerFactory.createReader(fs,crypto);P.validateBatch(q,validationNow,q.jvmStartMs,"+("true" if preview else "false")+");"
+ js+="if(q.applicationRestartEvidence){const C=require(path.join(base,'application-restart-continuity.cjs'));C.validate(readEvidence(q.applicationRestartEvidence,true),q,readEvidence,validationNow);}"
+ js+="if(q.manualHomeLedgerAnchorEvidence){const C=require(path.join(base,'manual-home-ledger-anchor.cjs'));C.validate(readEvidence(q.manualHomeLedgerAnchorEvidence,true),q,readEvidence,validationNow);}"
+ js+="const F=require(path.join(base,'ftp-two-pad.cjs'));if(F.isFtp(q))F.verifySources(q,readEvidence);"
+ try: subprocess.run(['node','-e',js,str(POLICY)],input=json.dumps({'q':q,'validationNow':validation_now}),text=True,check=True,capture_output=True)
  except subprocess.CalledProcessError as e: err('Installed Node validateBatch rejected request: '+(e.stderr or e.stdout).strip())
+
 def required_dict(o,k):
  v=o.get(k)
  if not isinstance(v,dict): err(f'{k} must be a JSON object')
