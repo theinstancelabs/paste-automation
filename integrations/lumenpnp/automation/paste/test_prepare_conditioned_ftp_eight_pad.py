@@ -1,5 +1,6 @@
 import importlib.util
 import json
+import os
 import tempfile
 import time
 import unittest
@@ -59,7 +60,11 @@ class EightPadBuilderTests(unittest.TestCase):
             for key,rotation in (('N1',720),('N2',-1816),('top',0),('bottom',0)):
                 barrier_data['afterQuerySnapshot']['nativePoses'][key]['rotation']=rotation
             fixture.barrier.write_text(json.dumps(barrier_data))
-            now=fixture.now; finished=datetime.fromtimestamp(now/1000,timezone.utc).isoformat().replace('+00:00','Z')
+            now=fixture.now
+            # Give the captured image the exact deterministic authored clock
+            # value; filesystem nanoseconds must not race review timestamps.
+            os.utime(fixture.image,ns=(now*1_000_000,now*1_000_000))
+            finished=datetime.fromtimestamp(now/1000,timezone.utc).isoformat().replace('+00:00','Z')
             report=fixture.json('availability-report.json',{'status':'completed-camera-survey-awaiting-image-review','finishedAt':finished,
                 'controllerPositionVerified':True,'uncertainCompletion':False,'request':{'jvmStartMs':1,'liveConfigurationSha256':'a'*64},
                 'afterImages':{'top':{'path':fixture.image.name}}})

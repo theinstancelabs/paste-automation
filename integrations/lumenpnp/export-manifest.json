@@ -1313,8 +1313,8 @@
       "sourceRoot": "/home/lumen/lumenpnp",
       "sourcePath": "automation/paste/test_prepare_conditioned_ftp_eight_pad.py",
       "destination": "integrations/lumenpnp/automation/paste/test_prepare_conditioned_ftp_eight_pad.py",
-      "sha256": "7a0d0239f6ca86a79cd5f67f85bb28f4a96fc66c897fa3d9aedd7a81aa48a10c",
-      "bytes": 18958
+      "sha256": "cd3e7f78a261f69a168a47a0779e8c1cb82690723e661350eec9c139d06f38b8",
+      "bytes": 19202
     },
     {
       "sourceRoot": "/home/lumen/lumenpnp",
