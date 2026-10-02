@@ -12,6 +12,7 @@ import time
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
+EXECUTE_IMAGE_MAX_AGE_MS = 240_000
 SCOPES = {
     'contiguous-native-scrap-batch-preview',
     'contiguous-native-scrap-sequence-comparison-preview',
@@ -28,6 +29,18 @@ SCOPES = {
 
 def read(path):
     return json.loads(path.read_bytes())
+
+
+def validate_execute_image_freshness(request, now_ms=None):
+    """Leave one minute of headroom before the native 300-second image gate."""
+    captured = request.get('imageCapturedMs')
+    now_ms = int(time.time() * 1000) if now_ms is None else now_ms
+    if isinstance(captured, bool) or not isinstance(captured, (int, float)) or captured < 0:
+        raise ValueError('Reviewed image timestamp is missing; capture and review a new image, then prepare a new request')
+    age = now_ms - captured
+    if age < 0 or age > EXECUTE_IMAGE_MAX_AGE_MS:
+        raise ValueError('Reviewed image is too old for dispatch (age {} ms; limit {} ms); capture and review a new image, then prepare a new request'.format(age, EXECUTE_IMAGE_MAX_AGE_MS))
+    return age
 
 
 def wait_report(report, ident, preview, seconds, clock=time.monotonic, sleep=time.sleep,
@@ -136,6 +149,8 @@ def run(prepared_dir, preview, root=ROOT, invoke=subprocess.run, wait=wait_repor
             if read(receipt) != binding:
                 raise ValueError('Existing attempt binds different request bytes; do not replay')
         if not existing:
+            if not preview:
+                validate_execute_image_freshness(q)
             runtime_bytes = original
             if not preview:
                 native_preview = root / 'automation/evidence' / ('paste-contiguous-batch-preview-' + q['id']) / 'report.json'
