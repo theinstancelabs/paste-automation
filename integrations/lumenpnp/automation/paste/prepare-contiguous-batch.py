@@ -62,7 +62,7 @@ def prepare(args):
  manual_ref=evidence(args.manual_home_ledger_anchor_evidence) if getattr(args,'manual_home_ledger_anchor_evidence',None) else None
  manual_record=read(manual_ref['path'])[0] if manual_ref else None
  current_jvm=reqb.get('jvmStartMs'); current_config=barrier.get('liveConfigurationSha256')
- if (current_jvm!=base.get('jvmStartMs') or current_config!=base.get('liveConfigurationSha256')) and not (manual_record and manual_record.get('scope')=='manual-home-ledger-anchor-continuity' and manual_record.get('sessionId')==base.get('sessionId') and manual_record.get('currentJvmStartMs')==current_jvm and manual_record.get('currentConfigurationSha256')==current_config and manual_record.get('currentBarrierEvidence')==evidence(bp2)):
+ if (current_jvm!=base.get('jvmStartMs') or current_config!=base.get('liveConfigurationSha256')) and not (manual_record and manual_record.get('scope') in ('manual-home-ledger-anchor-continuity','manual-home-ledger-anchor-continuation') and manual_record.get('sessionId')==base.get('sessionId') and manual_record.get('currentJvmStartMs')==current_jvm and manual_record.get('currentConfigurationSha256')==current_config and manual_record.get('currentBarrierEvidence')==evidence(bp2)):
   err('Barrier JVM/configuration differs from immutable template; exact manual-home ledger continuity required')
  raw=snap.get('raw'); driver=snap.get('driver'); poses=snap.get('nativePoses')
  if not all(isinstance(x,dict) for x in (raw,driver,poses)) or set(raw)!={'X','Y','Z','A','B'} or set(driver)!=set(raw) or set(poses)!={'N1','N2','top','bottom'}: err('Barrier lacks complete five-axis and four-pose snapshot')
@@ -88,7 +88,7 @@ def prepare(args):
  node_previous(report,ledger,hashlib.sha256(lb).hexdigest(),captured)
  if not ledger.get('entries') or ledger['entries'][-1].get('status')!='verified' or report['id'] not in (ledger['entries'][-1].get('requestId'),ledger['entries'][-1].get('cycleId'),ledger['entries'][-1].get('batchId')): err('Previous report is not current verified ledger tail')
  stages=recipe.get('stages')
- if not isinstance(stages,list) or not 1<=len(stages)<=(64 if recipe.get('targetSurface')=='scrap-sequence-comparison' else 96 if recipe.get('targetSurface') in ('scrap-conditioned-ftp-eight-pad','ftp-selected-pads') else 40): err('Recipe exceeds its reviewed scope stage limit')
+ if not isinstance(stages,list) or not 1<=len(stages)<=(64 if recipe.get('targetSurface')=='scrap-sequence-comparison' else 400 if recipe.get('targetSurface')=='ftp-selected-pads-up-to-40' else 96 if recipe.get('targetSurface') in ('scrap-conditioned-ftp-eight-pad','ftp-selected-pads') else 40): err('Recipe exceeds its reviewed scope stage limit')
  start=copy.deepcopy(raw); built=[]
  for i,src in enumerate(stages):
   if not isinstance(src,dict) or src.get('axis') not in ('X','Y','Z','B') or not isinstance(src.get('target'),(int,float)): err(f'Invalid recipe stage {i}')
@@ -126,9 +126,9 @@ def prepare(args):
    if not linked: err('A prior-JVM amendment anchor requires exact ledger-prefix continuity evidence')
  if recipe.get('targetSurface')=='scrap-sequence-comparison':
   q.update(scope='contiguous-native-scrap-sequence-comparison-preview',targetSurface='scrap-sequence-comparison',sequenceProtocol=recipe.get('sequenceProtocol'))
- elif recipe.get('targetSurface') in ('cleaned-ftp-demo','scrap-conditioned-ftp-demo','scrap-conditioned-ftp-eight-pad','ftp-one-pad-cleanup','ftp-selected-pads'):
+ elif recipe.get('targetSurface') in ('cleaned-ftp-demo','scrap-conditioned-ftp-demo','scrap-conditioned-ftp-eight-pad','ftp-one-pad-cleanup','ftp-selected-pads','ftp-selected-pads-up-to-40'):
   target_ev=sha_evidence(recipe.get('ftpTargetEvidence'),'ftpTargetEvidence'); target,_,_=read(target_ev['path'])
-  q.update(scope='contiguous-native-ftp-one-pad-cleanup-preview' if recipe['targetSurface']=='ftp-one-pad-cleanup' else 'contiguous-native-ftp-selected-pads-preview' if recipe['targetSurface']=='ftp-selected-pads' else 'contiguous-native-ftp-conditioned-eight-pad-preview' if recipe['targetSurface']=='scrap-conditioned-ftp-eight-pad' else 'contiguous-native-ftp-conditioned-two-pad-preview' if recipe['targetSurface']=='scrap-conditioned-ftp-demo' else 'contiguous-native-ftp-two-pad-preview',ftpTargetEvidence=target_ev,ftpTargetRecord=target)
+  q.update(scope='contiguous-native-ftp-one-pad-cleanup-preview' if recipe['targetSurface']=='ftp-one-pad-cleanup' else 'contiguous-native-ftp-selected-pads-up-to-40-preview' if recipe['targetSurface']=='ftp-selected-pads-up-to-40' else 'contiguous-native-ftp-selected-pads-preview' if recipe['targetSurface']=='ftp-selected-pads' else 'contiguous-native-ftp-conditioned-eight-pad-preview' if recipe['targetSurface']=='scrap-conditioned-ftp-eight-pad' else 'contiguous-native-ftp-conditioned-two-pad-preview' if recipe['targetSurface']=='scrap-conditioned-ftp-demo' else 'contiguous-native-ftp-two-pad-preview',ftpTargetEvidence=target_ev,ftpTargetRecord=target)
  elif recipe.get('targetSurface') not in (None,'scrap') or 'ftpTargetEvidence' in recipe: err('Explicit supported target surface required')
  q['evidence']=[q[k] for k in ('barrierEvidence','reviewedImageEvidence','profileEvidence','previousReportEvidence','primeLedgerEvidence','priorLedgerEvidence','carryoverEvidence')]+[{'path':str(lp),'sha256':q['previousLedgerSha256']},clear]+([restart_ev] if restart_ev else [])+([manual_anchor_ev] if manual_anchor_ev else [])
  amendment=q.get('budgetAmendmentEvidence')
@@ -144,7 +144,7 @@ def prepare(args):
 
 def finalize(args):
  q,qp,_=read(args.request); pr,pp,pbytes=read(args.preview)
- if q.get('scope') not in ('contiguous-native-scrap-batch-preview','contiguous-native-scrap-sequence-comparison-preview','contiguous-native-ftp-two-pad-preview','contiguous-native-ftp-conditioned-two-pad-preview','contiguous-native-ftp-conditioned-eight-pad-preview','contiguous-native-ftp-one-pad-cleanup-preview','contiguous-native-ftp-selected-pads-preview') or q.get('enabled') is not False: err('Disabled preview request required')
+ if q.get('scope') not in ('contiguous-native-scrap-batch-preview','contiguous-native-scrap-sequence-comparison-preview','contiguous-native-ftp-two-pad-preview','contiguous-native-ftp-conditioned-two-pad-preview','contiguous-native-ftp-conditioned-eight-pad-preview','contiguous-native-ftp-one-pad-cleanup-preview','contiguous-native-ftp-selected-pads-preview','contiguous-native-ftp-selected-pads-up-to-40-preview') or q.get('enabled') is not False: err('Disabled preview request required')
  if pr.get('status')!='completed-model-only-contiguous-batch-preview' or pr.get('noControllerAccess') is not True or pr.get('noMotion') is not True or pr.get('id')!=q.get('id') or pr.get('jvmStartMs')!=q.get('jvmStartMs') or pr.get('liveConfigurationSha256')!=q.get('liveConfigurationSha256'): err('Matching no-controller/no-motion native preview required')
  if not same(pr.get('request'),q) or not isinstance(pr.get('stages'),list) or len(pr['stages'])!=len(q.get('previewStages',[])): err('Preview report request/stage count mismatch')
  q=copy.deepcopy(q); stages=[]

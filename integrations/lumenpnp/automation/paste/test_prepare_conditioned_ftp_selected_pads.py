@@ -63,4 +63,30 @@ class SelectedPadsBuilderTests(unittest.TestCase):
         self.assertFalse(json.loads((self.root/'out'/'native'/'preview-request.json').read_text()).get('enabled',True))
         self.assertEqual(len(recipe['stages']),len(prefix)+17)  # One long Y leg is split at the existing 9.9 mm cap.
 
+    def test_explicit_35_pad_dose6_preparer_builds_within_new_stage_cap_offline(self):
+        targets=self.registration.read_text();reg=json.loads(targets);byid={p['padId']:p for p in reg['resistorPadMachineXYTargets']}
+        pads=list(self.pads)
+        identities=[f'R{ref}.{n}' for ref in range(1,18) for n in (1,2) if f'R{ref}.{n}' not in ('R3.1','R2.2')]+['R30.2']
+        for ix,padid in enumerate(identities):
+            folder=self.root/f'wide{ix}';folder.mkdir();img=folder/'top.png';img.write_bytes(b'\x89PNG\r\n\x1a\ntest')
+            report=folder/'report.json';report.write_text(json.dumps({'status':'completed-camera-survey-awaiting-image-review','controllerPositionVerified':True,'uncertainCompletion':False,'finishedAt':datetime.fromtimestamp(self.now/1000,timezone.utc).isoformat().replace('+00:00','Z'),'request':{'jvmStartMs':1,'liveConfigurationSha256':'a'*64},'afterImages':{'top':{'path':'top.png'}}}))
+            surf=self.json(f'wide-surface{ix}.json',{'boardId':'ftp-board','provenance':'commissioning-provisional','precisionCalibrated':False,'flowCalibrated':False,'reviewedBy':'reviewer','jvmStartMs':1,'liveConfigurationSha256':'a'*64,'surface':{'rawZ':58.37,'estimatedGapMm':.404,'gapUncertaintyMm':.3},'basisEvidence':self.ev})
+            surface={'rawZ':58.37,'estimatedGapMm':.404,'gapUncertaintyMm':.3}
+            x,y=12+ix*.01,11+ix*.01;byid[padid]={'padId':padid,'machineXYMm':[x,y]}
+            pads.append({'padId':padid,'rawPose':{'X':x,'Y':y,'Z':58.37,'A':720.0},'padIdentityReviewed':True,'padAvailableReviewed':True,'availabilityCapturedMs':self.now,'availabilityReportEvidence':M.ev(report),'availabilityImageEvidence':M.ev(img),'surface':surface,'surfaceEvidence':M.ev(surf)})
+        reg['resistorPadMachineXYTargets']=list(byid.values());self.registration.write_text(json.dumps(reg))
+        target=dict(self.target,pads=pads);target['compensatedSequence']=dict(target['compensatedSequence'],doseDegrees=6);self.json('wide-target.json',target)
+        args=SimpleNamespace(template=str(self.template),barrier=str(self.barrier),target_record=str(self.root/'wide-target.json'),experiment=str(self.experiment_file),profile=str(self.profile),clearance_review=str(self.review),image=str(self.image),previous_report=str(self.prev),ledger=str(self.ledger),output=str(self.root/'wide-out'),xy_clearance_raw_z=53.4,up_to_40=True)
+        called=[]
+        def generic(cmd,**kwargs):
+            called.append(cmd);out=Path(cmd[cmd.index('--output')+1]);out.mkdir(parents=True);(out/'preview-request.json').write_text('{"enabled":false}\n');return SimpleNamespace(stdout='/tmp/preview-request.json')
+        with patch.object(M.subprocess,'run',side_effect=generic): M.build(args)
+        recipe=json.loads((self.root/'wide-out'/'recipe.json').read_text())
+        request=json.loads((self.root/'wide-out'/'native'/'preview-request.json').read_text())
+        self.assertEqual(recipe['targetSurface'],'ftp-selected-pads-up-to-40')
+        self.assertEqual(recipe['bAccounting']['selectedPadCount'],35)
+        self.assertGreater(len(recipe['stages']),96);self.assertLessEqual(len(recipe['stages']),400)
+        self.assertEqual(recipe['bAccounting']['grossChargedDegrees'],recipe['bAccounting']['conditioningGrossDegrees']+35*12+40)
+        self.assertNotIn('--up-to-40',called[0])  # Scope is selected by the recipe target, not a generic CLI bypass.
+
 if __name__=='__main__': unittest.main()

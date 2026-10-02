@@ -44,7 +44,7 @@ This records the experiment, not a calibrated dispensing recommendation. Working
 
 ## Reusable saved workflow
 
-Prepare actual reviewed input JSON for `author-conditioned-ftp-selected-pads.py`. Supply explicit reviewer/time and attestations; hash-bound registration and valid revalidation; fresh pad report/image pairs; individual surface records; current barrier, ledger and previous wet terminal; fresh stationary/tip images; and reviewed scrap points and clearance. The author does not obtain observations or create physical attestations. Selected scope supports one to eight unique pads, at most 96 stages, and one uninterrupted conditioning/transfer route.
+Prepare actual reviewed input JSON for `author-conditioned-ftp-selected-pads.py`. Supply explicit reviewer/time and attestations; hash-bound registration and valid revalidation; fresh pad report/image pairs; individual surface records; current barrier, ledger and previous wet terminal; fresh stationary/tip images; and reviewed scrap points and clearance. The author does not obtain observations or create physical attestations. The existing selected scope supports one to eight unique pads and at most 96 stages. For a single larger route, use the separate input scope `reviewed-selected-pads-up-to-40-authoring-inputs`; it supports up to 40 unique pads and at most 400 stages. Both retain the same per-pad evidence, axis-step, clearance, fresh-session, native preview, and B-ledger limits.
 
 ```sh
 python3 automation/paste/author-conditioned-ftp-selected-pads.py --inputs REVIEWED.json --output NEW_DIRECTORY

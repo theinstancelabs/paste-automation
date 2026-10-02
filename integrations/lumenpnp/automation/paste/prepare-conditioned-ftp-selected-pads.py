@@ -12,14 +12,14 @@ COMP,PREP=M.COMP,M.PREP
 def fail(s): raise ValueError(s)
 def ev(path): return M.path_evidence(path)
 
-def read_availability(pad,template,board_id,reviewed_ms,now,snapshots):
+def read_availability(pad,template,board_id,reviewed_ms,now,snapshots,max_age_ms=300000):
     for k in ('availabilityReportEvidence','availabilityImageEvidence','surfaceEvidence'):
         e=pad.get(k); PREP.WIPE.checked_evidence(e,'selected '+k); path=Path(e['path']).resolve(strict=True); data=path.read_bytes()
         if hashlib.sha256(data).hexdigest()!=e['sha256']: fail('Selected '+k+' hash mismatch')
         snapshots[path]=data
         if k=='availabilityReportEvidence':
             report=json.loads(data); stamp=round(datetime.datetime.fromisoformat(report['finishedAt'].replace('Z','+00:00')).timestamp()*1000)
-            if stamp!=pad.get('availabilityCapturedMs') or not 0<=now-stamp<=300000 or stamp>reviewed_ms: fail('Selected-pad camera observation is stale or time-mismatched')
+            if stamp!=pad.get('availabilityCapturedMs') or not 0<=now-stamp<=max_age_ms or stamp>reviewed_ms: fail('Selected-pad camera observation is stale or time-mismatched')
             if report.get('status') not in ('completed-camera-survey-awaiting-image-review','completed-contiguous-air-batch-awaiting-observation') or report.get('controllerPositionVerified') is not True or report.get('uncertainCompletion') is not False: fail('Selected-pad availability needs verified camera report')
             req=report.get('request') or {}
             if req.get('jvmStartMs')!=template.get('jvmStartMs') or req.get('liveConfigurationSha256')!=template.get('liveConfigurationSha256'): fail('Selected-pad camera report session/configuration differs')
@@ -68,7 +68,8 @@ def build(args):
     if barrier.get('request',{}).get('jvmStartMs')!=template.get('jvmStartMs') or barrier.get('liveConfigurationSha256')!=template.get('liveConfigurationSha256'): fail('Barrier/template session mismatch')
     if target.get('schema')!=1 or target.get('scope')!='ftp-selected-pads-targets' or target.get('sessionId')!=template.get('sessionId') or target.get('jvmStartMs')!=template.get('jvmStartMs') or target.get('liveConfigurationSha256')!=barrier.get('liveConfigurationSha256') or target.get('quantizationMm')!=.01 or target.get('boardUnmovedSinceRegistration') is not True: fail('Selected target identity/review mismatch')
     pads=target.get('pads');c=target.get('compensatedSequence') or {}
-    if not isinstance(pads,list) or not 1<=len(pads)<=8 or c.get('protocol')!='restore-dose-retract-lift-selected-pads': fail('Select one to eight unique pads under selected-pad protocol')
+    wide=getattr(args,'up_to_40',False)
+    if not isinstance(pads,list) or not 1<=len(pads)<=(40 if wide else 8) or c.get('protocol')!='restore-dose-retract-lift-selected-pads': fail('Select one to forty unique pads under selected-pad protocol' if wide else 'Select one to eight unique pads under selected-pad protocol')
     ids=[p.get('padId') for p in pads]
     if len(set(ids))!=len(ids) or any(not isinstance(i,str) or not __import__('re').fullmatch(r'R(?:[1-9]|[1-3][0-9]|40)\.[12]',i) for i in ids): fail('Selected pads must be unique registered pad identities')
     if target.get('reviewedBy') is None or type(target.get('reviewedMs')) is not int or not captured<=target['reviewedMs']<=now: fail('Fresh complete-route pad review required')
@@ -85,7 +86,7 @@ def build(args):
     availability=[]
     for p in pads:
         if p.get('padIdentityReviewed') is not True or p.get('padAvailableReviewed') is not True: fail('Each selected pad needs explicit fresh review')
-        read_availability(p,template,target['boardId'],target['reviewedMs'],now,snaps)
+        read_availability(p,template,target['boardId'],target['reviewedMs'],now,snaps,900000 if wide else 300000)
     gap=PREP.number(profile.get('estimatedGapMm'),'conditioning profile gap');unc=PREP.number(profile.get('gapUncertaintyMm'),'conditioning uncertainty')
     prefix,_,prep_accounting=PREP.stages_for(experiment,re,gap,unc)
     retract_i=len(prefix)-2-(1 if experiment.get('conditioningFinalWipeMm',0) else 0)
@@ -122,7 +123,7 @@ def build(args):
         c['finalIdleStageIndices']=[bstep(20,0),bstep(20,2000)]
     else: fail('Selected-pad idle relief must be20 or40')
     c.pop('finalIdleStageIndex',None) if idle==40 else None
-    if len(stages)>96: fail('Selected-pad route exceeds96 native stages')
+    if len(stages)>(400 if wide else 96): fail('Selected-pad route exceeds its native stage cap')
     target['pads']=pads
     target['inlineConditioning']={'schema':1,'protocol':'scrap-condition-transit-selected-pads','experiment':copy.deepcopy(experiment),'experimentEvidence':ee,'maximumTransferMilliseconds':15000,'prefixStageCount':len(prefix),'retractionStageIndex':retract_i,'liftStageIndex':len(prefix)-1}
     route=[copy.deepcopy(raw)];cur=copy.deepcopy(raw)
@@ -134,7 +135,7 @@ def build(args):
             sign=-1 if axis=='Z' and name=='N2' else 1;vals=[native[name][axis.lower()]+sign*(x[axis]-raw[axis]) for x in route];limits['min'+axis]=min(vals)-.001;limits['max'+axis]=max(vals)+.001
         heads[name]=limits
     out=Path(args.output).resolve();out.mkdir(parents=True,exist_ok=False);tpout=out/'targets.json';tpout.write_text(json.dumps(target,indent=2,allow_nan=False)+'\n')
-    gross=sum(abs(b['B']-a['B']) for a,b in zip(route,route[1:]));recipe={'mode':'wet','stages':stages,'rawBounds':bounds,'headClearanceBounds':heads,'xyClearanceRawZ':clear,'clearanceReviewEvidence':re,'profileEvidence':ev(pp),'previousReportEvidence':ev(prevp),'previousLedgerPath':str(lp),'targetSurface':'ftp-selected-pads','ftpTargetEvidence':ev(tpout),'sourceTargetEvidence':ev(tp0),'bAccounting':{'initialB':raw['B'],'finalB':route[-1]['B'],'grossChargedDegrees':gross,'netDegrees':route[-1]['B']-raw['B'],'conditioningGrossDegrees':prep_accounting['grossCommandedDegrees'],'selectedPadCount':len(pads)}}
+    gross=sum(abs(b['B']-a['B']) for a,b in zip(route,route[1:]));recipe={'mode':'wet','stages':stages,'rawBounds':bounds,'headClearanceBounds':heads,'xyClearanceRawZ':clear,'clearanceReviewEvidence':re,'profileEvidence':ev(pp),'previousReportEvidence':ev(prevp),'previousLedgerPath':str(lp),'targetSurface':'ftp-selected-pads-up-to-40' if wide else 'ftp-selected-pads','ftpTargetEvidence':ev(tpout),'sourceTargetEvidence':ev(tp0),'bAccounting':{'initialB':raw['B'],'finalB':route[-1]['B'],'grossChargedDegrees':gross,'netDegrees':route[-1]['B']-raw['B'],'conditioningGrossDegrees':prep_accounting['grossCommandedDegrees'],'selectedPadCount':len(pads)}}
     rpout=out/'recipe.json';rpout.write_text(json.dumps(recipe,indent=2,allow_nan=False)+'\n');nativeout=out/'native';cmd=[sys.executable,str(GENERIC),'prepare','--template',str(tp),'--barrier',str(bp),'--image',str(image),'--recipe',str(rpout),'--output',str(nativeout)]
     if getattr(args,'application_restart_evidence',None):cmd.extend(['--application-restart-evidence',str(Path(args.application_restart_evidence).resolve(strict=True))])
     if getattr(args,'manual_home_ledger_anchor_evidence',None):cmd.extend(['--manual-home-ledger-anchor-evidence',str(Path(args.manual_home_ledger_anchor_evidence).resolve(strict=True))])
@@ -148,6 +149,7 @@ def build(args):
 def main():
  p=argparse.ArgumentParser(description=__doc__)
  for name in ('template','barrier','target-record','experiment','profile','clearance-review','image','previous-report','ledger','output'):p.add_argument('--'+name,required=True)
+ p.add_argument('--up-to-40',action='store_true',help='Use distinct reviewed 1-40-pad scope and 400-stage ceiling')
  p.add_argument('--application-restart-evidence',help='explicit continuity proof when resuming across an application restart')
  p.add_argument('--manual-home-ledger-anchor-evidence',help='narrow reviewed manual-home ledger continuity evidence')
  p.add_argument('--xy-clearance-raw-z',type=float,required=True);a=p.parse_args()
