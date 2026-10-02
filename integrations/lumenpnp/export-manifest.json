@@ -1734,8 +1734,8 @@
       "sourceRoot": "/home/lumen/lumenpnp",
       "sourcePath": "automation/scripts/Preview_Paste_Contiguous_Batch.js",
       "destination": "integrations/lumenpnp/automation/scripts/Preview_Paste_Contiguous_Batch.js",
-      "sha256": "a5a8a471179b3ce1b21abd6f5a86d1ac7c55d3afecbefde18c2638da2ffb67d7",
-      "bytes": 14558
+      "sha256": "c62c3afe2c7d150e7cc482ca77025540e3e755c8cc7dbd5cb437f1ed612ec23d",
+      "bytes": 15130
     },
     {
       "sourceRoot": "/home/lumen/lumenpnp",
@@ -2304,6 +2304,20 @@
       "destination": "integrations/lumenpnp/automation/tests/test_preflight_evidence_cache_nashorn.py",
       "sha256": "70dc2dcf4f42714c057088f57c9f0a9f0ca30eafd5ea8a89f84bc50ed3f7ecb5",
       "bytes": 1157
+    },
+    {
+      "sourceRoot": "/home/lumen/lumenpnp",
+      "sourcePath": "automation/tests/java/EvaluatePreviewEvidenceCache.java",
+      "destination": "integrations/lumenpnp/automation/tests/java/EvaluatePreviewEvidenceCache.java",
+      "sha256": "114cf9f6ba431162b3a45703131bd2cf92c831e8c87339554d12bdd023543fcb",
+      "bytes": 3340
+    },
+    {
+      "sourceRoot": "/home/lumen/lumenpnp",
+      "sourcePath": "automation/tests/test_preview_evidence_cache_nashorn.py",
+      "destination": "integrations/lumenpnp/automation/tests/test_preview_evidence_cache_nashorn.py",
+      "sha256": "1c1d6d3a116f72bc539dc27d78dfffc621b9ef3833976b5f8f1aec7fe006ad06",
+      "bytes": 1126
     }
   ],
   "manifestSelfHash": "Excluded to avoid a recursive digest; this manifest enumerates every other exported/generated file.",

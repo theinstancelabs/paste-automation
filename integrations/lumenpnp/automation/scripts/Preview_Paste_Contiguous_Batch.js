@@ -22,9 +22,13 @@
  var jvm=Number(Java.type('java.lang.management.ManagementFactory').getRuntimeMXBean().getStartTime()),now=Number(java.lang.System.currentTimeMillis());
  if(q.schema!==1||['contiguous-native-scrap-batch-preview','contiguous-native-scrap-sequence-comparison-preview',PasteFtpTwoPad.scope(true,q)].indexOf(q.scope)<0)throw Error('Batch preview scope required');
  CommissioningStroke.validateBatch(q,now,jvm,true);
- function boundEvidence(e,json){var b=Fs.readAllBytes(new F(e.path).toPath());if(hash(b)!==e.sha256)throw Error('Manual-home evidence changed');return json?JSON.parse(String(new java.lang.String(b,UTF))):String(new java.lang.String(b,UTF));}
+ function freezeEvidence(value){if(value&&typeof value==='object'){Object.keys(value).forEach(function(k){freezeEvidence(value[k]);});Object.freeze(value);}return value;}
+ // Per-preview immutable cache: every read still rehashes the file before reuse.
+ var frozenEvidenceJson=Object.create(null);
+ function parseFrozenEvidence(data,e){var key=String(new F(e.path).getCanonicalPath())+'#'+e.sha256;if(Object.prototype.hasOwnProperty.call(frozenEvidenceJson,key))return frozenEvidenceJson[key];var parsed=freezeEvidence(JSON.parse(String(new java.lang.String(data,UTF))));frozenEvidenceJson[key]=parsed;return parsed;}
+ function boundEvidence(e,json){var b=Fs.readAllBytes(new F(e.path).toPath());if(hash(b)!==e.sha256)throw Error('Manual-home evidence changed');return json?parseFrozenEvidence(b,e):String(new java.lang.String(b,UTF));}
  if(q.manualHomeLedgerAnchorEvidence)PasteManualHomeLedgerAnchor.validate(boundEvidence(q.manualHomeLedgerAnchorEvidence,true),q,boundEvidence,now);
- function ftpEvidence(e,json){var b=Fs.readAllBytes(new F(e.path).toPath());if(hash(b)!==e.sha256)throw Error('FTP source changed');return json?JSON.parse(String(new java.lang.String(b,UTF))):null;}
+ function ftpEvidence(e,json){var b=Fs.readAllBytes(new F(e.path).toPath());if(hash(b)!==e.sha256)throw Error('FTP source changed');return json?parseFrozenEvidence(b,e):null;}
  if(PasteFtpTwoPad.isFtp(q))PasteFtpTwoPad.verifySources(q,ftpEvidence);
  var mDrivers=m.getDrivers(),GD='org.openpnp.machine.reference.driver.GcodeDriver',AP='org.openpnp.machine.reference.driver.AbstractMotionPlanner',AM='org.openpnp.spi.base.AbstractMachine',top=m.getDefaultHead().getDefaultCamera();
  if(mDrivers.size()!==1||String(planner.getClass().getName())!=='org.openpnp.machine.reference.driver.NullMotionPlanner')throw Error('Audited native model required');
