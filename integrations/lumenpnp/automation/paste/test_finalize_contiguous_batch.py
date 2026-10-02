@@ -11,11 +11,23 @@ SPEC=importlib.util.spec_from_file_location('prepare_contiguous_batch',SCRIPT)
 M=importlib.util.module_from_spec(SPEC);SPEC.loader.exec_module(M)
 
 class SelectedFinalizeTests(unittest.TestCase):
+    def test_14410_amendment_attaches_hash_bound_travel_review_evidence(self):
+        with tempfile.TemporaryDirectory() as td:
+            root=Path(td)
+            review=root/'review.json';review.write_text(json.dumps({'scope':'reviewed-reduced15'}))
+            travel=M.evidence(review)
+            amendment_path=root/'budget-amendment.json';amendment_path.write_text(json.dumps({'newMaximumAbsoluteDegrees':14410,'travelReviewEvidence':travel}))
+            q={'budgetAmendmentEvidence':{**M.evidence(amendment_path),'newMaximumAbsoluteDegrees':14410,'travelReviewEvidence':travel},'evidence':[]}
+            self.assertEqual(M.add_amendment_travel_evidence(q),travel)
+            self.assertIn(travel,q['evidence'])
+            self.assertEqual(M.add_amendment_travel_evidence(q),travel)
+            self.assertEqual(q['evidence'],[travel])
+
     def test_selected_pad_native_preview_finalizes_with_preserved_scope(self):
         with tempfile.TemporaryDirectory() as td:
             root=Path(td);formatter=root/'stage.txt';formatter.write_text('G1 Z53.4 F...\n')
             fe=M.evidence(formatter);raw={'X':1.0,'Y':2.0,'Z':58.4,'A':720.0,'B':-1000.0};target={**raw,'Z':53.4}
-            q={'scope':'contiguous-native-ftp-selected-pads-preview','enabled':False,'id':'12345678-1234-1234-1234-123456789abc','jvmStartMs':10,'liveConfigurationSha256':'a'*64,'previewStages':[{'axis':'Z','speedFraction':1.0,'startRaw':raw,'targetRaw':target}],'evidence':[]}
+            travel={'path':'/review/14410.json','sha256':'e'*64};q={'scope':'contiguous-native-ftp-selected-pads-preview','enabled':False,'id':'12345678-1234-1234-1234-123456789abc','jvmStartMs':10,'liveConfigurationSha256':'a'*64,'previewStages':[{'axis':'Z','speedFraction':1.0,'startRaw':raw,'targetRaw':target}],'evidence':[travel]}
             request=root/'preview-request.json';request.write_text(json.dumps(q))
             stage={'axis':'Z','speedFraction':1.0,'startRaw':raw,'targetRaw':target,'formatterEvidence':fe,'path':fe['path'],'sha256':fe['sha256'],'expandedCommands':['G1 Z53.4 F...']}
             report={'status':'completed-model-only-contiguous-batch-preview','noControllerAccess':True,'noMotion':True,'id':q['id'],'jvmStartMs':10,'liveConfigurationSha256':'a'*64,'request':q,'stages':[stage]}
@@ -25,6 +37,7 @@ class SelectedFinalizeTests(unittest.TestCase):
             runtime=json.loads((root/'runtime-request.json').read_text())
             self.assertEqual(runtime['scope'],'contiguous-native-ftp-selected-pads')
             self.assertEqual(runtime['previewStages'][0]['expandedCommands'],stage['expandedCommands'])
+            self.assertIn(travel,runtime['evidence'])
             self.assertFalse(runtime['enabled'])
 
     def test_scrap_sequence_native_preview_finalizes_without_scope_downgrade(self):

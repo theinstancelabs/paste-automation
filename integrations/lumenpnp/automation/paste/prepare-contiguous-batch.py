@@ -26,6 +26,18 @@ def same(a,b):
  if isinstance(a,dict): return a.keys()==b.keys() and all(same(a[k],b[k]) for k in a)
  if isinstance(a,list): return len(a)==len(b) and all(same(x,y) for x,y in zip(a,b))
  return a==b
+
+TRAVEL_REVIEW_AMENDMENT_CAPS=(3600,8400,11800,12500,12750,13350,13750,14050,14410)
+def add_amendment_travel_evidence(q):
+ amendment=q.get('budgetAmendmentEvidence')
+ if not amendment or amendment.get('newMaximumAbsoluteDegrees') not in TRAVEL_REVIEW_AMENDMENT_CAPS:return None
+ ceiling=amendment['newMaximumAbsoluteDegrees']
+ amend_ev=sha_evidence(amendment,f'{ceiling}-degree amendment');record,_,_=read(amend_ev['path'])
+ travel=sha_evidence(record.get('travelReviewEvidence'),'travelReviewEvidence')
+ if record.get('newMaximumAbsoluteDegrees')!=ceiling or not same(amendment.get('travelReviewEvidence'),travel):err(f'{ceiling}-degree amendment travel review must match request envelope')
+ if not any(same(item,travel) for item in q.get('evidence',[])):q.setdefault('evidence',[]).append(travel)
+ return travel
+
 def node_previous(report,ledger,ledger_sha,captured_ms):
  js="const P=require(process.argv[1]),v=JSON.parse(require('fs').readFileSync(0,'utf8'));P.validatePreviousReport(v.report,v.ledger,v.sha,v.capturedMs);"
  data={'report':report,'ledger':ledger,'sha':ledger_sha,'capturedMs':captured_ms}
@@ -156,13 +168,7 @@ def prepare(args):
   q.update(scope='contiguous-native-ftp-one-pad-cleanup-preview' if recipe['targetSurface']=='ftp-one-pad-cleanup' else 'contiguous-native-ftp-retraction-comparison-preview' if recipe['targetSurface']=='ftp-selected-pads-retraction-comparison' else 'contiguous-native-ftp-minimum-travel-eight-pad-preview' if recipe['targetSurface']=='ftp-selected-pads-minimum-travel-eight-pad' else 'contiguous-native-ftp-selected-pads-up-to-40-preview' if recipe['targetSurface']=='ftp-selected-pads-up-to-40' else 'contiguous-native-ftp-selected-pads-preview' if recipe['targetSurface']=='ftp-selected-pads' else 'contiguous-native-ftp-conditioned-eight-pad-preview' if recipe['targetSurface']=='scrap-conditioned-ftp-eight-pad' else 'contiguous-native-ftp-conditioned-two-pad-preview' if recipe['targetSurface']=='scrap-conditioned-ftp-demo' else 'contiguous-native-ftp-two-pad-preview',ftpTargetEvidence=target_ev,ftpTargetRecord=target)
  elif recipe.get('targetSurface') not in (None,'scrap') or 'ftpTargetEvidence' in recipe: err('Explicit supported target surface required')
  q['evidence']=[q[k] for k in ('barrierEvidence','reviewedImageEvidence','profileEvidence','previousReportEvidence','primeLedgerEvidence','priorLedgerEvidence','carryoverEvidence')]+[{'path':str(lp),'sha256':q['previousLedgerSha256']},clear]+([restart_ev] if restart_ev else [])+([manual_anchor_ev] if manual_anchor_ev else [])
- amendment=q.get('budgetAmendmentEvidence')
- if amendment and amendment.get('newMaximumAbsoluteDegrees') in (3600,8400,11800,12500,12750,13350,13750,14050):
-  ceiling=amendment['newMaximumAbsoluteDegrees']
-  amend_ev=sha_evidence(amendment,f'{ceiling}-degree amendment'); record,_,_=read(amend_ev['path'])
-  travel=sha_evidence(record.get('travelReviewEvidence'),'travelReviewEvidence')
-  if record.get('newMaximumAbsoluteDegrees')!=ceiling or not same(amendment.get('travelReviewEvidence'),travel): err(f'{ceiling}-degree amendment travel review must match request envelope')
-  q['evidence'].append(travel)
+ add_amendment_travel_evidence(q)
  node_validate(q,True)
  (out/'preview-request.json').write_text(json.dumps(q,indent=2)+'\n')
  print(out/'preview-request.json')
