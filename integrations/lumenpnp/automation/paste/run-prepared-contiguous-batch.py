@@ -52,6 +52,17 @@ def wait_report(report, ident, preview, seconds, clock=time.monotonic, sleep=tim
     raise TimeoutError('No verified terminal; observe this ID, do not replay: ' + str(report))
 
 
+def terminal_wait_seconds(scope):
+    """Set a report polling window without changing the native stage timeout."""
+    if scope == 'contiguous-native-ftp-selected-pads-up-to-40-preview':
+        return 600
+    if scope in ('contiguous-native-scrap-sequence-comparison-preview',
+                 'contiguous-native-ftp-conditioned-eight-pad-preview',
+                 'contiguous-native-ftp-selected-pads-preview'):
+        return 300
+    return 60
+
+
 def run(prepared_dir, preview, root=ROOT, invoke=subprocess.run, wait=wait_report):
     prepared = Path(prepared_dir).resolve(strict=True)
     request = prepared / 'preview-request.json'
@@ -108,7 +119,7 @@ def run(prepared_dir, preview, root=ROOT, invoke=subprocess.run, wait=wait_repor
             plan = root / 'automation/plans' / (action + '-request.json')
             plan.write_bytes(runtime_bytes)
             invoke([sys.executable, str(root / 'automation/scripts/run_reviewed_action.py'), action, '--confirmed'], cwd=root, check=True, stdout=subprocess.DEVNULL)
-        seconds = 300 if q['scope'] in ('contiguous-native-scrap-sequence-comparison-preview','contiguous-native-ftp-conditioned-eight-pad-preview','contiguous-native-ftp-selected-pads-preview','contiguous-native-ftp-selected-pads-up-to-40-preview') else 60
+        seconds = terminal_wait_seconds(q['scope'])
         r = wait(report, q['id'], preview, seconds)
         summary = dict(report=str(report), id=q['id'], status=r['status'], existingIdObserved=existing, dispatchedThisInvocation=not existing)
         (prepared / ('runner-' + mode + '-result.json')).write_text(json.dumps(summary, indent=2) + '\n')

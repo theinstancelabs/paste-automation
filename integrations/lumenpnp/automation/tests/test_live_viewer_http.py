@@ -11,6 +11,7 @@ import time
 import types
 import unittest
 import zipfile
+import xml.etree.ElementTree as ET
 from io import BytesIO
 from unittest import mock
 
@@ -103,6 +104,20 @@ class LiveViewerHttpTest(unittest.TestCase):
                             'Content-Type': 'application/json', 'Idempotency-Key': key})
         return headers
 
+    def test_openpnp_catalog_reads_saved_parts_and_pure_model_feeder_snapshot(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root=Path(tmp);config=root/'config';config.mkdir();backups=root/'backups';snap=backups/'paste-live-model-state-123'/ 'report.json';snap.parent.mkdir(parents=True)
+            (config/'parts.xml').write_text('<openpnp-parts><part id="P1" package-id="PKG"/><part id="P2" package-id="MISSING"/></openpnp-parts>')
+            (config/'packages.xml').write_text('<openpnp-packages><package id="PKG"/></openpnp-packages>')
+            snap.write_text(json.dumps({'scope':'pure-model-state-no-controller-access','time':'2026-10-01T12:00:00Z',
+                'jvmStartMs':123,'liveConfigurationSha256':'abc','feeders':[{'id':'F1','name':'Tape 1','className':'ExampleFeeder',
+                'enabled':True,'partId':'P1','configuredLocation':'(1,2,3)'}]}))
+            result=live_viewer.openpnp_catalog_snapshot(config,backups)
+            self.assertEqual(result['parts'],[{'id':'P1','packageId':'PKG'}])
+            self.assertEqual(result['feederSnapshot']['feeders'][0]['id'],'F1')
+            self.assertEqual(result['physicalFeederReadiness'],'unknown')
+            self.assertNotIn('/home/',json.dumps(result))
+
     def test_rejects_unauthenticated_and_malformed_posts(self):
         status, _ = self.request('POST', '/messages', b'{}', {'Content-Type': 'application/json'})
         self.assertEqual(status, 403)
@@ -177,6 +192,34 @@ class LiveViewerHttpTest(unittest.TestCase):
         self.assertNotIn('/home/',json.dumps(payload))
         self.assertIn('loadKnownJobStatus',live_viewer.PAGE.decode())
 
+    def test_current_native_batch_status_is_fixed_authenticated_and_report_derived(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root=Path(tmp); prepared=root/'prepared'; batch=root/('paste-contiguous-batch-'+live_viewer.CURRENT_NATIVE_BATCH_ID)
+            prepared.mkdir();batch.mkdir()
+            image=batch/'top.png';image.write_bytes(b'\x89PNG\r\n\x1a\n')
+            stages=[{'index':0},{'index':1}]
+            pads=[{'padId':'R1.1','liftStageIndex':0},{'padId':'R2.1','liftStageIndex':1}]
+            report={'id':live_viewer.CURRENT_NATIVE_BATCH_ID,'motionSubmitted':True,
+              'status':'submitting-cycle-stage-2','controllerPositionVerified':False,
+              'request':{'id':live_viewer.CURRENT_NATIVE_BATCH_ID,
+                'scope':'contiguous-native-ftp-selected-pads-up-to-40','enabled':False,
+                'previewStages':stages,'ftpTargetRecord':{'pads':pads}},
+              'stages':[{'index':0,'verified':True,'nativeMotionCompletionReported':True}],
+              'afterImages':{'top':{'path':str(image)}}}
+            (batch/'report.json').write_text(json.dumps(report))
+            with mock.patch.object(live_viewer,'CURRENT_NATIVE_PREPARED_DIR',prepared), \
+                 mock.patch.object(live_viewer,'CURRENT_NATIVE_BATCH_DIR',batch):
+                status,_=self.request('GET','/paste-results/current-native')
+                self.assertEqual(status,403)
+                status,payload=self.request('GET','/paste-results/current-native',headers=self.private_headers())
+                self.assertEqual(status,200)
+                self.assertEqual((payload['status'],payload['verifiedStages'],payload['completedPads']),('running',1,1))
+                self.assertEqual((payload['totalStages'],payload['totalPads'],payload['currentPad']),(2,2,'R2.1'))
+                self.assertEqual(set(payload['imageUrls']),{'top'})
+                image_status,data,_=self.request_with_headers('GET',payload['imageUrls']['top'],headers=self.private_headers())
+                self.assertEqual(image_status,200);self.assertTrue(data.startswith(b'\x89PNG'))
+        self.assertIn('loadCurrentNativeBatch',live_viewer.PAGE.decode())
+
     def test_private_kicad_planner_saves_job_and_svg_without_enabling_execution(self):
         boundary='----viewer-board-test'
         board=b'''(kicad_pcb (version 20240108) (net 0 "")
@@ -216,9 +259,37 @@ class LiveViewerHttpTest(unittest.TestCase):
         status,data,headers=self.request_with_headers('GET',result['reviewBundleUrl'],headers=self.private_headers())
         self.assertEqual(status,200);self.assertEqual(headers['content-type'],'application/zip')
         with zipfile.ZipFile(BytesIO(data)) as archive:
-            self.assertEqual(set(archive.namelist()),{'job.json','preview.svg','readiness.json','README.txt'})
-            self.assertIn(b'not an OpenPnP machine job',archive.read('README.txt'))
+            self.assertEqual(set(archive.namelist()),{'job.json','preview.svg','readiness.json','pnp-draft.board.xml','pnp-draft.job.xml','README.txt'})
+            self.assertIn(b'disabled OpenPnP-format draft',archive.read('README.txt'))
+            board=ET.fromstring(archive.read('pnp-draft.board.xml'))
+            placements=board.findall('./placements/placement')
+            self.assertEqual(len(placements),2)
+            self.assertTrue(all(p.get('enabled')=='false' and p.find('part-id') is None for p in placements))
+            native=ET.fromstring(archive.read('pnp-draft.job.xml'))
+            location=native.find(".//object[@class='org.openpnp.model.BoardLocation']")
+            self.assertEqual(location.get('locally-enabled'),'false')
+            self.assertNotIn(b'/home/',archive.read('pnp-draft.job.xml'))
+        status,data,headers=self.request_with_headers('GET',result['openpnpDraftUrl'],headers=self.private_headers())
+        self.assertEqual(status,200);self.assertEqual(headers['content-type'],'application/zip')
+        with zipfile.ZipFile(BytesIO(data)) as archive:
+            self.assertEqual(set(archive.namelist()),{'pnp-draft.board.xml','pnp-draft.job.xml','README.txt'})
+            self.assertIn(b'Every placement and the board location are disabled',archive.read('README.txt'))
+        with mock.patch.object(live_viewer,'openpnp_catalog_snapshot',return_value={
+                'parts':[{'id':'R0603-1K','packageId':'R0603'}],'packages':['R0603'],
+                'feederSnapshot':{'time':'snapshot-test','feeders':[]}}):
+            mapping_headers=self.private_headers(True,'mapping-save-0001')
+            mapping_headers['Content-Type']='application/json'
+            status,mapped=self.request('POST',result['jobUrl']+'/openpnp-mapping',
+                json.dumps({'mappings':{'U1':'R0603-1K'}}).encode(),mapping_headers)
+            self.assertEqual(status,200,mapped);self.assertEqual(mapped['mappings'],{'U1':'R0603-1K'})
+            self.assertTrue(mapped['allPlacementsDisabled']);self.assertFalse(mapped['executionAuthorized'])
+            job_dir=Path(self.state/'paste-jobs'/result['jobId'])
+            board=ET.parse(job_dir/'pnp-draft.board.xml').getroot()
+            mapped_placement=next(p for p in board.findall('./placements/placement') if p.get('id')=='U1')
+            self.assertEqual(mapped_placement.get('part-id'),'R0603-1K');self.assertEqual(mapped_placement.get('enabled'),'false')
+            self.assertTrue((job_dir/'mapping.json').is_file())
         self.assertIn('Start paste — blocked',live_viewer.PAGE.decode())
+        self.assertIn('Download disabled OpenPnP draft',live_viewer.PAGE.decode())
 
     def test_kicad_planner_upload_requires_auth_and_rejects_non_board_files(self):
         boundary='----viewer-board-invalid';body=(f'--{boundary}\r\nContent-Disposition: form-data; name="board"; filename="bad.txt"\r\n\r\nhello\r\n--{boundary}--\r\n').encode()

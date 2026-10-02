@@ -205,8 +205,11 @@ def prepare(args):
             or wet_report.get('id') != source_request.get('id')):
         fail('Verified wet terminal report and ledger must match the immutable template identities')
     manual_review = proof
-    if (manual_review.get('scope') != 'manual-home-ledger-anchor-continuity'
+    if (manual_review.get('scope') not in ('manual-home-ledger-anchor-continuity', 'manual-home-ledger-anchor-continuation')
             or manual_review.get('sessionId') != template.get('sessionId')
+            or manual_review.get('currentJvmStartMs') != barrier.get('request', {}).get('jvmStartMs')
+            or manual_review.get('currentConfigurationSha256') != barrier.get('liveConfigurationSha256')
+            or manual_review.get('currentBarrierEvidence') != evidence(barrier_path)
             or manual_review.get('currentLedgerEvidence') != {'path': str(ledger_path), 'sha256': hashlib.sha256(ledger_bytes).hexdigest()}
             or manual_review.get('latestTerminalReportEvidence') != {'path': str(wet_path), 'sha256': hashlib.sha256(wet_bytes).hexdigest()}):
         fail('Manual-home continuity proof must bind this exact wet report and ledger')

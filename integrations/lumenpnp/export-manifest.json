@@ -921,8 +921,8 @@
       "sourceRoot": "/home/lumen/lumenpnp",
       "sourcePath": "automation/paste/prepare-air-fiducial-route.py",
       "destination": "integrations/lumenpnp/automation/paste/prepare-air-fiducial-route.py",
-      "sha256": "61eb37d3c96570a452f707f152bb089d00a8024ea7ccbc013389878900b06d80",
-      "bytes": 16016
+      "sha256": "592688dc855963544933a5560fab516048759f6030c493a3522f45cfba587283",
+      "bytes": 16356
     },
     {
       "sourceRoot": "/home/lumen/lumenpnp",
@@ -1117,8 +1117,8 @@
       "sourceRoot": "/home/lumen/lumenpnp",
       "sourcePath": "automation/paste/run-prepared-contiguous-batch.py",
       "destination": "integrations/lumenpnp/automation/paste/run-prepared-contiguous-batch.py",
-      "sha256": "f896f63e9991c55b4d4069bccc263dd4fac41369006f0ee58dd34626f13dc28a",
-      "bytes": 7128
+      "sha256": "7a4059640846183f68e1618bd9c3837f3b7b6b8b27ff38f19f712222d4da8459",
+      "bytes": 7372
     },
     {
       "sourceRoot": "/home/lumen/lumenpnp",
@@ -1551,8 +1551,8 @@
       "sourceRoot": "/home/lumen/lumenpnp",
       "sourcePath": "automation/paste/z-observation.md",
       "destination": "integrations/lumenpnp/automation/paste/z-observation.md",
-      "sha256": "942e8a5fcf1760ffe165189e578d2db443eb2df9b2c42bb64ea488342ded7c8e",
-      "bytes": 6491
+      "sha256": "cf9816c665b99900d4253e835ea30415d33179e9f89dbfe0c4bcac411dd46e06",
+      "bytes": 6465
     },
     {
       "sourceRoot": "/home/lumen/lumenpnp",
@@ -1565,8 +1565,8 @@
       "sourceRoot": "/home/lumen/lumenpnp",
       "sourcePath": "automation/paste/z-observation.test.cjs",
       "destination": "integrations/lumenpnp/automation/paste/z-observation.test.cjs",
-      "sha256": "b3a9afd2f8f45030b5094f679de4ee4defaea1d3b3d0d7af2ef5b3d99392484d",
-      "bytes": 13985
+      "sha256": "ba8044a459030505f980ed0a6b410852c73c159fe650a9487364db2e99874cc9",
+      "bytes": 13952
     },
     {
       "sourceRoot": "/home/lumen/lumenpnp",
@@ -1775,8 +1775,8 @@
       "sourceRoot": "/home/lumen/lumenpnp",
       "sourcePath": "automation/scripts/Read_Paste_Model_State.js",
       "destination": "integrations/lumenpnp/automation/scripts/Read_Paste_Model_State.js",
-      "sha256": "6f3deec2080e5faaf174078252b7c02d0b2690ca94cea556ba52997fb38c92d3",
-      "bytes": 4084
+      "sha256": "095aded1821b8c161024f1bcab26c64e85aeaaefe412b84355b524199d9c317f",
+      "bytes": 4675
     },
     {
       "sourceRoot": "/home/lumen/lumenpnp",
@@ -1950,8 +1950,8 @@
       "sourceRoot": "/home/lumen/lumenpnp",
       "sourcePath": "automation/scripts/live_viewer.py",
       "destination": "integrations/lumenpnp/automation/scripts/live_viewer.py",
-      "sha256": "2465fd7eb16bc40196b94b1f53b1ce3bfc3095c09e2fed9fd60c741fb277b840",
-      "bytes": 62231
+      "sha256": "be0edc799b72dd8fb77d17a7abb261f7cd72d28c7447dee4616ec51750f3d137",
+      "bytes": 83359
     },
     {
       "sourceRoot": "/home/lumen/lumenpnp",
@@ -1992,8 +1992,8 @@
       "sourceRoot": "/home/lumen/lumenpnp",
       "sourcePath": "automation/tests/java/CheckNativeBAxis.java",
       "destination": "integrations/lumenpnp/automation/tests/java/CheckNativeBAxis.java",
-      "sha256": "7bff2b62fbb5aa1d6eebb0636d085732f74ce6488d822d0e9a676ac6f86c6aa8",
-      "bytes": 3693
+      "sha256": "8bf94353dfb6e3c58288b71a13249f1019539e570e8c62c723496d240ea04866",
+      "bytes": 4728
     },
     {
       "sourceRoot": "/home/lumen/lumenpnp",
@@ -2027,8 +2027,8 @@
       "sourceRoot": "/home/lumen/lumenpnp",
       "sourcePath": "automation/tests/test_live_viewer_http.py",
       "destination": "integrations/lumenpnp/automation/tests/test_live_viewer_http.py",
-      "sha256": "2515cc19de9cce56cb31d4651074878bcbb2eb2f08cfb01d357b240a0b8be2fc",
-      "bytes": 23141
+      "sha256": "836304911f44f16330652b462ab094f379291f79a30dcee96f3ce12cadd66589",
+      "bytes": 29036
     },
     {
       "sourceRoot": "/home/lumen/lumenpnp",
@@ -2127,6 +2127,41 @@
       "destination": "integrations/lumenpnp/automation/paste/test_projected_polygons.py",
       "sha256": "32b669a714bff7def8cb04bac73fff1fb97ad575632531637f3aa94df9e5c88b",
       "bytes": 3636
+    },
+    {
+      "sourceRoot": "/home/lumen/lumenpnp",
+      "sourcePath": "automation/paste/author-manual-home-ledger-continuation.py",
+      "destination": "integrations/lumenpnp/automation/paste/author-manual-home-ledger-continuation.py",
+      "sha256": "d176075f395f52426a216f6bb4ba56b765202c8ea60509aa1fb317feb68fb344",
+      "bytes": 7485
+    },
+    {
+      "sourceRoot": "/home/lumen/lumenpnp",
+      "sourcePath": "automation/paste/cv_pad_availability.py",
+      "destination": "integrations/lumenpnp/automation/paste/cv_pad_availability.py",
+      "sha256": "778da856617e4453ed1c10c15a0b202c0b60adff593524784c15ddfe87bb7462",
+      "bytes": 17872
+    },
+    {
+      "sourceRoot": "/home/lumen/lumenpnp",
+      "sourcePath": "automation/paste/test_author_manual_home_continuation.py",
+      "destination": "integrations/lumenpnp/automation/paste/test_author_manual_home_continuation.py",
+      "sha256": "50343e872ce687ef86dff866899acf29e41c1807be448fd48cbce027165d639b",
+      "bytes": 3341
+    },
+    {
+      "sourceRoot": "/home/lumen/lumenpnp",
+      "sourcePath": "automation/paste/test_cv_pad_availability.py",
+      "destination": "integrations/lumenpnp/automation/paste/test_cv_pad_availability.py",
+      "sha256": "e50805a3c62fbe109f337ee3bc610594dff9e78316f1c775a95f2f69360037c3",
+      "bytes": 3392
+    },
+    {
+      "sourceRoot": "/home/lumen/lumenpnp",
+      "sourcePath": "automation/tests/test_run_prepared_contiguous_batch.py",
+      "destination": "integrations/lumenpnp/automation/tests/test_run_prepared_contiguous_batch.py",
+      "sha256": "7adaf852f63c4c5e8c06385ad02e3b7b6550c939ffb695ed277708c88c658c1d",
+      "bytes": 784
     }
   ],
   "manifestSelfHash": "Excluded to avoid a recursive digest; this manifest enumerates every other exported/generated file.",

@@ -42,6 +42,16 @@ public final class CheckNativeBAxis {
     Motion motion=new Motion(null,new AxesLocation(b,720),new AxesLocation(b,719),.05,Motion.MotionOption.SpeedOverPrecision);
     equal(motion.getLocation1().getCoordinate(b),719);
     double feed=motion.getFeedRatePerSecond(driver);if(!(feed>0&&feed<=5.000001))throw new AssertionError("Unexpected feed "+feed);
+    driver.setMotionControlType(Driver.MotionControlType.ConstantAcceleration);
+    Motion installedModeProjection=new Motion(null,new AxesLocation(b,720),new AxesLocation(b,719),.05,Motion.MotionOption.SpeedOverPrecision);
+    java.util.List<Motion.MoveToCommand> commands=installedModeProjection.interpolatedMoveToCommands(driver,false);
+    if(commands.size()!=1)throw new AssertionError("Direction test projected more than one command");
+    Motion.MoveToCommand command=commands.get(0);
+    if(command.getMovedAxesLocation().getAxes().size()!=1)throw new AssertionError("Projected command gained other axes");
+    equal(command.getMovedAxesLocation().getCoordinate(b),719);
+    double projectedFeed=command.getFeedRatePerSecond();
+    if(!(projectedFeed>0&&projectedFeed<=5.000001)||!(command.getAccelerationPerSecond2()>0))throw new AssertionError("Invalid projected rate");
+    System.out.println("ConstantAcceleration isolated projection: B719 only, feed="+projectedFeed+", acceleration="+command.getAccelerationPerSecond2());
     System.out.println("Offline native partial B719/B720/B721 preserved; XYZ/A unchanged; controller-linear classification; computed feed="+feed+" units/s; no communications opened.");
   }
 }

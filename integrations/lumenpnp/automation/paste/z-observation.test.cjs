@@ -91,8 +91,8 @@ test('fine controller steps must be exact 4/10/20, with every other controller c
   for(const axis of ['X','Y','Z','A','B'])assert.throws(()=>z.compareControllerCounts(before,{...after,[axis]:after[axis]+1},q));
  }
 });
-test('fine activation is explicitly enabled in runtime source behind policy evidence gates',()=>{
- const source=fs.readFileSync(__dirname+'/../scripts/Observe_Paste_Z.js','utf8');assert.match(source,/var PASTE_FINE_Z_OBSERVATION_ENABLED = true;/);
+test('fine activation remains disabled in runtime source',()=>{
+ const source=fs.readFileSync(__dirname+'/../scripts/Observe_Paste_Z.js','utf8');assert.match(source,/var PASTE_FINE_Z_OBSERVATION_ENABLED = false;/);
  assert.ok(source.indexOf('PasteZObservation.fineStepGate(q,PASTE_FINE_Z_OBSERVATION_ENABLED)')<source.indexOf('d.getReportedLocation('));
 });
 
