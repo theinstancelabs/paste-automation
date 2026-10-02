@@ -62,6 +62,11 @@ class RunnerTests(unittest.TestCase):
             self.assertFalse((self.prepared/('runner-'+('preview' if preview else 'execute')+'-attempt.json')).exists())
         self.assertEqual(self.calls,[])
 
+    def test_air_terminal_is_observed_without_redispatch(self):
+        report=self.root/'report.json'
+        report.write_text(json.dumps(dict(id=self.q['id'],status='completed-contiguous-air-batch-awaiting-observation',request={'mode':'air'},controllerPositionVerified=True,uncertainCompletion=False)))
+        self.assertEqual(M.wait_report(report,self.q['id'],False,1)['request']['mode'],'air')
+
     def test_timeout_or_bridge_failure_cannot_redispatch(self):
         def timeout(*args): raise TimeoutError('uncertain')
         with self.assertRaises(TimeoutError): M.run(self.prepared, True, self.root, self.invoke, timeout)

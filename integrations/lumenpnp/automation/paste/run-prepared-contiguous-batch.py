@@ -42,7 +42,7 @@ def wait_report(report, ident, preview, seconds, clock=time.monotonic, sleep=tim
             status = r.get('status', '')
             if r.get('error') or status.startswith(('failed', 'stopped')):
                 raise RuntimeError('Failed/stopped existing action; do not replay: ' + str(report))
-            if status == terminal:
+            if status == terminal or (not preview and status == 'completed-contiguous-air-batch-awaiting-observation' and r.get('request', {}).get('mode') == 'air'):
                 verified = (r.get('noControllerAccess') is True and r.get('noMotion') is True) if preview else (r.get('controllerPositionVerified') is True and r.get('uncertainCompletion') is False)
                 if not verified:
                     raise RuntimeError('Unverified terminal; do not replay: ' + str(report))
