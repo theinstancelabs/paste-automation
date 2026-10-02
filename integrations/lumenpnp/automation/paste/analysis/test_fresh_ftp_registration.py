@@ -55,7 +55,7 @@ class FreshFtpRegistrationTests(unittest.TestCase):
                    'roi': [10, 10, 54, 54], 'thresholds': [100, 150, 200]}
         return request, transformed
 
-    def affine_fixture(self, root):
+    def affine_fixture(self, root, third='R40.1'):
         request, _ = self.fixture(root)
         request['registrationModel'] = 'three-fiducial-affine'
         candidate = analyze(request, now_ms=1000)
@@ -84,7 +84,7 @@ class FreshFtpRegistrationTests(unittest.TestCase):
         path=root/'jacobian.json'; path.write_text(json.dumps(j))
         request['imageJacobianEvidence']=dict(path=str(path),sha256=hashlib.sha256(path.read_bytes()).hexdigest())
         request['heldOutPadChecks']=[]
-        for pad in ('R1.2','R16.1','R40.1'):
+        for pad in ('R1.2','R16.1',third):
             report,image=proof(pad,targets[pad])
             request['heldOutPadChecks'].append(dict(padId=pad,report=report['path'],reportSha256=report['sha256'],
                 topImageSha256=image['sha256'],padIdentityReviewed=True,centerMeasurementReviewed=True,observedCenterPixel=[127.5,127.5]))
@@ -141,6 +141,19 @@ class FreshFtpRegistrationTests(unittest.TestCase):
             self.assertFalse(accepted['executionReady'])
             del q['heldOutPadChecks']
             self.assertFalse(analyze(q,now_ms=1000)['acceptance']['passed'])
+
+    def test_affine_accepts_r24_alternative_while_preserving_distant_holdout_set(self):
+        for third in ('R40.1', 'R24.1'):
+            with self.subTest(third=third), tempfile.TemporaryDirectory() as td:
+                q=self.affine_fixture(Path(td), third=third)
+                accepted=analyze(q,now_ms=1000)
+                self.assertTrue(accepted['acceptance']['passed'])
+                self.assertEqual({p['padId'] for p in accepted['independentHeldOutPadChecks']},
+                                 {'R1.2','R16.1',third})
+                xs=[p['predictedMachineXYMm'][0] for p in accepted['independentHeldOutPadChecks']]
+                ys=[p['predictedMachineXYMm'][1] for p in accepted['independentHeldOutPadChecks']]
+                self.assertGreaterEqual(max(xs)-min(xs),25)
+                self.assertGreaterEqual(max(ys)-min(ys),25)
 
     def test_affine_rejects_wrong_jacobian_and_bad_heldout(self):
         with tempfile.TemporaryDirectory() as td:

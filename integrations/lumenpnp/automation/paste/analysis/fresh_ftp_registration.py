@@ -16,7 +16,7 @@ MAX_REPORT_AGE_MS = 30 * 60 * 1000
 MIN_SCALE, MAX_SCALE, MAX_THIRD_RESIDUAL_MM = 0.99, 1.01, 0.08
 AFFINE_MODEL = 'three-fiducial-affine'
 MAX_AFFINE_SKEW_DEGREES = 0.3
-HELD_OUT_PADS = ('R1.2', 'R16.1', 'R40.1')
+HELD_OUT_PAD_SETS = (('R1.2', 'R16.1', 'R40.1'), ('R1.2', 'R16.1', 'R24.1'))
 FAST_CAMERA_SCOPE = 'camera-only-registered-fast-inspection'
 
 
@@ -363,8 +363,13 @@ def reviewed_jacobian(ev, session, now):
 
 def held_out_checks(request, result, now):
     checks=request['heldOutPadChecks'];session=result['session']
-    if not isinstance(checks,list) or len(checks)!=3 or sorted(c.get('padId','') for c in checks)!=sorted(HELD_OUT_PADS):
-        raise ValueError('Exactly R1.2, R16.1 and R40.1 held-out image checks required')
+    check_ids=tuple(sorted(c.get('padId','') for c in checks)) if isinstance(checks,list) else ()
+    if len(checks or [])!=3 or check_ids not in tuple(tuple(sorted(v)) for v in HELD_OUT_PAD_SETS):
+        raise ValueError('Held-out checks must be R1.2/R16.1 plus exactly one of R24.1 or R40.1')
+    points={p['padId']:p['machineXYMm'] for p in result['resistorPadMachineXYTargets']}
+    held=[points[c['padId']] for c in checks]
+    if max(p[0] for p in held)-min(p[0] for p in held)<25 or max(p[1] for p in held)-min(p[1] for p in held)<25:
+        raise ValueError('Held-out pads must retain at least 25 mm spread on both machine XY axes')
     jac,prov=reviewed_jacobian(request.get('imageJacobianEvidence'),session,now);inv=inverse(jac)
     targets={p['padId']:p['machineXYMm'] for p in result['resistorPadMachineXYTargets']};out=[]
     used={m['reportId'] for m in result['measurements'].values()}

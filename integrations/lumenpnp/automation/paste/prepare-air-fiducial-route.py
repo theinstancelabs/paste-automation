@@ -37,6 +37,11 @@ def air_identity_template(template):
     return result
 
 
+def same_session_barrier(template_request, barrier_request, configuration_sha256):
+    return (template_request.get('jvmStartMs') == barrier_request.get('jvmStartMs')
+            and template_request.get('liveConfigurationSha256') == configuration_sha256)
+
+
 def finite(value):
     return type(value) in (int, float) and math.isfinite(value)
 
@@ -182,10 +187,12 @@ def prepare(args):
     review, review_path, review_bytes = load(args.clearance_review)
     manual_path = getattr(args, 'manual_home_ledger_anchor_evidence', None)
     restart_path_arg = getattr(args, 'application_restart_evidence', None)
-    if bool(manual_path) == bool(restart_path_arg):
-        fail('Supply exactly one manual-home continuity proof or application-restart continuity record')
-    continuity_ev = evidence(manual_path or restart_path_arg)
-    continuity_record, continuity_path, continuity_bytes = load(continuity_ev['path'])
+    if manual_path and restart_path_arg:
+        fail('Supply at most one manual-home continuity proof or application-restart continuity record')
+    continuity_path = continuity_bytes = continuity_record = continuity_ev = None
+    if manual_path or restart_path_arg:
+        continuity_ev = evidence(manual_path or restart_path_arg)
+        continuity_record, continuity_path, continuity_bytes = load(continuity_ev['path'])
     image_ev = evidence(args.image)
     image = Path(image_ev['path'])
     image_bytes = image.read_bytes()
@@ -214,6 +221,10 @@ def prepare(args):
     raw = snap.get('raw')
     poses = snap.get('nativePoses')
     restart_mode = bool(restart_path_arg)
+    if not continuity_ev:
+        template_request = template.get('request') or template
+        if not same_session_barrier(template_request, req, barrier.get('liveConfigurationSha256')):
+            fail('Without a continuity proof, the barrier must match the wet template JVM and configuration exactly')
     stages, points, bounds, heads = route(
         raw, poses, args.target_x, args.target_y, args.target_z,
         allow_initial_clearance_lift=restart_mode)
@@ -235,7 +246,7 @@ def prepare(args):
         if not restart_record_matches(continuity_record, template.get('sessionId'),
                                       barrier.get('liveConfigurationSha256'), req.get('jvmStartMs')):
             fail('Application-restart continuity must bind this session/configuration and end at the current barrier JVM')
-    else:
+    elif manual_path:
         manual_review = continuity_record
         if (manual_review.get('scope') not in ('manual-home-ledger-anchor-continuity', 'manual-home-ledger-anchor-continuation')
                 or manual_review.get('sessionId') != template.get('sessionId')
@@ -296,17 +307,21 @@ def prepare(args):
     cmd = [sys.executable, str(PREP), 'prepare', '--template', str(generated_template),
            '--barrier', str(barrier_path), '--image', str(image), '--recipe', str(recipe_path),
            '--output', str(prepared)]
-    continuity_flag = '--application-restart-evidence' if restart_mode else '--manual-home-ledger-anchor-evidence'
-    cmd.extend([continuity_flag, str(continuity_path)])
+    if continuity_path:
+        continuity_flag = '--application-restart-evidence' if restart_mode else '--manual-home-ledger-anchor-evidence'
+        cmd.extend([continuity_flag, str(continuity_path)])
     try:
         result = subprocess.run(cmd, cwd=ROOT, check=True, text=True, capture_output=True)
     except subprocess.CalledProcessError as exc:
         fail('Existing disabled contiguous-batch preparer rejected route: ' + (exc.stderr or exc.stdout or str(exc)).strip())
-    for path, before in ((template_path, template_bytes), (barrier_path, barrier_bytes),
-                         (wet_path, wet_bytes), (ledger_path, ledger_bytes),
-                         (review_path, review_bytes), (continuity_path, continuity_bytes),
+    sources = [(template_path, template_bytes), (barrier_path, barrier_bytes),
+               (wet_path, wet_bytes), (ledger_path, ledger_bytes),
+               (review_path, review_bytes),
                          (image, image_bytes), (historical_profile_path, historical_profile_bytes),
-                         (measurement_path, measurement_bytes)):
+               (measurement_path, measurement_bytes)]
+    if continuity_path:
+        sources.append((continuity_path, continuity_bytes))
+    for path, before in sources:
         if path.read_bytes() != before:
             fail('Evidence source changed during preparation: ' + str(path))
     print(json.dumps({
@@ -325,7 +340,7 @@ def main():
     p.add_argument('--barrier', required=True, help='current read-only position barrier report')
     p.add_argument('--previous-report', required=True, help='verified current wet terminal report')
     p.add_argument('--ledger', required=True, help='current verified wet ledger')
-    continuity = p.add_mutually_exclusive_group(required=True)
+    continuity = p.add_mutually_exclusive_group(required=False)
     continuity.add_argument('--manual-home-ledger-anchor-evidence', help='current manual-home continuity proof')
     continuity.add_argument('--application-restart-evidence', help='reviewed application-restart continuity record for the current JVM')
     p.add_argument('--image', required=True, help='current reviewed stationary image')

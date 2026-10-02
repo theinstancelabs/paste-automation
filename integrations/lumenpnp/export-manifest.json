@@ -124,8 +124,8 @@
       "sourceRoot": "/home/lumen/lumenpnp",
       "sourcePath": "automation/paste/analysis/fresh_ftp_registration.py",
       "destination": "integrations/lumenpnp/automation/paste/analysis/fresh_ftp_registration.py",
-      "sha256": "2b0f2dd8f09adae6b97b80003b8efbbeef04a2765fa8caa2578bec1a9720ad7d",
-      "bytes": 36921
+      "sha256": "fe74a1853aa93d1f32490776ddc0b7ff6abe0d9100e1f4127adcb5723241976b",
+      "bytes": 37387
     },
     {
       "sourceRoot": "/home/lumen/lumenpnp",
@@ -201,8 +201,8 @@
       "sourceRoot": "/home/lumen/lumenpnp",
       "sourcePath": "automation/paste/analysis/test_fresh_ftp_registration.py",
       "destination": "integrations/lumenpnp/automation/paste/analysis/test_fresh_ftp_registration.py",
-      "sha256": "35347b11a406f377616e42be94218abf2e4a271ee8931634ec4cff07c31322da",
-      "bytes": 15146
+      "sha256": "5b5b0fa375d2f27d6247d8118bebf3757f513d618b92f01adc0bbb811b7d0fd5",
+      "bytes": 16016
     },
     {
       "sourceRoot": "/home/lumen/lumenpnp",
@@ -502,8 +502,8 @@
       "sourceRoot": "/home/lumen/lumenpnp",
       "sourcePath": "automation/paste/commissioning-batch.test.cjs",
       "destination": "integrations/lumenpnp/automation/paste/commissioning-batch.test.cjs",
-      "sha256": "0fd27fcf90d9fb143395e04ef543c92c479473a9174000d8d19ae485be35cd48",
-      "bytes": 70782
+      "sha256": "97d7f53c3db458fb018f74e48e5c309b8625a1b2f3501a41dcd168567cfda711",
+      "bytes": 71314
     },
     {
       "sourceRoot": "/home/lumen/lumenpnp",
@@ -733,8 +733,8 @@
       "sourceRoot": "/home/lumen/lumenpnp",
       "sourcePath": "automation/paste/ftp-two-pad.cjs",
       "destination": "integrations/lumenpnp/automation/paste/ftp-two-pad.cjs",
-      "sha256": "ca2dea741714c4706e0bdf001215b15433880852c9a804f0a859fe3eddf5b541",
-      "bytes": 45032
+      "sha256": "b7c4050973e88064e1ea9b5ef3a2c01afdf5b68050b9cde354b8a8684a473dd2",
+      "bytes": 45962
     },
     {
       "sourceRoot": "/home/lumen/lumenpnp",
@@ -922,8 +922,8 @@
       "sourceRoot": "/home/lumen/lumenpnp",
       "sourcePath": "automation/paste/prepare-air-fiducial-route.py",
       "destination": "integrations/lumenpnp/automation/paste/prepare-air-fiducial-route.py",
-      "sha256": "fe2dfda1f8a1aef67d1ec7c8231a12e178ba04f759fb41b81a57a2690cc005ce",
-      "bytes": 18945
+      "sha256": "fca5245f5a28d4e38f92a2c2b53125eb4f71db4fa4579d08f29d920dfd83e04b",
+      "bytes": 19713
     },
     {
       "sourceRoot": "/home/lumen/lumenpnp",
@@ -1293,8 +1293,8 @@
       "sourceRoot": "/home/lumen/lumenpnp",
       "sourcePath": "automation/paste/test_prepare_air_fiducial_route.py",
       "destination": "integrations/lumenpnp/automation/paste/test_prepare_air_fiducial_route.py",
-      "sha256": "d2a366280d73c21f549830884af3c22b5501381928e9483bb764742234f5f756",
-      "bytes": 7927
+      "sha256": "4bdf17b74dc0c9d9983d1100c236b27c8058070a2b418ad17948b700b37717f1",
+      "bytes": 8389
     },
     {
       "sourceRoot": "/home/lumen/lumenpnp",
@@ -2325,6 +2325,27 @@
       "destination": "integrations/lumenpnp/automation/paste/prepare-application-restart-continuity.py",
       "sha256": "08c9ed3a64cf404e513a432172d0cc17b48c1c2b0253453326c94f08655a13b1",
       "bytes": 7865
+    },
+    {
+      "sourceRoot": "/home/lumen/lumenpnp",
+      "sourcePath": "automation/paste/acquire-current-affine-registration.py",
+      "destination": "integrations/lumenpnp/automation/paste/acquire-current-affine-registration.py",
+      "sha256": "149c2637569e427cbf401557d3321e83e40dc26bd96779a1cbfa96e0d14fb0cb",
+      "bytes": 17065
+    },
+    {
+      "sourceRoot": "/home/lumen/lumenpnp",
+      "sourcePath": "automation/paste/analysis/measure_fresh_registration_centers.py",
+      "destination": "integrations/lumenpnp/automation/paste/analysis/measure_fresh_registration_centers.py",
+      "sha256": "dc82972b7920efd5d817e096f14f281c9ccf58982f1fe5deb74f384465a9dd61",
+      "bytes": 9236
+    },
+    {
+      "sourceRoot": "/home/lumen/lumenpnp",
+      "sourcePath": "automation/paste/analysis/finalize-current-affine-registration.py",
+      "destination": "integrations/lumenpnp/automation/paste/analysis/finalize-current-affine-registration.py",
+      "sha256": "ba6dd684d87a98dee4950ce07934d1f6c2ce11c09fa8ec624ee7f3b0af27e61e",
+      "bytes": 6123
     }
   ],
   "manifestSelfHash": "Excluded to avoid a recursive digest; this manifest enumerates every other exported/generated file.",

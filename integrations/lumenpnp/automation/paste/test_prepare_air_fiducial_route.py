@@ -87,6 +87,13 @@ class AirFiducialRouteTest(unittest.TestCase):
         self.assertEqual(air['profileEvidence'], template['profileEvidence'])
         self.assertIn('budgetAmendmentEvidence', template)
 
+    def test_no_continuity_proof_is_limited_to_exact_same_jvm_and_configuration(self):
+        template = {'jvmStartMs': 123, 'liveConfigurationSha256': 'a' * 64}
+        barrier = {'jvmStartMs': 123}
+        self.assertTrue(MODULE.same_session_barrier(template, barrier, 'a' * 64))
+        self.assertFalse(MODULE.same_session_barrier(template, {'jvmStartMs': 124}, 'a' * 64))
+        self.assertFalse(MODULE.same_session_barrier(template, barrier, 'b' * 64))
+
     def test_contiguous_preparer_accepts_only_same_jvm_or_exact_bound_continuity(self):
         base = {'sessionId': 'session', 'jvmStartMs': 100, 'liveConfigurationSha256': 'a' * 64}
         ref = {'path': '/barrier.json', 'sha256': 'b' * 64}
