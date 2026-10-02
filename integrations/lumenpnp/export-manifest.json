@@ -236,8 +236,8 @@
       "sourceRoot": "/home/lumen/lumenpnp",
       "sourcePath": "automation/paste/analysis/test_prepare_retraction_coupon.py",
       "destination": "integrations/lumenpnp/automation/paste/analysis/test_prepare_retraction_coupon.py",
-      "sha256": "9e2f463c0595cc9b713314be8e5ff441ee9553d177cc22c81e3c7ba402911863",
-      "bytes": 34213
+      "sha256": "7f03c74b4baac776e30cdc0011d5418ca898c972dac82a4cf33dff868bce32bb",
+      "bytes": 34650
     },
     {
       "sourceRoot": "/home/lumen/lumenpnp",
@@ -964,8 +964,8 @@
       "sourceRoot": "/home/lumen/lumenpnp",
       "sourcePath": "automation/paste/prepare-contiguous-batch.py",
       "destination": "integrations/lumenpnp/automation/paste/prepare-contiguous-batch.py",
-      "sha256": "4a56f85481542bf70dde39768c68e0cd8938dc4254a4f8b2df56b36b2dde8587",
-      "bytes": 21125
+      "sha256": "fa7cd561a88ea0dc53d88d8a87d0a8b8e5564c04e694340bf81e20378edcbda6",
+      "bytes": 21131
     },
     {
       "sourceRoot": "/home/lumen/lumenpnp",

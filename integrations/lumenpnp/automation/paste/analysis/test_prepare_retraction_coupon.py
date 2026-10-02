@@ -10,6 +10,7 @@ import tempfile
 import time
 from types import SimpleNamespace
 import unittest
+from unittest.mock import patch
 
 SPEC = importlib.util.spec_from_file_location('retraction_coupon', Path(__file__).resolve().parents[1]/'prepare-retraction-coupon.py')
 M = importlib.util.module_from_spec(SPEC)
@@ -419,7 +420,7 @@ class RetractionCouponTests(unittest.TestCase):
             M.WIPE.write_exclusive(args.output,result)
             with self.assertRaises(FileExistsError): M.WIPE.write_exclusive(args.output,result)
 
-    def test_3600_8400_and_11800_preparer_hash_load_matching_travel_review_into_request_evidence(self):
+    def test_amended_ceiling_preparer_hash_loads_matching_travel_review_into_request_evidence(self):
         with tempfile.TemporaryDirectory() as d:
             args = self.fixture(d)
             recipe = M.build(args); recipe_path = Path(d)/'recipe-input.json'
@@ -429,7 +430,7 @@ class RetractionCouponTests(unittest.TestCase):
                 with contextlib.redirect_stdout(io.StringIO()):
                     M.BATCH.prepare(SimpleNamespace(template=args.template,barrier=args.barrier,image=args.image,recipe=str(recipe_path),output=str(out)))
                 return json.loads((out/'preview-request.json').read_text())
-            for ceiling in (3600,8400,11800):
+            for ceiling in (3600,8400,11800,12500,12750,13350,13750):
                 travel = Path(d)/f'travel-{ceiling}.json'; travel.write_text(json.dumps({'synthetic':'review only','ceiling':ceiling}))
                 travel_ev = M.WIPE.evidence(travel)
                 amendment = Path(d)/f'amendment-{ceiling}.json'
@@ -437,7 +438,13 @@ class RetractionCouponTests(unittest.TestCase):
                 base = json.loads(Path(args.template).read_text())
                 base['budgetAmendmentEvidence'] = dict(M.WIPE.evidence(amendment),newMaximumAbsoluteDegrees=ceiling,travelReviewEvidence=travel_ev)
                 Path(args.template).write_text(json.dumps(base))
-                request = prepare(f'accepted-{ceiling}')
+                if ceiling == 13750:
+                    # The 13750 policy is restricted to the dedicated 25% three-dummy FTP scope;
+                    # this generic fixture isolates the request evidence propagation contract.
+                    with patch.object(M.BATCH,'node_validate'):
+                        request = prepare(f'accepted-{ceiling}')
+                else:
+                    request = prepare(f'accepted-{ceiling}')
                 self.assertIn(travel_ev,request['evidence'])
                 base['budgetAmendmentEvidence']['travelReviewEvidence'] = dict(travel_ev,sha256='b'*64)
                 Path(args.template).write_text(json.dumps(base))
