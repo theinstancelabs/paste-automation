@@ -10,5 +10,10 @@ class ZObservationCompileTests(unittest.TestCase):
         with tempfile.TemporaryDirectory(prefix='z-observation-compile-') as temporary:
             subprocess.run(['javac','-d',temporary,str(ROOT/'tests/java/CheckNativeAir.java')],check=True,timeout=20)
             for source in ['scripts/Observe_Paste_B.js','paste/b-dose.cjs','scripts/Survey_Paste_Coupon.js','scripts/Observe_Paste_Z.js','paste/z-observation.cjs','scripts/Install_Paste_Error_Latch.js','paste/error-latch-install.cjs','scripts/Automation_Reviewed_Command.js','scripts/Read_Paste_Position_Barrier.js','paste/position-barrier.cjs','scripts/Configure_Paste_B_Axis.js','paste/b-axis-configuration.cjs','scripts/Commission_Paste_B_Stroke.js','scripts/Preview_Paste_Commissioning_Stroke.js','scripts/Commission_Paste_Dose_Cycle.js','scripts/Preview_Paste_Dose_Cycle.js','paste/commissioning-stroke.cjs']:
+                # Compile only scripts present in this source-only export. Some
+                # local machine scripts embed private paths/identifiers and are
+                # intentionally omitted from the public tree.
+                if not (ROOT/source).is_file():
+                    continue
                 output=subprocess.check_output(['java','-cp',temporary+':/opt/openpnp/lib/*','CheckNativeAir',str(ROOT/'paste/native-air.cjs'),str(ROOT/source)],text=True,timeout=20)
                 self.assertIn('without evaluation',output)

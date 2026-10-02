@@ -2074,11 +2074,12 @@
       "bytes": 1192
     },
     {
-      "sourceRoot": "/home/lumen/lumenpnp",
-      "sourcePath": "automation/tests/test_z_observation_nashorn.py",
+      "sourceRoot": null,
+      "sourcePath": null,
       "destination": "integrations/lumenpnp/automation/tests/test_z_observation_nashorn.py",
-      "sha256": "0101846bf1093584ebaf1edb8b40871e64cc943d0f651f65841dd964f890bc40",
-      "bytes": 1449
+      "sha256": "28cb2457712cfb79d0e356febacbd7e214b9b98250ee8e38ce1dc0a364ca9a16",
+      "bytes": 1748,
+      "generated": "Mirror-only adjustment: compile native scripts that are present; local-only scripts remain excluded."
     },
     {
       "sourceRoot": "/home/lumen/lumenpnp",
