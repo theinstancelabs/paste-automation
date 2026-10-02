@@ -150,9 +150,10 @@ class SelectedPadsBuilderTests(unittest.TestCase):
         with patch.object(M.subprocess,'run',side_effect=generic):
             for case,(percent,first_ref) in enumerate(zip((15,20,25,30),(21,25,29,17))):
                 case_experiment=dict(experiment)
-                if percent==25:
+                if percent in (20,25):
                     case_experiment['conditioningRetractDegrees']=1.5
                     case_experiment['targetsXY']=[{'X':2.0,'Y':0.0},{'X':3.0,'Y':0.0},{'X':4.0,'Y':0.0},{'X':5.0,'Y':0.0}]
+                case_experiment['preWipeReliefDegrees']=2
                 ef=self.json(f'minimum-travel-experiment-{percent}.json',case_experiment)
                 review=self.json(f'minimum-travel-review-{percent}.json',{'reviewedBy':'reviewer','reviewedMs':self.now,'experimentEvidence':M.ev(ef),'imageEvidence':M.ev(self.image)})
                 prof=json.loads(self.profile.read_text());prof['measurementEvidence']=M.ev(review);pf=self.json(f'minimum-travel-profile-{percent}.json',prof)
@@ -167,7 +168,7 @@ class SelectedPadsBuilderTests(unittest.TestCase):
                 target={**self.target,'pads':pads,'surface':pads[0]['surface'],'surfaceEvidence':pads[0]['surfaceEvidence'],'reviewedMs':self.now,
                   'pairReferences':refs,
                   'minimumTravelPolicy':{'schema':1,'protocol':'same-component-pair-no-interim-retract','retractPercent':percent,'pairReferences':refs,'plan':plan,'orderedPadIds':[p['padId'] for p in pads]},
-                  'compensatedSequence':{'schema':1,'protocol':'restore-dose-pair-carry-retract-lift-minimum-travel-eight-pad','doseDegrees':6,'retractDegrees':3,'retractPercent':percent,'requestedRetractionDegrees':requested,'conditioningRetractDegrees':3,'dwellMilliseconds':2000,'retractDwellMilliseconds':500,'idleReliefDegrees':40}}
+                  'compensatedSequence':{'schema':1,'protocol':'restore-dose-pair-carry-retract-lift-minimum-travel-eight-pad','doseDegrees':6,'retractDegrees':3,'retractPercent':percent,'requestedRetractionDegrees':requested,'conditioningRetractDegrees':1.5 if percent in (20,25) else 3,'dwellMilliseconds':2000,'retractDwellMilliseconds':500,'idleReliefDegrees':40}}
                 tf=self.json(f'minimum-travel-target-{percent}.json',target);outdir=self.root/f'minimum-travel-out-{percent}'
                 args=SimpleNamespace(template=str(self.template),barrier=str(self.barrier),target_record=str(tf),experiment=str(ef),profile=str(pf),clearance_review=str(review),image=str(self.image),previous_report=str(self.prev),ledger=str(self.ledger),output=str(outdir),xy_clearance_raw_z=53.4,minimum_travel_eight_pad=True)
                 M.build(args)
@@ -176,6 +177,14 @@ class SelectedPadsBuilderTests(unittest.TestCase):
                 self.assertLessEqual(len(recipe['stages']),150);self.assertLessEqual(recipe['bAccounting']['grossChargedDegrees'],220)
                 self.assertEqual(built['pairReferences'],refs);self.assertEqual(built['compensatedSequence']['retractPercent'],percent)
                 self.assertEqual(built['compensatedSequence']['requestedRetractionDegrees'],requested)
+                self.assertEqual(built['compensatedSequence']['conditioningRetractDegrees'],1.5 if percent in (20,25) else 3)
+                self.assertEqual(built['inlineConditioning']['experiment']['preWipeReliefDegrees'],2)
+                if percent in (20,25):
+                    inline=built['inlineConditioning']
+                    self.assertEqual(inline['conditioningDepositCount'],3)
+                    self.assertEqual(inline['requestedConditioningRetractDegrees'],1.5)
+                    self.assertEqual(len(inline['conditioningRetractEvents']),3)
+                    self.assertEqual(len(inline['conditioningRestoreEvents']),2)
                 for pair_start in (0,2,4,6):
                     first,second=built['pads'][pair_start:pair_start+2]
                     self.assertIsNotNone(first['restoreStageIndex']);self.assertIsNone(first['retractStageIndex'])

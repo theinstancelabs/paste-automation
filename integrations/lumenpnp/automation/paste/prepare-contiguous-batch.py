@@ -139,7 +139,7 @@ def prepare(args):
  elif recipe.get('targetSurface') not in (None,'scrap') or 'ftpTargetEvidence' in recipe: err('Explicit supported target surface required')
  q['evidence']=[q[k] for k in ('barrierEvidence','reviewedImageEvidence','profileEvidence','previousReportEvidence','primeLedgerEvidence','priorLedgerEvidence','carryoverEvidence')]+[{'path':str(lp),'sha256':q['previousLedgerSha256']},clear]+([restart_ev] if restart_ev else [])+([manual_anchor_ev] if manual_anchor_ev else [])
  amendment=q.get('budgetAmendmentEvidence')
- if amendment and amendment.get('newMaximumAbsoluteDegrees') in (3600,8400,11800,12500,12750,13350,13750):
+ if amendment and amendment.get('newMaximumAbsoluteDegrees') in (3600,8400,11800,12500,12750,13350,13750,14050):
   ceiling=amendment['newMaximumAbsoluteDegrees']
   amend_ev=sha_evidence(amendment,f'{ceiling}-degree amendment'); record,_,_=read(amend_ev['path'])
   travel=sha_evidence(record.get('travelReviewEvidence'),'travelReviewEvidence')

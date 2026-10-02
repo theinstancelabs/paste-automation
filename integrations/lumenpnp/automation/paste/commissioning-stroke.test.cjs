@@ -121,3 +121,10 @@ test('3600, 8400, 11800 and 12500 require exact loaded travel evidence and prese
  assert.throws(()=>P.reserve(f.anchor,next,{...carry,maximumAbsoluteDegrees:ceiling},f.context),/carryover/);
  }
 });
+test('14050 ceiling requires exact hash-bound reduced-relief 20/25 recipe',()=>{
+ const travel={path:'/cap-14050/review.json',sha256:'6b6894506d1958c17b4e8079eee2ca3e1cc294dd32ba6f2bda8d2d631fc31006'},record={newMaximumAbsoluteDegrees:14050,travelReviewEvidence:travel};
+ function request(pct){const retract=6*pct/100;return {scope:'contiguous-native-ftp-minimum-travel-eight-pad-preview',evidence:[travel],budgetAmendmentEvidence:{travelReviewEvidence:travel},ftpTargetRecord:{compensatedSequence:{doseDegrees:6,retractPercent:pct,retractDegrees:3,conditioningRetractDegrees:1.5,requestedRetractionDegrees:retract,preWipeReliefDegrees:2},inlineConditioning:{protocol:'scrap-condition-transit-minimum-travel-eight-pad',conditioningDepositCount:3,requestedConditioningRetractDegrees:1.5,conditioningRetractEvents:[0,1,2].map(i=>({requestedDegrees:1.5,controllerSteps:7,stageIndex:i})),conditioningRestoreEvents:[{stageIndex:3,reversalOfStageIndex:0,controllerSteps:-7,rawDelta:-1.5},{stageIndex:4,reversalOfStageIndex:1,controllerSteps:-7,rawDelta:-1.5}],experiment:{mode:'transfer-preparation',conditioningDoseDegrees:6,conditioningRetractDegrees:1.5,retractDegrees:3,preWipeReliefDegrees:2,targetsXY:[{X:1,Y:1},{X:2,Y:1},{X:3,Y:1},{X:4,Y:1}]}}}};}
+ for(const pct of [20,25])assert.equal(P.budgetTravelReview(request(pct),record),travel);
+ for(const edit of [q=>q.ftpTargetRecord.compensatedSequence.preWipeReliefDegrees=20,q=>q.ftpTargetRecord.compensatedSequence.conditioningRetractDegrees=3,q=>q.ftpTargetRecord.inlineConditioning.experiment.targetsXY[3]={X:1,Y:1},q=>q.ftpTargetRecord.compensatedSequence.retractPercent=30]){const q=request(25);edit(q);assert.throws(()=>P.budgetTravelReview(q,record),/14050-degree ceiling/);}
+ const bad={...record,travelReviewEvidence:{...travel,sha256:'1'.repeat(64)}};assert.throws(()=>P.budgetTravelReview(request(25),bad),/14050-degree/);
+});

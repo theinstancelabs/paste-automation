@@ -96,7 +96,7 @@ def build(args):
         if (policy.get('schema')!=1 or policy.get('protocol')!='same-component-pair-no-interim-retract' or policy.get('pairReferences')!=pair_refs or
                 c.get('protocol')!='restore-dose-pair-carry-retract-lift-minimum-travel-eight-pad' or
                 c.get('doseDegrees')!=6 or policy.get('retractPercent')!=pct or
-                c.get('retractDegrees')!=3 or c.get('conditioningRetractDegrees')!=3 or c.get('dwellMilliseconds')!=2000 or
+                c.get('retractDegrees')!=3 or c.get('conditioningRetractDegrees')!=(1.5 if pct in (20,25) else 3) or c.get('dwellMilliseconds')!=2000 or
                 c.get('retractDwellMilliseconds')!=500 or c.get('idleReliefDegrees')!=40): fail('Exact minimum-travel eight-pad recipe required')
     if not isinstance(pads,list) or not 1<=len(pads)<=(32 if comparison else 40 if wide else 8) or c.get('protocol') not in (('restore-dose-retract-lift-retraction-comparison',) if comparison else ('restore-dose-pair-carry-retract-lift-minimum-travel-eight-pad',) if minimum_travel else ('restore-dose-retract-lift-selected-pads',)): fail('Selected-pad count/protocol mismatch')
     ids=[p.get('padId') for p in pads]
@@ -141,8 +141,10 @@ def build(args):
     prefix,_,prep_accounting=PREP.stages_for(experiment,re,gap,unc)
     if minimum_travel:
         requested_condition_retract=experiment.get('conditioningRetractDegrees',3)
-        if prep_accounting.get('requestedConditioningRetractDegrees')!=requested_condition_retract or requested_condition_retract==1.5 and (c.get('retractPercent')!=25 or prep_accounting.get('conditioningDepositCount')!=3):
-            fail('Fractional 25% conditioner retraction requires an explicitly reviewed three-dummy sequence; legacy conditioning remains R3')
+        expected_condition_retract=1.5 if c.get('retractPercent') in (20,25) else 3
+        if (requested_condition_retract!=expected_condition_retract or prep_accounting.get('requestedConditioningRetractDegrees')!=requested_condition_retract or
+                requested_condition_retract!=3 and prep_accounting.get('conditioningDepositCount')!=3):
+            fail('Fractional conditioner retraction requires the exact reviewed 20%/25% three-dummy sequence; legacy conditioning remains R3')
     group_prefixes=[prefix]
     if comparison:
         for g in target['retractionComparison']['groups'][1:]:
@@ -232,7 +234,7 @@ def build(args):
     c.pop('finalIdleStageIndex',None) if idle==40 else None
     if len(stages)>(400 if wide or comparison else 96): fail('Selected-pad route exceeds its native stage cap')
     target['pads']=pads
-    target['inlineConditioning']={'schema':1,'protocol':'scrap-condition-transit-retraction-comparison' if comparison else 'scrap-condition-transit-minimum-travel-eight-pad' if minimum_travel else 'scrap-condition-transit-selected-pads','experiment':copy.deepcopy(experiment),'experimentEvidence':ee,'maximumTransferMilliseconds':15000,'prefixStageCount':len(prefix),'retractionStageIndex':retract_i,'liftStageIndex':lift_i,'conditioningDepositCount':prep_accounting.get('conditioningDepositCount',1),'requestedConditioningRetractDegrees':prep_accounting.get('requestedConditioningRetractDegrees'),'actualConditioningRetractRawDelta':prep_accounting.get('actualConditioningRetractRawDelta'),'actualConditioningRetractControllerSteps':prep_accounting.get('actualConditioningRetractControllerSteps'),'actualConditioningRetractDegrees':prep_accounting.get('actualConditioningRetractDegrees'),'conditioningRetractEvents':prep_accounting.get('conditioningRetractEvents',[]),'comparisonGroupPrefixes':[{'group':i+1,'prefixStageCount':len(x)} for i,x in enumerate(group_prefixes)] if comparison else None}
+    target['inlineConditioning']={'schema':1,'protocol':'scrap-condition-transit-retraction-comparison' if comparison else 'scrap-condition-transit-minimum-travel-eight-pad' if minimum_travel else 'scrap-condition-transit-selected-pads','experiment':copy.deepcopy(experiment),'experimentEvidence':ee,'maximumTransferMilliseconds':15000,'prefixStageCount':len(prefix),'retractionStageIndex':retract_i,'liftStageIndex':lift_i,'conditioningDepositCount':prep_accounting.get('conditioningDepositCount',1),'requestedConditioningRetractDegrees':prep_accounting.get('requestedConditioningRetractDegrees'),'actualConditioningRetractRawDelta':prep_accounting.get('actualConditioningRetractRawDelta'),'actualConditioningRetractControllerSteps':prep_accounting.get('actualConditioningRetractControllerSteps'),'actualConditioningRetractDegrees':prep_accounting.get('actualConditioningRetractDegrees'),'conditioningRetractEvents':prep_accounting.get('conditioningRetractEvents',[]),'conditioningRestoreEvents':prep_accounting.get('conditioningRestoreEvents',[]),'comparisonGroupPrefixes':[{'group':i+1,'prefixStageCount':len(x)} for i,x in enumerate(group_prefixes)] if comparison else None}
     route=[copy.deepcopy(raw)];cur=copy.deepcopy(raw)
     for s in stages:cur=copy.deepcopy(cur);cur[s['axis']]=s['target'];route.append(cur)
     bounds={a:{'min':min(x[a] for x in route),'max':max(x[a] for x in route)} for a in 'XYZB'};heads={}
