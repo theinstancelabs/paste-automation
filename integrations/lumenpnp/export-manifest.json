@@ -768,15 +768,15 @@
       "sourceRoot": "/home/lumen/lumenpnp",
       "sourcePath": "automation/paste/manual-home-ledger-anchor.cjs",
       "destination": "integrations/lumenpnp/automation/paste/manual-home-ledger-anchor.cjs",
-      "sha256": "5e5722caddfded13ca336072a8ff9378f00343ad17698e8e0dc86720d036aa96",
-      "bytes": 24682
+      "sha256": "237688f1a5157123d1c9432f5640d45224ce73ff220f949cde067a2f003f5902",
+      "bytes": 25109
     },
     {
       "sourceRoot": "/home/lumen/lumenpnp",
       "sourcePath": "automation/paste/manual-home-ledger-anchor.test.cjs",
       "destination": "integrations/lumenpnp/automation/paste/manual-home-ledger-anchor.test.cjs",
-      "sha256": "0d448b0603f2b1ac12024edc020594a5df29060afb58f65c612f33faaac65804",
-      "bytes": 12994
+      "sha256": "5cb5c37dcf1c81f13707b5f1e54715bfe3a254004444159baa7ea2ca7af3a365",
+      "bytes": 13212
     },
     {
       "sourceRoot": "/home/lumen/lumenpnp",
@@ -2099,8 +2099,8 @@
       "sourceRoot": "/home/lumen/lumenpnp",
       "sourcePath": "automation/paste/author-manual-home-ledger-continuation.py",
       "destination": "integrations/lumenpnp/automation/paste/author-manual-home-ledger-continuation.py",
-      "sha256": "d176075f395f52426a216f6bb4ba56b765202c8ea60509aa1fb317feb68fb344",
-      "bytes": 7485
+      "sha256": "781ef7b054af84de090fc2fdb4537e64c1cfa4f85a262290b451d1d9557b8bb5",
+      "bytes": 8524
     },
     {
       "sourceRoot": "/home/lumen/lumenpnp",
@@ -2113,8 +2113,8 @@
       "sourceRoot": "/home/lumen/lumenpnp",
       "sourcePath": "automation/paste/test_author_manual_home_continuation.py",
       "destination": "integrations/lumenpnp/automation/paste/test_author_manual_home_continuation.py",
-      "sha256": "50343e872ce687ef86dff866899acf29e41c1807be448fd48cbce027165d639b",
-      "bytes": 3341
+      "sha256": "e8cd1b4760dc48b3e2b7f9a79b9656f14c5e5c88c62dbd44db3cc41c7a918b5a",
+      "bytes": 3651
     },
     {
       "sourceRoot": "/home/lumen/lumenpnp",

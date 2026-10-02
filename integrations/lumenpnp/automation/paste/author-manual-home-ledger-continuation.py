@@ -5,7 +5,7 @@ This tool does not connect to OpenPnP or dispatch any motion. It never edits the
 original manual-home proof. Each wet report must have a matching immutable ledger
 snapshot whose SHA equals the report's completedLedgerSha256.
 """
-import argparse, hashlib, json
+import argparse, hashlib, json, math, struct
 from pathlib import Path
 
 def evidence(path):
@@ -17,6 +17,18 @@ def load(ref):
     p=Path(ref['path']); data=p.read_bytes()
     if hashlib.sha256(data).hexdigest()!=ref['sha256']: raise ValueError(f'evidence hash mismatch: {p}')
     return json.loads(data)
+
+def controller_step_count(raw_b):
+    """Match the Java controller's float32 B-to-count conversion."""
+    f32=lambda value: struct.unpack('<f',struct.pack('<f',float(value)))[0]
+    product=f32(f32(raw_b)*f32(4.44))
+    return (1 if product >= 0 else -1)*math.floor(abs(product)+0.5)
+
+def same_report_b(raw_b, ledger_b):
+    return (isinstance(raw_b,(int,float)) and isinstance(ledger_b,(int,float))
+            and math.isfinite(raw_b) and math.isfinite(ledger_b)
+            and abs(raw_b-ledger_b)<=1e-7
+            and controller_step_count(raw_b)==controller_step_count(ledger_b))
 
 def build(args):
     baseline_ref=evidence(args.baseline_proof); baseline=load(baseline_ref)
@@ -36,7 +48,12 @@ def build(args):
       expected_link=baseline_ref if idx==0 else None
       if idx==0 and req.get('manualHomeLedgerAnchorEvidence')!=expected_link: raise ValueError('first wet report must bind the original manual-home proof')
       ledger_ref=evidence(ledger_path); ledger=load(ledger_ref)
-      if report.get('completedLedgerSha256')!=ledger_ref['sha256'] or ledger.get('lastVerifiedB')!=report.get('after',{}).get('reported',{}).get('B'): raise ValueError(f'pair {idx} ledger hash or final B does not match wet report')
+      reported_b=report.get('after',{}).get('reported',{}).get('B')
+      reported_count=report.get('after',{}).get('counts',{}).get('B')
+      if (report.get('completedLedgerSha256')!=ledger_ref['sha256']
+          or not same_report_b(ledger.get('lastVerifiedB'),reported_b)
+          or reported_count!=controller_step_count(ledger.get('lastVerifiedB'))):
+          raise ValueError(f'pair {idx} ledger hash or final B/count does not match wet report')
       if idx and (req.get('previousLedgerSha256')!=verified[-1]['ledgerEvidence']['sha256'] or not req.get('manualHomeLedgerAnchorEvidence')): raise ValueError(f'pair {idx} does not continue the preceding exact ledger and proof')
       verified.append({'reportEvidence':report_ref,'ledgerEvidence':ledger_ref})
     first_report_ref=verified[0]['reportEvidence']; first_report=load(first_report_ref); first_req=first_report.get('request',{})
@@ -75,8 +92,11 @@ def build(args):
           or tq.get('previousReportEvidence')!=report_ref
           or any(s.get('axis')=='B' for s in tq.get('previewStages',[]))):
           raise ValueError('optional latest terminal must be an exact B-preserving AIR report after the final wet report')
-      if terminal_report.get('after',{}).get('reported',{}).get('B')!=ledger.get('lastVerifiedB'):
-          raise ValueError('latest AIR report changed the verified final B raw position')
+      terminal_b=terminal_report.get('after',{}).get('reported',{}).get('B')
+      terminal_count=terminal_report.get('after',{}).get('counts',{}).get('B')
+      if (not same_report_b(terminal_b,ledger.get('lastVerifiedB'))
+          or terminal_count!=controller_step_count(ledger.get('lastVerifiedB'))):
+          raise ValueError('latest AIR report changed the verified final B raw position/count')
       record['latestTerminalReportEvidence']=terminal_ref
     out=Path(args.output).resolve(); out.parent.mkdir(parents=True,exist_ok=True)
     if out in [Path(x).resolve() for x in [args.baseline_proof,args.first_wet_report,args.ledger_snapshot,args.current_barrier]+[p for pair in pairs[1:] for p in pair]]: raise ValueError('output must not overwrite evidence')
