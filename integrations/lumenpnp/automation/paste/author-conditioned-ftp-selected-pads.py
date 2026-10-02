@@ -4,6 +4,7 @@ import argparse,copy,datetime,hashlib,importlib.util,json,subprocess,sys,time
 from pathlib import Path
 HERE=Path(__file__).resolve().parent
 spec=importlib.util.spec_from_file_location('selected_preparer',HERE/'prepare-conditioned-ftp-selected-pads.py');P=importlib.util.module_from_spec(spec);spec.loader.exec_module(P)
+minspec=importlib.util.spec_from_file_location('minimum_travel_policy',HERE/'minimum_travel_policy.py');MIN=importlib.util.module_from_spec(minspec);minspec.loader.exec_module(MIN)
 SOURCES=('template','barrier','stationaryImage','tipImage','registration','registrationRevalidation','targetBase','profileBase','tipOffset','previousReport','ledger','scrapExperiment','applicationRestartEvidence','manualHomeLedgerAnchorEvidence')
 ATTEST=('boardCleaned','padsAvailable','boardUnmovedSinceRegistration','bothHeadsClearanceReviewed','clearTransitCorridorReviewed','scrapPrimeAndWipeReviewed','tipReviewedNoLongStrand')
 def fail(s):raise ValueError(s)
@@ -12,8 +13,8 @@ def load_hash(e,json_mode=True):
  if hashlib.sha256(data).hexdigest()!=e['sha256']:fail('Source hash changed: '+str(path))
  return json.loads(data) if json_mode else data
 def derive(q,load,now):
- wide=q.get('scope')=='reviewed-selected-pads-up-to-40-authoring-inputs';comparison=q.get('scope')=='reviewed-four-group-retraction-comparison-authoring-inputs'
- if q.get('schema')!=1 or q.get('scope') not in ('reviewed-selected-pads-authoring-inputs','reviewed-selected-pads-up-to-40-authoring-inputs','reviewed-four-group-retraction-comparison-authoring-inputs'):fail('Explicit selected-pad authoring scope required')
+ wide=q.get('scope')=='reviewed-selected-pads-up-to-40-authoring-inputs';comparison=q.get('scope')=='reviewed-four-group-retraction-comparison-authoring-inputs';minimum_travel=q.get('scope')=='reviewed-minimum-travel-eight-pad-authoring-inputs'
+ if q.get('schema')!=1 or q.get('scope') not in ('reviewed-selected-pads-authoring-inputs','reviewed-selected-pads-up-to-40-authoring-inputs','reviewed-four-group-retraction-comparison-authoring-inputs','reviewed-minimum-travel-eight-pad-authoring-inputs'):fail('Explicit selected-pad authoring scope required')
  stamp=q.get('reviewedMs')
  if type(stamp)is not int or not 0<=now-stamp<=300000 or not isinstance(q.get('reviewedBy'),str) or not q['reviewedBy'].strip():fail('Fresh explicit integer reviewer/time required')
  for key in ('reviewBasis','profileBasis'):
@@ -29,8 +30,9 @@ def derive(q,load,now):
  if not isinstance(offset,list) or len(offset)!=2 or not all(P.COMP.finite(v) for v in offset):fail('Bound camera-minus-tip offset required')
  reviews=q.get('selectedPads');
  if not isinstance(reviews,list) or not 1<=len(reviews)<=(32 if comparison else 40 if wide else 8):fail('Select one to forty explicitly reviewed pads' if wide else 'Select one to eight explicitly reviewed pads')
- dose=6 if comparison else q.get('doseDegrees');dwell=q.get('dwellMilliseconds',200);retract=3 if comparison else q.get('retractDegrees',2)
- conditioning=6 if comparison else q.get('conditioningDoseDegrees',20);restore=0 if comparison else q.get('conditioningRestoreDegrees',0);final_wipe=q.get('conditioningFinalWipeMm',0)
+ if minimum_travel and (len(reviews)!=8 or [x.get('padId') for x in reviews]!=[f'R{r}.{side}' for r in range(17,21) for side in (1,2)]):fail('Minimum-travel trial requires ordered R17-R20 complete adjacent pairs')
+ dose=6 if comparison or minimum_travel else q.get('doseDegrees');dwell=2000 if minimum_travel else q.get('dwellMilliseconds',200);retract=3 if comparison or minimum_travel else q.get('retractDegrees',2)
+ conditioning=6 if comparison or minimum_travel else q.get('conditioningDoseDegrees',20);restore=0 if comparison or minimum_travel else q.get('conditioningRestoreDegrees',0);final_wipe=q.get('conditioningFinalWipeMm',0)
  if type(dose)is not int or dose not in (2,3,4,6,12,20):fail('Selected-pad dose must be an allowed integer degree amount')
  if type(dwell)is not int or dwell not in (200,1000,2000):fail('Selected-pad dwell must be 200, 1000 or 2000 ms')
  if type(retract)is not int or retract not in (2,3,4,6):fail('Selected-pad retract must be an allowed integer degree amount')
@@ -40,7 +42,7 @@ def derive(q,load,now):
  if final_wipe and (conditioning!=6 or retract!=3 or attest.get('conditioningFinalWipeReviewed') is not True):fail('Conditioner final wipe requires conditioner6/R3 and explicit review')
  target=copy.deepcopy(docs['targetBase'])
  if 'registrationRevalidation' not in src:target.pop('registrationRevalidationEvidence',None)
- for k in ('pairReferences','inlineConditioning','compensatedSequence','padAvailabilityImage','padAvailabilityReport','cleanupSequence','retractionComparison'):target.pop(k,None)
+ for k in ('pairReferences','inlineConditioning','compensatedSequence','padAvailabilityImage','padAvailabilityReport','cleanupSequence','retractionComparison','minimumTravelPolicy'):target.pop(k,None)
  surface_first=None;surface_ev_first=None;pads=[];seen=set()
  for item in reviews:
   padid=item.get('padId')
@@ -51,7 +53,7 @@ def derive(q,load,now):
   captured=item.get('availabilityCapturedMs')
   try:report_ms=round(datetime.datetime.fromisoformat(report['finishedAt'].replace('Z','+00:00')).timestamp()*1000)
   except (KeyError,ValueError,TypeError):fail('Pad report requires an exact finish time')
-  if type(captured)is not int or captured!=report_ms or captured>stamp or not 0<=now-captured<=(900000 if wide or comparison else 300000):fail('Pad availability report must be fresh and precede review')
+  if type(captured)is not int or captured!=report_ms or captured>stamp or not 0<=now-captured<=(900000 if wide or comparison or minimum_travel else 300000):fail('Pad availability report must be fresh and precede review')
   req=report.get('request') or {}
   if report.get('status') not in ('completed-camera-survey-awaiting-image-review','completed-contiguous-air-batch-awaiting-observation') or report.get('controllerPositionVerified') is not True or report.get('uncertainCompletion') is not False or req.get('jvmStartMs')!=session['jvmStartMs'] or req.get('liveConfigurationSha256')!=session['liveConfigurationSha256']:fail('Pad availability must bind verified same-session camera observation')
   top=(report.get('afterImages') or {}).get('top');report_path=Path(item['availabilityReportEvidence']['path']).resolve(strict=True);image_path=Path(item['availabilityImageEvidence']['path']).resolve(strict=True)
@@ -65,13 +67,21 @@ def derive(q,load,now):
   pad={'padId':padid,'rawPose':pose,'padIdentityReviewed':True,'padAvailableReviewed':True,'availabilityReportEvidence':copy.deepcopy(item['availabilityReportEvidence']),'availabilityImageEvidence':copy.deepcopy(item['availabilityImageEvidence']),'availabilityCapturedMs':captured,'surface':copy.deepcopy(surface),'surfaceEvidence':copy.deepcopy(item['surfaceEvidence'])}
   if comparison:
    idx=len(pads);group=idx//8+1;percent=[15,20,25,30][group-1];pad.update(group=group,retractPercent=percent)
+  if minimum_travel:
+   reference,pair_order=padid.rsplit('.',1);pad.update(componentReference=reference,pairOrder=int(pair_order),retractPercent=30,requestedRetractionDegrees=1.8)
   pads.append(pad)
   if surface_first is None:surface_first=copy.deepcopy(surface);surface_ev_first=copy.deepcopy(item['surfaceEvidence'])
  target.update(schema=1,scope='ftp-selected-pads-targets',reviewedBy=q['reviewedBy'],reviewedMs=stamp,**session)
  target.update(boardCleaned=attest['boardCleaned'],padsAvailable=attest['padsAvailable'],boardUnmovedSinceRegistration=attest['boardUnmovedSinceRegistration'],registrationEvidence=copy.deepcopy(src['registration']),surfaceEvidence=surface_ev_first,surface=surface_first,tipOffsetEvidence=copy.deepcopy(src['tipOffset']),cameraMinusTipXYMm=copy.deepcopy(offset),provenance='commissioning-provisional',precisionCalibrated=False,flowCalibrated=False,quantizationMm=.01,pads=pads)
  if 'registrationRevalidation' in src:target['registrationRevalidationEvidence']=copy.deepcopy(src['registrationRevalidation'])
  target['padAvailabilityImage']=copy.deepcopy(pads[0]['availabilityImageEvidence']);target['padAvailabilityReport']=copy.deepcopy(pads[0]['availabilityReportEvidence'])
- if comparison:
+ if minimum_travel:
+  travel=MIN.plan_minimum_travel_transitions([{'reference':p['componentReference'],'pad':p['padId'].rsplit('.',1)[1],'xy_mm':[p['rawPose']['X'],p['rawPose']['Y']]} for p in pads])
+  if len(travel['transitions'])!=7 or any((i%2==0 and (t['reason']!='same-component-short-move' or t['retractBeforeMove'] or t['restoreAfterMove'] or not t['skipRequiresNoPriorRetract'])) or (i%2==1 and (t['reason']!='component-boundary' or not t['retractBeforeMove'] or not t['restoreAfterMove'])) or not t['preserveClearanceLift'] for i,t in enumerate(travel['transitions'])):fail('Pair transitions must be short same-component moves and component boundaries must retain retract/restore')
+  target['pairReferences']=['R17','R18','R19','R20']
+  target['minimumTravelPolicy']={'schema':1,'protocol':'same-component-pair-no-interim-retract','plan':travel,'orderedPadIds':[p['padId'] for p in pads]}
+  target['compensatedSequence']={'schema':1,'protocol':'restore-dose-pair-carry-retract-lift-minimum-travel-eight-pad','doseDegrees':6,'retractDegrees':3,'retractPercent':30,'requestedRetractionDegrees':1.8,'conditioningRetractDegrees':3,'dwellMilliseconds':2000,'retractDwellMilliseconds':500,'idleReliefDegrees':40}
+ elif comparison:
   rc=copy.deepcopy(q.get('retractionComparison') or {});groups=rc.get('groups')
   if not isinstance(groups,list) or len(groups)!=4:fail('Four explicit comparison lane/group records required')
   percentages=[15,20,25,30]
@@ -109,6 +119,7 @@ def build(inputs,output):
  for k,p in [('template',src['template']['path']),('barrier',src['barrier']['path']),('target-record',tp),('experiment',ep),('profile',pp),('clearance-review',rp),('image',src['stationaryImage']['path']),('previous-report',src['previousReport']['path']),('ledger',src['ledger']['path']),('output',out/'prepared'),('xy-clearance-raw-z',q['xyClearanceRawZ'])]:cmd.extend(['--'+k,str(p)])
  if q.get('scope')=='reviewed-selected-pads-up-to-40-authoring-inputs':cmd.append('--up-to-40')
  if q.get('scope')=='reviewed-four-group-retraction-comparison-authoring-inputs':cmd.append('--retraction-comparison')
+ if q.get('scope')=='reviewed-minimum-travel-eight-pad-authoring-inputs':cmd.append('--minimum-travel-eight-pad')
  if 'applicationRestartEvidence' in src:cmd.extend(['--application-restart-evidence',src['applicationRestartEvidence']['path']])
  if 'manualHomeLedgerAnchorEvidence' in src:cmd.extend(['--manual-home-ledger-anchor-evidence',src['manualHomeLedgerAnchorEvidence']['path']])
  try:result=subprocess.run(cmd,check=True,text=True,capture_output=True)

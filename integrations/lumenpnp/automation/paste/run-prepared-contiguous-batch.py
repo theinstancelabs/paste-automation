@@ -21,6 +21,7 @@ SCOPES = {
     'contiguous-native-ftp-selected-pads-preview',
     'contiguous-native-ftp-selected-pads-up-to-40-preview',
     'contiguous-native-ftp-retraction-comparison-preview',
+    'contiguous-native-ftp-minimum-travel-eight-pad-preview',
     'contiguous-native-ftp-one-pad-cleanup-preview',
 }
 
@@ -71,6 +72,8 @@ def terminal_wait_seconds(scope):
     """Set a report polling window without changing the native stage timeout."""
     if scope in ('contiguous-native-ftp-selected-pads-up-to-40-preview','contiguous-native-ftp-retraction-comparison-preview'):
         return 600
+    if scope == 'contiguous-native-ftp-minimum-travel-eight-pad-preview':
+        return 300
     if scope in ('contiguous-native-scrap-sequence-comparison-preview',
                  'contiguous-native-ftp-conditioned-eight-pad-preview',
                  'contiguous-native-ftp-selected-pads-preview'):

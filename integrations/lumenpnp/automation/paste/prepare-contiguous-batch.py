@@ -2,6 +2,13 @@
 """Prepare disabled contiguous-batch requests offline. Never connects to or dispatches to OpenPnP."""
 import argparse, copy, hashlib, json, math, os, subprocess, sys, time, uuid, datetime
 from pathlib import Path
+
+PREVIEW_SCOPES = (
+ 'contiguous-native-scrap-batch-preview','contiguous-native-scrap-sequence-comparison-preview',
+ 'contiguous-native-ftp-two-pad-preview','contiguous-native-ftp-conditioned-two-pad-preview',
+ 'contiguous-native-ftp-conditioned-eight-pad-preview','contiguous-native-ftp-one-pad-cleanup-preview',
+ 'contiguous-native-ftp-selected-pads-preview','contiguous-native-ftp-selected-pads-up-to-40-preview',
+ 'contiguous-native-ftp-retraction-comparison-preview','contiguous-native-ftp-minimum-travel-eight-pad-preview')
 ROOT=Path('/home/lumen/lumenpnp'); POLICY=ROOT/'automation/paste/commissioning-stroke.cjs'
 def err(s): raise ValueError(s)
 def read(p):
@@ -88,7 +95,7 @@ def prepare(args):
  node_previous(report,ledger,hashlib.sha256(lb).hexdigest(),captured)
  if not ledger.get('entries') or ledger['entries'][-1].get('status')!='verified' or report['id'] not in (ledger['entries'][-1].get('requestId'),ledger['entries'][-1].get('cycleId'),ledger['entries'][-1].get('batchId')): err('Previous report is not current verified ledger tail')
  stages=recipe.get('stages')
- if not isinstance(stages,list) or not 1<=len(stages)<=(64 if recipe.get('targetSurface')=='scrap-sequence-comparison' else 400 if recipe.get('targetSurface') in ('ftp-selected-pads-up-to-40','ftp-selected-pads-retraction-comparison') else 96 if recipe.get('targetSurface') in ('scrap-conditioned-ftp-eight-pad','ftp-selected-pads') else 40): err('Recipe exceeds its reviewed scope stage limit')
+ if not isinstance(stages,list) or not 1<=len(stages)<=(64 if recipe.get('targetSurface')=='scrap-sequence-comparison' else 400 if recipe.get('targetSurface') in ('ftp-selected-pads-up-to-40','ftp-selected-pads-retraction-comparison') else 256 if recipe.get('targetSurface')=='ftp-selected-pads-minimum-travel-eight-pad' else 96 if recipe.get('targetSurface') in ('scrap-conditioned-ftp-eight-pad','ftp-selected-pads') else 40): err('Recipe exceeds its reviewed scope stage limit')
  start=copy.deepcopy(raw); built=[]
  for i,src in enumerate(stages):
   if not isinstance(src,dict) or src.get('axis') not in ('X','Y','Z','B') or not isinstance(src.get('target'),(int,float)): err(f'Invalid recipe stage {i}')
@@ -126,13 +133,13 @@ def prepare(args):
    if not linked: err('A prior-JVM amendment anchor requires exact ledger-prefix continuity evidence')
  if recipe.get('targetSurface')=='scrap-sequence-comparison':
   q.update(scope='contiguous-native-scrap-sequence-comparison-preview',targetSurface='scrap-sequence-comparison',sequenceProtocol=recipe.get('sequenceProtocol'))
- elif recipe.get('targetSurface') in ('cleaned-ftp-demo','scrap-conditioned-ftp-demo','scrap-conditioned-ftp-eight-pad','ftp-one-pad-cleanup','ftp-selected-pads','ftp-selected-pads-up-to-40','ftp-selected-pads-retraction-comparison'):
+ elif recipe.get('targetSurface') in ('cleaned-ftp-demo','scrap-conditioned-ftp-demo','scrap-conditioned-ftp-eight-pad','ftp-one-pad-cleanup','ftp-selected-pads','ftp-selected-pads-up-to-40','ftp-selected-pads-retraction-comparison','ftp-selected-pads-minimum-travel-eight-pad'):
   target_ev=sha_evidence(recipe.get('ftpTargetEvidence'),'ftpTargetEvidence'); target,_,_=read(target_ev['path'])
-  q.update(scope='contiguous-native-ftp-one-pad-cleanup-preview' if recipe['targetSurface']=='ftp-one-pad-cleanup' else 'contiguous-native-ftp-retraction-comparison-preview' if recipe['targetSurface']=='ftp-selected-pads-retraction-comparison' else 'contiguous-native-ftp-selected-pads-up-to-40-preview' if recipe['targetSurface']=='ftp-selected-pads-up-to-40' else 'contiguous-native-ftp-selected-pads-preview' if recipe['targetSurface']=='ftp-selected-pads' else 'contiguous-native-ftp-conditioned-eight-pad-preview' if recipe['targetSurface']=='scrap-conditioned-ftp-eight-pad' else 'contiguous-native-ftp-conditioned-two-pad-preview' if recipe['targetSurface']=='scrap-conditioned-ftp-demo' else 'contiguous-native-ftp-two-pad-preview',ftpTargetEvidence=target_ev,ftpTargetRecord=target)
+  q.update(scope='contiguous-native-ftp-one-pad-cleanup-preview' if recipe['targetSurface']=='ftp-one-pad-cleanup' else 'contiguous-native-ftp-retraction-comparison-preview' if recipe['targetSurface']=='ftp-selected-pads-retraction-comparison' else 'contiguous-native-ftp-minimum-travel-eight-pad-preview' if recipe['targetSurface']=='ftp-selected-pads-minimum-travel-eight-pad' else 'contiguous-native-ftp-selected-pads-up-to-40-preview' if recipe['targetSurface']=='ftp-selected-pads-up-to-40' else 'contiguous-native-ftp-selected-pads-preview' if recipe['targetSurface']=='ftp-selected-pads' else 'contiguous-native-ftp-conditioned-eight-pad-preview' if recipe['targetSurface']=='scrap-conditioned-ftp-eight-pad' else 'contiguous-native-ftp-conditioned-two-pad-preview' if recipe['targetSurface']=='scrap-conditioned-ftp-demo' else 'contiguous-native-ftp-two-pad-preview',ftpTargetEvidence=target_ev,ftpTargetRecord=target)
  elif recipe.get('targetSurface') not in (None,'scrap') or 'ftpTargetEvidence' in recipe: err('Explicit supported target surface required')
  q['evidence']=[q[k] for k in ('barrierEvidence','reviewedImageEvidence','profileEvidence','previousReportEvidence','primeLedgerEvidence','priorLedgerEvidence','carryoverEvidence')]+[{'path':str(lp),'sha256':q['previousLedgerSha256']},clear]+([restart_ev] if restart_ev else [])+([manual_anchor_ev] if manual_anchor_ev else [])
  amendment=q.get('budgetAmendmentEvidence')
- if amendment and amendment.get('newMaximumAbsoluteDegrees') in (3600,8400,11800,12500):
+ if amendment and amendment.get('newMaximumAbsoluteDegrees') in (3600,8400,11800,12500,12750):
   ceiling=amendment['newMaximumAbsoluteDegrees']
   amend_ev=sha_evidence(amendment,f'{ceiling}-degree amendment'); record,_,_=read(amend_ev['path'])
   travel=sha_evidence(record.get('travelReviewEvidence'),'travelReviewEvidence')
@@ -144,7 +151,7 @@ def prepare(args):
 
 def finalize(args):
  q,qp,_=read(args.request); pr,pp,pbytes=read(args.preview)
- if q.get('scope') not in ('contiguous-native-scrap-batch-preview','contiguous-native-scrap-sequence-comparison-preview','contiguous-native-ftp-two-pad-preview','contiguous-native-ftp-conditioned-two-pad-preview','contiguous-native-ftp-conditioned-eight-pad-preview','contiguous-native-ftp-one-pad-cleanup-preview','contiguous-native-ftp-selected-pads-preview','contiguous-native-ftp-selected-pads-up-to-40-preview','contiguous-native-ftp-retraction-comparison-preview') or q.get('enabled') is not False: err('Disabled preview request required')
+ if q.get('scope') not in PREVIEW_SCOPES or q.get('enabled') is not False: err('Disabled preview request required')
  if pr.get('status')!='completed-model-only-contiguous-batch-preview' or pr.get('noControllerAccess') is not True or pr.get('noMotion') is not True or pr.get('id')!=q.get('id') or pr.get('jvmStartMs')!=q.get('jvmStartMs') or pr.get('liveConfigurationSha256')!=q.get('liveConfigurationSha256'): err('Matching no-controller/no-motion native preview required')
  if not same(pr.get('request'),q) or not isinstance(pr.get('stages'),list) or len(pr['stages'])!=len(q.get('previewStages',[])): err('Preview report request/stage count mismatch')
  q=copy.deepcopy(q); stages=[]

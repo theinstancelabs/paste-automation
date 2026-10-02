@@ -18,7 +18,7 @@ class SequenceScopeContractTests(unittest.TestCase):
         self.assertIn("'targetSurface': 'scrap-sequence-comparison'", author)
         self.assertIn("'sequenceProtocol': 'three-12-degree-sacrificial-then-three-6-degree-test-r2'", author)
         self.assertIn("scope='" + PREVIEW + "'", preparer)
-        self.assertIn(PREVIEW, preparer[preparer.index('def finalize'):])
+        self.assertIn(PREVIEW, preparer[preparer.index('PREVIEW_SCOPES ='):preparer.index('\n\n', preparer.index('PREVIEW_SCOPES ='))])
         self.assertIn(PREVIEW, runner)
         self.assertIn(PREVIEW, self.read('automation/paste/test_finalize_contiguous_batch.py'))
 

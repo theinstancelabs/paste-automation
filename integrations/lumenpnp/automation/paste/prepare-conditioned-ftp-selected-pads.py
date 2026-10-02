@@ -8,6 +8,7 @@ GENERIC=ROOT/'automation/paste/prepare-contiguous-batch.py'
 BASE=HERE/'prepare-conditioned-ftp-pair.py'
 spec=importlib.util.spec_from_file_location('selected_pair_base',BASE); M=importlib.util.module_from_spec(spec); spec.loader.exec_module(M)
 COMP,PREP=M.COMP,M.PREP
+MIN_SPEC=importlib.util.spec_from_file_location('minimum_travel_policy',HERE/'minimum_travel_policy.py');MIN=importlib.util.module_from_spec(MIN_SPEC);MIN_SPEC.loader.exec_module(MIN)
 
 def fail(s): raise ValueError(s)
 def ev(path): return M.path_evidence(path)
@@ -82,14 +83,29 @@ def build(args):
     if barrier.get('request',{}).get('jvmStartMs')!=template.get('jvmStartMs') or barrier.get('liveConfigurationSha256')!=template.get('liveConfigurationSha256'): fail('Barrier/template session mismatch')
     if target.get('schema')!=1 or target.get('scope')!='ftp-selected-pads-targets' or target.get('sessionId')!=template.get('sessionId') or target.get('jvmStartMs')!=template.get('jvmStartMs') or target.get('liveConfigurationSha256')!=barrier.get('liveConfigurationSha256') or target.get('quantizationMm')!=.01 or target.get('boardUnmovedSinceRegistration') is not True: fail('Selected target identity/review mismatch')
     pads=target.get('pads');c=target.get('compensatedSequence') or {}
-    wide=getattr(args,'up_to_40',False); comparison=getattr(args,'retraction_comparison',False)
+    wide=getattr(args,'up_to_40',False); comparison=getattr(args,'retraction_comparison',False); minimum_travel=getattr(args,'minimum_travel_eight_pad',False)
     if comparison:
         rc=target.get('retractionComparison') or {}
         if rc.get('schema')!=1 or rc.get('protocol')!='four-group-fractional-retraction-comparison' or rc.get('doseDegrees')!=6 or rc.get('stepsPerDegree')!=4.44 or c.get('protocol')!='restore-dose-retract-lift-retraction-comparison' or c.get('doseDegrees')!=6 or c.get('conditioningRetractDegrees')!=3 or c.get('retractDegrees')!=3: fail('Exact fractional comparison contract required')
-    if not isinstance(pads,list) or not 1<=len(pads)<=(32 if comparison else 40 if wide else 8) or c.get('protocol') not in (('restore-dose-retract-lift-retraction-comparison',) if comparison else ('restore-dose-retract-lift-selected-pads',)): fail('Selected-pad count/protocol mismatch')
+    if minimum_travel:
+        if target.get('pairReferences')!=['R17','R18','R19','R20']: fail('Minimum-travel scope requires exact ordered resistor references')
+        policy=target.get('minimumTravelPolicy') or {}
+        if (policy.get('schema')!=1 or policy.get('protocol')!='same-component-pair-no-interim-retract' or
+                c.get('protocol')!='restore-dose-pair-carry-retract-lift-minimum-travel-eight-pad' or
+                c.get('doseDegrees')!=6 or c.get('retractPercent')!=30 or c.get('requestedRetractionDegrees')!=1.8 or
+                c.get('retractDegrees')!=3 or c.get('conditioningRetractDegrees')!=3 or c.get('dwellMilliseconds')!=2000 or
+                c.get('retractDwellMilliseconds')!=500 or c.get('idleReliefDegrees')!=40): fail('Exact minimum-travel eight-pad recipe required')
+    if not isinstance(pads,list) or not 1<=len(pads)<=(32 if comparison else 40 if wide else 8) or c.get('protocol') not in (('restore-dose-retract-lift-retraction-comparison',) if comparison else ('restore-dose-pair-carry-retract-lift-minimum-travel-eight-pad',) if minimum_travel else ('restore-dose-retract-lift-selected-pads',)): fail('Selected-pad count/protocol mismatch')
     ids=[p.get('padId') for p in pads]
     if len(set(ids))!=len(ids) or any(not isinstance(i,str) or not __import__('re').fullmatch(r'R(?:[1-9]|[1-3][0-9]|40)\.[12]',i) for i in ids): fail('Selected pads must be unique registered pad identities')
     if comparison and (len(pads)!=32 or [p['padId'] for p in pads]!=[f'R{r}.{side}' for r in range(1,17) for side in (1,2)]): fail('Comparison requires ordered R1-R16 pad pairs')
+    if minimum_travel and (len(pads)!=8 or [p['padId'] for p in pads]!=[f'R{r}.{side}' for r in range(17,21) for side in (1,2)]): fail('Minimum-travel scope requires exactly the ordered R17-R20 adjacent pad pairs')
+    if minimum_travel:
+        for p in pads:
+            reference,side=p['padId'].rsplit('.',1)
+            if p.get('componentReference')!=reference or p.get('pairOrder')!=int(side) or p.get('retractPercent')!=30 or p.get('requestedRetractionDegrees')!=1.8: fail('Every minimum-travel pad must bind its exact component, pair order and fixed 30-percent request')
+        travel=MIN.plan_minimum_travel_transitions([{'reference':p['padId'].rsplit('.',1)[0],'pad':p['padId'].rsplit('.',1)[1],'xy_mm':[p['rawPose']['X'],p['rawPose']['Y']]} for p in pads])
+        if travel!=target['minimumTravelPolicy'].get('plan') or target['minimumTravelPolicy'].get('orderedPadIds')!=ids or len(travel['transitions'])!=7 or any((i%2==0 and (t['reason']!='same-component-short-move' or t['retractBeforeMove'] or t['restoreAfterMove'] or not t['skipRequiresNoPriorRetract'])) or (i%2==1 and (t['reason']!='component-boundary' or not t['retractBeforeMove'] or not t['restoreAfterMove'])) or not t['preserveClearanceLift'] for i,t in enumerate(travel['transitions'])): fail('Reviewed minimum-travel plan differs from current pad coordinates or pair boundaries')
     if comparison:
         groups=target['retractionComparison'].get('groups')
         if not isinstance(groups,list) or len(groups)!=4: fail('Four comparison groups required')
@@ -110,13 +126,14 @@ def build(args):
     ee,re=ev(ep),ev(rp)
     if PREP.WIPE.checked_evidence(review.get('experimentEvidence'),'review experiment')!=ee or experiment.get('mode')!='transfer-preparation' or experiment.get('startRaw')!=raw: fail('Preparation experiment/review must bind exact barrier')
     if comparison and (experiment.get('primeDegrees')!=60 or experiment.get('conditioningDoseDegrees')!=6 or experiment.get('conditioningRestoreDegrees',0)!=0 or experiment.get('retractDegrees')!=3 or experiment.get('retractDwellMilliseconds')!=500): fail('Each comparison lane requires the identical 60-degree prime and conditioner6/R3/500')
+    if minimum_travel and (experiment.get('primeDegrees')!=60 or experiment.get('conditioningDoseDegrees')!=6 or experiment.get('conditioningRestoreDegrees',0)!=0 or experiment.get('retractDegrees')!=3 or experiment.get('retractDwellMilliseconds')!=500): fail('Minimum-travel route requires identical prime60/conditioner6/R3/500')
     if experiment.get('retractDegrees')!=c.get('retractDegrees') or experiment.get('conditioningDoseDegrees') not in (6,12,20) or experiment.get('conditioningRestoreDegrees',0) not in (0,3): fail('Conditioning amounts must match selected protocol')
     if experiment.get('conditioningDoseDegrees')==12 and (experiment.get('conditioningDwellMilliseconds',experiment.get('dwellMilliseconds',2000))!=2000 or experiment.get('retractDegrees')!=3 or experiment.get('retractDwellMilliseconds')!=500): fail('Conditioner12 requires 2000 ms and R3/500')
     if target.get('pads') and target['pads'][0].get('surface')!=target.get('surface'): fail('Top-level surface must mirror first selected pad surface')
     availability=[]
     for p in pads:
         if p.get('padIdentityReviewed') is not True or p.get('padAvailableReviewed') is not True: fail('Each selected pad needs explicit fresh review')
-        read_availability(p,template,target['boardId'],target['reviewedMs'],now,snaps,900000 if wide or comparison else 300000)
+        read_availability(p,template,target['boardId'],target['reviewedMs'],now,snaps,900000 if wide or comparison or minimum_travel else 300000)
     gap=PREP.number(profile.get('estimatedGapMm'),'conditioning profile gap');unc=PREP.number(profile.get('gapUncertaintyMm'),'conditioning uncertainty')
     prefix,_,prep_accounting=PREP.stages_for(experiment,re,gap,unc)
     group_prefixes=[prefix]
@@ -164,17 +181,37 @@ def build(args):
             retract_amount,retract_steps=fractional_target(after_dose,p['requestedRetractionDegrees'],desired_steps,'positive');retract_degrees=retract_amount
             p['restoreRawDelta']=-restore_amount;p['actualRetractRawDelta']=retract_amount;p['actualRetractControllerSteps']=retract_steps;p['actualQuantizedRetractionDegrees']=round(retract_steps/4.44,6)
             p['restoreStageIndex']=bstep(-restore_amount,0)
+        elif minimum_travel:
+            p['componentReference']=ids[pi].rsplit('.',1)[0];p['pairOrder']=int(ids[pi].rsplit('.',1)[1]);p['retractPercent']=30;p['requestedRetractionDegrees']=1.8
+            if p['pairOrder']==1:
+                if pi==0: restore_target=at['B']-3.0;p['restoreSourceStageIndex']=retract_i
+                else:
+                    previous=pads[pi-1];restore_target=previous['retractRestoreTargetB'];p['restoreSourceStageIndex']=previous['retractStageIndex']
+                expected_restore_steps=-round(3*4.44) if pi==0 else -previous['actualRetractControllerSteps']
+                if controller_steps(restore_target)-controller_steps(at['B'])!=expected_restore_steps: fail('Pair-start restore must reverse the exact conditioner or preceding fractional retract count')
+                p['restoreStageIndex']=len(stages);p['restoreTargetB']=restore_target;at=append(stages,at,'B',restore_target,gapEvidence=p['surfaceEvidence'],estimatedGapMm=surf['estimatedGapMm'],gapUncertaintyMm=surf['gapUncertaintyMm'],dwellMilliseconds=0)
+            else:
+                p['restoreStageIndex']=None;p['restoreSourceStageIndex']=None;p['restoreTargetB']=None
         else:p['restoreStageIndex']=bstep(-retract_degrees,0)
         if c['doseDegrees']==12:
             p['doseStageIndices']=[bstep(-6,0),bstep(-6,c['dwellMilliseconds'])]
         else: p['doseStageIndices']=[bstep(-c['doseDegrees'],c['dwellMilliseconds'])]
-        p['retractStageIndex']=bstep(retract_degrees,c['retractDwellMilliseconds'])
+        if minimum_travel and p['pairOrder']==1:
+            p['retractStageIndex']=None;p['actualRetractRawDelta']=None;p['actualRetractControllerSteps']=None;p['retractRestoreTargetB']=None
+        elif minimum_travel:
+            before_retract=at['B'];desired_steps=round(1.8*4.44);amount,steps=fractional_target(before_retract,1.8,desired_steps,'positive')
+            p['retractRestoreTargetB']=before_retract;p['actualRetractRawDelta']=amount;p['actualRetractControllerSteps']=steps;p['actualQuantizedRetractionDegrees']=round(steps/4.44,6)
+            p['retractStageIndex']=bstep(amount,c['retractDwellMilliseconds'])
+        else:p['retractStageIndex']=bstep(retract_degrees,c['retractDwellMilliseconds'])
         p['liftStageIndex']=len(stages);at=append(stages,at,'Z',clear)
         if comparison and pi%8==7:
             gi=pi//8;g=target['retractionComparison']['groups'][gi];g['groupIdleReliefStageIndices']=[bstep(20,0),bstep(20,2000)];g['groupEndStageIndex']=g['groupIdleReliefStageIndices'][-1]
     idle=c['idleReliefDegrees']
     if comparison:
         if idle!=40:fail('Each comparison group requires identical 40-degree finishing relief')
+    elif minimum_travel:
+        if idle!=40:fail('Minimum-travel route requires final 40-degree relief')
+        c['finalIdleStageIndices']=[bstep(20,0),bstep(20,2000)]
     elif idle==20:
         c['finalIdleStageIndex']=bstep(20,2000)
     elif idle==40:
@@ -184,7 +221,7 @@ def build(args):
     c.pop('finalIdleStageIndex',None) if idle==40 else None
     if len(stages)>(400 if wide or comparison else 96): fail('Selected-pad route exceeds its native stage cap')
     target['pads']=pads
-    target['inlineConditioning']={'schema':1,'protocol':'scrap-condition-transit-retraction-comparison' if comparison else 'scrap-condition-transit-selected-pads','experiment':copy.deepcopy(experiment),'experimentEvidence':ee,'maximumTransferMilliseconds':15000,'prefixStageCount':len(prefix),'retractionStageIndex':retract_i,'liftStageIndex':len(prefix)-1,'comparisonGroupPrefixes':[{'group':i+1,'prefixStageCount':len(x)} for i,x in enumerate(group_prefixes)] if comparison else None}
+    target['inlineConditioning']={'schema':1,'protocol':'scrap-condition-transit-retraction-comparison' if comparison else 'scrap-condition-transit-minimum-travel-eight-pad' if minimum_travel else 'scrap-condition-transit-selected-pads','experiment':copy.deepcopy(experiment),'experimentEvidence':ee,'maximumTransferMilliseconds':15000,'prefixStageCount':len(prefix),'retractionStageIndex':retract_i,'liftStageIndex':len(prefix)-1,'comparisonGroupPrefixes':[{'group':i+1,'prefixStageCount':len(x)} for i,x in enumerate(group_prefixes)] if comparison else None}
     route=[copy.deepcopy(raw)];cur=copy.deepcopy(raw)
     for s in stages:cur=copy.deepcopy(cur);cur[s['axis']]=s['target'];route.append(cur)
     bounds={a:{'min':min(x[a] for x in route),'max':max(x[a] for x in route)} for a in 'XYZB'};heads={}
@@ -196,7 +233,8 @@ def build(args):
     out=Path(args.output).resolve();out.mkdir(parents=True,exist_ok=False);tpout=out/'targets.json';tpout.write_text(json.dumps(target,indent=2,allow_nan=False)+'\n')
     gross=sum(abs(b['B']-a['B']) for a,b in zip(route,route[1:]));
     if comparison and gross>813: fail('Fractional comparison exceeds the currently reviewed 813-degree remaining budget')
-    recipe={'mode':'wet','stages':stages,'rawBounds':bounds,'headClearanceBounds':heads,'xyClearanceRawZ':clear,'clearanceReviewEvidence':re,'profileEvidence':ev(pp),'previousReportEvidence':ev(prevp),'previousLedgerPath':str(lp),'targetSurface':'ftp-selected-pads-retraction-comparison' if comparison else 'ftp-selected-pads-up-to-40' if wide else 'ftp-selected-pads','ftpTargetEvidence':ev(tpout),'sourceTargetEvidence':ev(tp0),'bAccounting':{'initialB':raw['B'],'finalB':route[-1]['B'],'grossChargedDegrees':gross,'netDegrees':route[-1]['B']-raw['B'],'conditioningGrossDegrees':prep_accounting['grossCommandedDegrees'],'selectedPadCount':len(pads)}}
+    if minimum_travel and (len(stages)>150 or gross>220): fail('Minimum-travel eight-pad route exceeds its 150-stage or 220-degree bound')
+    recipe={'mode':'wet','stages':stages,'rawBounds':bounds,'headClearanceBounds':heads,'xyClearanceRawZ':clear,'clearanceReviewEvidence':re,'profileEvidence':ev(pp),'previousReportEvidence':ev(prevp),'previousLedgerPath':str(lp),'targetSurface':'ftp-selected-pads-retraction-comparison' if comparison else 'ftp-selected-pads-minimum-travel-eight-pad' if minimum_travel else 'ftp-selected-pads-up-to-40' if wide else 'ftp-selected-pads','ftpTargetEvidence':ev(tpout),'sourceTargetEvidence':ev(tp0),'bAccounting':{'initialB':raw['B'],'finalB':route[-1]['B'],'grossChargedDegrees':gross,'netDegrees':route[-1]['B']-raw['B'],'conditioningGrossDegrees':prep_accounting['grossCommandedDegrees'],'selectedPadCount':len(pads)}}
     rpout=out/'recipe.json';rpout.write_text(json.dumps(recipe,indent=2,allow_nan=False)+'\n');nativeout=out/'native';cmd=[sys.executable,str(GENERIC),'prepare','--template',str(tp),'--barrier',str(bp),'--image',str(image),'--recipe',str(rpout),'--output',str(nativeout)]
     if getattr(args,'application_restart_evidence',None):cmd.extend(['--application-restart-evidence',str(Path(args.application_restart_evidence).resolve(strict=True))])
     if getattr(args,'manual_home_ledger_anchor_evidence',None):cmd.extend(['--manual-home-ledger-anchor-evidence',str(Path(args.manual_home_ledger_anchor_evidence).resolve(strict=True))])
@@ -212,6 +250,7 @@ def main():
  for name in ('template','barrier','target-record','experiment','profile','clearance-review','image','previous-report','ledger','output'):p.add_argument('--'+name,required=True)
  p.add_argument('--retraction-comparison',action='store_true',help='Use the exact four-group fractional comparison native scope')
  p.add_argument('--up-to-40',action='store_true',help='Use distinct reviewed 1-40-pad scope and 400-stage ceiling')
+ p.add_argument('--minimum-travel-eight-pad',action='store_true',help='Use the dedicated 8-pad R17-R20 pair-carry scope')
  p.add_argument('--application-restart-evidence',help='explicit continuity proof when resuming across an application restart')
  p.add_argument('--manual-home-ledger-anchor-evidence',help='narrow reviewed manual-home ledger continuity evidence')
  p.add_argument('--xy-clearance-raw-z',type=float,required=True);a=p.parse_args()
