@@ -29,7 +29,7 @@ def file_hash(path):
     path=Path(path).resolve(strict=True)
     return {'path':str(path),'sha256':sha(path)}
 def build(source_path=SOURCE,registration_path=REG,job_path=JOB,references=None,
-          operator='Root',review='',camera_target=None,now_ms=None):
+          operator='Root',review='',camera_target=None,target_mode='midpoint',now_ms=None):
     now_ms=time.time_ns()//1_000_000 if now_ms is None else now_ms
     source_path=Path(source_path).resolve(strict=True);registration_path=Path(registration_path).resolve(strict=True);job_path=Path(job_path).resolve(strict=True)
     source=json.loads(source_path.read_text());request=source.get('request',{});snap=source.get('afterQuerySnapshot',{})
@@ -52,16 +52,17 @@ def build(source_path=SOURCE,registration_path=REG,job_path=JOB,references=None,
     if reg.get('board',{}).get('sha256')!=sha(ROOT/'pnp/pcb/ftp/ftp.kicad_pcb'):fail('Registered board hash no longer matches canonical CAD')
     targets={p.get('padId'):p.get('machineXYMm') for p in reg.get('resistorPadMachineXYTargets',[]) if isinstance(p,dict)}
     target_list=[]
+    if target_mode not in ('midpoint','pad1'):fail('Target mode must be midpoint or pad1')
     if camera_target is not None:
         if camera_target!=(310.0,232.27) or not review.strip():fail('Only the explicitly reviewed scrap camera point [310,232.27] is permitted')
-        mode='reviewed-scrap-camera';refs=[];target_list=[{'reference':'scrap','x':310.0,'y':232.27,'pads':[]}]
+        mode='reviewed-scrap-camera';target_mode='fixed-scrap-camera';refs=[];target_list=[{'reference':'scrap','x':310.0,'y':232.27,'pads':[]}]
     else:
         mode='registered-references';refs=references or []
         if not 1<=len(refs)<=8 or len(set(refs))!=len(refs) or any(not isinstance(r,str) or not __import__('re').fullmatch(r'R(?:[1-9]|[1-3][0-9]|40)',r) for r in refs):fail('Choose 1–8 unique R1–R40 references')
         for ref in refs:
             p1,p2=targets.get(ref+'.1'),targets.get(ref+'.2')
             if not isinstance(p1,list) or not isinstance(p2,list) or len(p1)!=2 or len(p2)!=2:fail(f'Registration missing both centers for {ref}')
-            xy=[(float(p1[0])+float(p2[0]))/2,(float(p1[1])+float(p2[1]))/2]
+            xy=[float(p1[0]),float(p1[1])] if target_mode=='pad1' else [(float(p1[0])+float(p2[0]))/2,(float(p1[1])+float(p2[1]))/2]
             target_list.append({'reference':ref,'x':xy[0],'y':xy[1], 'pads':[{'padId':ref+'.1','x':float(p1[0]),'y':float(p1[1])},{'padId':ref+'.2','x':float(p2[0]),'y':float(p2[1])}]})
     cursor=(raw['X'],raw['Y']);total=0.;steps=[]
     for target in target_list:
@@ -76,7 +77,7 @@ def build(source_path=SOURCE,registration_path=REG,job_path=JOB,references=None,
             d=math.sqrt((x-prior[0])**2+(y-prior[1])**2)
             if d < .0001:continue
             if d>MAX_SEGMENT+1e-9:fail('Report-grid quantization exceeds segment travel ceiling')
-            step={'index':len(steps),'x':x,'y':y,'z':raw['Z'],'a':raw['A'],'b':raw['B'],'captureReferences':[target['reference']] if i==count and mode=='registered-references' else []}
+            step={'index':len(steps),'x':x,'y':y,'z':raw['Z'],'a':raw['A'],'b':raw['B'],'captureReferences':[target['reference']] if i==count else []}
             steps.append(step);total+=d
         cursor=end
     if total>MAX_TOTAL or len(steps)>MAX_STEPS:fail('Registered route exceeds 120 mm / 32 bounded segments')
@@ -88,7 +89,7 @@ def build(source_path=SOURCE,registration_path=REG,job_path=JOB,references=None,
     if not job_placements or any(p.get('enabled')!='false' for p in job_placements):fail('Inspection board must keep every placement disabled')
     if not all(r.get('rotation')==0 for r in [top]):fail('Top camera must have the reviewed zero rotation')
     plan={'schema':1,'scope':'camera-only-registered-fast-inspection','enabled':True,'id':str(uuid.uuid4()),'createdMs':now_ms,'jvmStartMs':jvm,
-      'liveConfigurationSha256':config,'mode':mode,'operatorReviewed':True,'reviewedBy':operator,'review':review or 'Registered-reference camera-only inspection; all component placements remain disabled.',
+      'liveConfigurationSha256':config,'mode':mode,'targetMode':target_mode,'operatorReviewed':True,'reviewedBy':operator,'review':review or 'Registered-reference camera-only inspection; all component placements remain disabled.',
       'speedFraction':1.0,'speedOverPrecision':True,'maxSegmentMm':MAX_SEGMENT,'maxTotalTravelMm':MAX_TOTAL,'plannedDistanceMm':round(total,6),
       'sourceReport':{**file_hash(source_path),'id':source['id'],'finishedAt':source.get('finishedAt'),'status':source['status']},
       'registration':{**file_hash(registration_path),'scope':reg['scope'],'targets':[{'padId':k,'machineXYMm':v} for k,v in sorted(targets.items()) if any(k.startswith(r+'.') for r in refs)]},
@@ -98,9 +99,9 @@ def build(source_path=SOURCE,registration_path=REG,job_path=JOB,references=None,
     return plan
 
 def main():
- p=argparse.ArgumentParser(description=__doc__);p.add_argument('--source-report',type=Path,default=SOURCE);p.add_argument('--registration',type=Path,default=REG);p.add_argument('--inspection-job',type=Path,default=JOB);p.add_argument('--references',help='Comma-separated registered references, for example R33,R34');p.add_argument('--camera-target',help='Only exact reviewed scratch coordinate 310,232.27');p.add_argument('--operator',default='Root');p.add_argument('--review',default='');p.add_argument('--output',type=Path,required=True);a=p.parse_args()
+ p=argparse.ArgumentParser(description=__doc__);p.add_argument('--source-report',type=Path,default=SOURCE);p.add_argument('--registration',type=Path,default=REG);p.add_argument('--inspection-job',type=Path,default=JOB);p.add_argument('--references',help='Comma-separated registered references, for example R33,R34');p.add_argument('--camera-target',help='Only exact reviewed scratch coordinate 310,232.27');p.add_argument('--target-mode',choices=('midpoint','pad1'),default='midpoint',help='Registered reference target: midpoint (default) or pad1 center');p.add_argument('--operator',default='Root');p.add_argument('--review',default='');p.add_argument('--output',type=Path,required=True);a=p.parse_args()
  refs=[x.strip() for x in a.references.split(',') if x.strip()] if a.references else None
  target=tuple(map(float,a.camera_target.split(','))) if a.camera_target else None
- result=build(a.source_report,a.registration,a.inspection_job,refs,a.operator,a.review,target)
+ result=build(a.source_report,a.registration,a.inspection_job,refs,a.operator,a.review,target,a.target_mode)
  a.output.parent.mkdir(parents=True,exist_ok=True);a.output.write_text(json.dumps(result,indent=2)+'\n');print(json.dumps({'output':str(a.output),'id':result['id'],'mode':result['mode'],'references':result['references'],'waypoints':len(result['routeSteps']),'distanceMm':result['plannedDistanceMm']},indent=2))
 if __name__=='__main__':main()

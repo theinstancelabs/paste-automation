@@ -14,6 +14,6 @@
  var placements=doc.getElementsByTagName('placement');if(placements.getLength()===0)throw Error('Inspection board has no placements');
  for(var i=0;i<placements.getLength();i++)if(String(placements.item(i).getAttributes().getNamedItem('enabled').getNodeValue())!=='false')throw Error('Inspection placement enabled; refusing load');
  var job=cfg.loadJob(jf),Swing=Java.type('javax.swing.SwingUtilities');
- Swing.invokeAndWait(new java.lang.Runnable({run:function(){panel.setJob(job);panel.selectPlacementsHolderLocation(job.getBoardLocations().get(0));panel.refresh();}}));
+ var update=new java.lang.Runnable({run:function(){panel.setJob(job);panel.selectPlacementsHolderLocation(job.getBoardLocations().get(0));panel.refresh();}});if(Swing.isEventDispatchThread())update.run();else Swing.invokeAndWait(update);
  print('Loaded hash-bound disabled inspection job; no config save or motion.');
 })();
