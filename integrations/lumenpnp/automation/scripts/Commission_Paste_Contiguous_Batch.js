@@ -35,13 +35,17 @@ var PASTE_CONTIGUOUS_BATCH_ENABLED = true;
  eval(read(root+'automation/paste/native-air.cjs'));
  eval(read(root+'automation/paste/connection-policy.cjs'));
  function freeze(value){if(value&&typeof value==='object'){Object.keys(value).forEach(function(k){freeze(value[k]);});Object.freeze(value);}return value;}
+ // Per-dispatch cache only: bytes are re-read and re-hashed at every call site;
+ // cached objects are deeply frozen and keyed by canonical path plus digest.
+ var frozenEvidenceJson=Object.create(null);
+ function parseFrozenEvidence(data,e){var key=String(new F(e.path).getCanonicalPath())+'#'+e.sha256;if(Object.prototype.hasOwnProperty.call(frozenEvidenceJson,key))return frozenEvidenceJson[key];var parsed=freeze(JSON.parse(String(new java.lang.String(data,UTF))));frozenEvidenceJson[key]=parsed;return parsed;}
  var q=JSON.parse(read(root+'automation/plans/paste-contiguous-batch-request.json')),jvm=Number(Java.type('java.lang.management.ManagementFactory').getRuntimeMXBean().getStartTime());
  freeze(q);CommissioningStroke.validateBatch(q,Number(java.lang.System.currentTimeMillis()),jvm);
- var barrierFile=new F(q.barrierEvidence.path);if(!barrierFile.isFile())throw Error('Position barrier evidence missing');var barrierBytes=Fs.readAllBytes(barrierFile.toPath());if(hash(barrierBytes)!==q.barrierEvidence.sha256)throw Error('Position barrier evidence changed');var barrierRecord=JSON.parse(String(new java.lang.String(barrierBytes,UTF)));freeze(barrierRecord);PasteWastePrime.barrier(barrierRecord,q,Number(java.lang.System.currentTimeMillis()));
- function boundJson(e){var data=Fs.readAllBytes(new F(e.path).toPath());if(hash(data)!==e.sha256)throw Error('Bound evidence changed');return freeze(JSON.parse(String(new java.lang.String(data,UTF))));}
- function manualHomeRead(e,json){var data=Fs.readAllBytes(new F(e.path).toPath());if(hash(data)!==e.sha256)throw Error('Manual-home evidence changed');return json?freeze(JSON.parse(String(new java.lang.String(data,UTF)))):String(new java.lang.String(data,UTF));}
+ var barrierFile=new F(q.barrierEvidence.path);if(!barrierFile.isFile())throw Error('Position barrier evidence missing');var barrierBytes=Fs.readAllBytes(barrierFile.toPath());if(hash(barrierBytes)!==q.barrierEvidence.sha256)throw Error('Position barrier evidence changed');var barrierRecord=parseFrozenEvidence(barrierBytes,q.barrierEvidence);PasteWastePrime.barrier(barrierRecord,q,Number(java.lang.System.currentTimeMillis()));
+ function boundJson(e){var data=Fs.readAllBytes(new F(e.path).toPath());if(hash(data)!==e.sha256)throw Error('Bound evidence changed');return parseFrozenEvidence(data,e);}
+ function manualHomeRead(e,json){var data=Fs.readAllBytes(new F(e.path).toPath());if(hash(data)!==e.sha256)throw Error('Manual-home evidence changed');return json?parseFrozenEvidence(data,e):String(new java.lang.String(data,UTF));}
  var manualHomeLedgerContinuity=null;if(q.manualHomeLedgerAnchorEvidence)manualHomeLedgerContinuity=PasteManualHomeLedgerAnchor.validate(boundJson(q.manualHomeLedgerAnchorEvidence),q,manualHomeRead,Number(java.lang.System.currentTimeMillis()));
- function ftpEvidence(e,json){var b=Fs.readAllBytes(new F(e.path).toPath());if(hash(b)!==e.sha256)throw Error('FTP source changed');return json?freeze(JSON.parse(String(new java.lang.String(b,UTF)))):null;}
+ function ftpEvidence(e,json){var b=Fs.readAllBytes(new F(e.path).toPath());if(hash(b)!==e.sha256)throw Error('FTP source changed');return json?parseFrozenEvidence(b,e):null;}
  var applicationRestartContext=null;if(q.applicationRestartEvidence){var restartRecord=boundJson(q.applicationRestartEvidence);applicationRestartContext=PasteApplicationRestartContinuity.validate(restartRecord,q,ftpEvidence,Number(java.lang.System.currentTimeMillis()));}
  function verifyFtpSources(){if(PasteFtpTwoPad.isFtp(q))PasteFtpTwoPad.verifySources(q,ftpEvidence);}
  verifyFtpSources();

@@ -1650,8 +1650,8 @@
       "sourceRoot": "/home/lumen/lumenpnp",
       "sourcePath": "automation/scripts/Commission_Paste_Contiguous_Batch.js",
       "destination": "integrations/lumenpnp/automation/scripts/Commission_Paste_Contiguous_Batch.js",
-      "sha256": "56b030b10edc20ff15e4b56df8f89cd8e9bcb94bd89bdeeda2b817db89a8282f",
-      "bytes": 41171
+      "sha256": "f49b634c1b52a3f2a16a3cbbe923bee28fde0d621af2163b443d448213c18fab",
+      "bytes": 41565
     },
     {
       "sourceRoot": "/home/lumen/lumenpnp",
@@ -2290,6 +2290,20 @@
       "destination": "integrations/lumenpnp/automation/paste/fast-camera-inspection.test.cjs",
       "sha256": "f67d4f92c4eff88db7df2cff059ada8ed781838acc013f71d9508573cc1936fd",
       "bytes": 2373
+    },
+    {
+      "sourceRoot": "/home/lumen/lumenpnp",
+      "sourcePath": "automation/tests/java/EvaluatePreflightEvidenceCache.java",
+      "destination": "integrations/lumenpnp/automation/tests/java/EvaluatePreflightEvidenceCache.java",
+      "sha256": "63f5a390c079dfcea51009155ade838937971f296896ffaeb4624da105673088",
+      "bytes": 3304
+    },
+    {
+      "sourceRoot": "/home/lumen/lumenpnp",
+      "sourcePath": "automation/tests/test_preflight_evidence_cache_nashorn.py",
+      "destination": "integrations/lumenpnp/automation/tests/test_preflight_evidence_cache_nashorn.py",
+      "sha256": "70dc2dcf4f42714c057088f57c9f0a9f0ca30eafd5ea8a89f84bc50ed3f7ecb5",
+      "bytes": 1157
     }
   ],
   "manifestSelfHash": "Excluded to avoid a recursive digest; this manifest enumerates every other exported/generated file.",
