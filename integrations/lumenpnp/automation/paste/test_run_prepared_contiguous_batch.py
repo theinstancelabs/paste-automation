@@ -31,7 +31,7 @@ class RunnerTests(unittest.TestCase):
             return SimpleNamespace(stdout=str(p))
         return SimpleNamespace()
 
-    def terminal(self, path, ident, preview, seconds):
+    def terminal(self, path, ident, preview, seconds, **kwargs):
         self.assertEqual(seconds, 300)
         return dict(status='completed-model-only-contiguous-batch-preview' if preview else 'completed-contiguous-batch-awaiting-observation')
 
@@ -46,7 +46,7 @@ class RunnerTests(unittest.TestCase):
         def fsync(fd):
             synced.append(stat.S_ISDIR(M.os.fstat(fd).st_mode));real(fd)
         def invoke(cmd,**kwargs):
-            self.assertEqual(synced,[False,True]);return self.invoke(cmd,**kwargs)
+            self.assertEqual(synced,[False,True,False,True]);return self.invoke(cmd,**kwargs)
         with patch.object(M.os,'fsync',side_effect=fsync):
             M.run(self.prepared,True,self.root,invoke,self.terminal)
         self.assertEqual(len(self.calls),1)
@@ -68,7 +68,7 @@ class RunnerTests(unittest.TestCase):
         self.assertEqual(M.wait_report(report,self.q['id'],False,1)['request']['mode'],'air')
 
     def test_timeout_or_bridge_failure_cannot_redispatch(self):
-        def timeout(*args): raise TimeoutError('uncertain')
+        def timeout(*args, **kwargs): raise TimeoutError('uncertain')
         with self.assertRaises(TimeoutError): M.run(self.prepared, True, self.root, self.invoke, timeout)
         M.run(self.prepared, True, self.root, self.invoke, self.terminal)
         self.assertEqual(len(self.calls), 1)
@@ -113,9 +113,43 @@ class RunnerTests(unittest.TestCase):
         report.unlink()
         with self.assertRaises(TimeoutError):M.wait_report(report,self.q['id'],False,0,now,sleep)
 
+    def test_fresh_bridge_error_fails_fast_and_is_bound_to_dispatch_time(self):
+        report=self.root/'report.json'; bridge=self.root/'bridge-error.txt'; clock=[0]
+        def now():return clock[0]
+        def sleep(_):
+            clock[0]+=1
+            bridge.write_text('native preview exception')
+            import os
+            os.utime(bridge,ns=(1234,1234))
+        with self.assertRaisesRegex(RuntimeError,'bridge error'):
+            M.wait_report(report,self.q['id'],True,60,now,sleep,bridge_error=bridge,dispatch_started_ns=1234)
+        bridge.unlink();clock[0]=0
+        with self.assertRaises(TimeoutError):
+            M.wait_report(report,self.q['id'],True,1,now,lambda _:clock.__setitem__(0,1),bridge_error=bridge,dispatch_started_ns=1234)
+
+    def test_run_records_fresh_bridge_error_and_keeps_one_shot_receipt(self):
+        bridge=self.root/'automation/plans/bridge-error.txt'
+        def dispatch(cmd,**kwargs):
+            self.calls.append(cmd)
+            if 'run_reviewed_action.py' in cmd[1]:
+                bridge.parent.mkdir(parents=True,exist_ok=True)
+                bridge.write_text('native preview exception for current request')
+                import os,time
+                future=time.time_ns()+1_000_000
+                os.utime(bridge,ns=(future,future))
+            return SimpleNamespace(stdout='')
+        with self.assertRaisesRegex(RuntimeError,'bridge error'):
+            M.run(self.prepared,True,self.root,dispatch)
+        failure=json.loads((self.prepared/'runner-preview-error.json').read_text())
+        self.assertEqual(failure['id'],self.q['id'])
+        self.assertIn('native preview exception',failure['bridgeError']['text'])
+        with self.assertRaisesRegex(RuntimeError,'bridge error'):
+            M.run(self.prepared,True,self.root,dispatch)
+        self.assertEqual(len(self.calls),1)
+
     def test_non_group_timeout_is_sixty_and_missing_selection_is_not_implicit(self):
         self.q['scope']='contiguous-native-ftp-conditioned-two-pad-preview';self.save()
-        def wait(report,ident,preview,seconds):self.assertEqual(seconds,60);return {'status':'complete'}
+        def wait(report,ident,preview,seconds,**kwargs):self.assertEqual(seconds,60);return {'status':'complete'}
         M.run(self.prepared,True,self.root,self.invoke,wait)
 
     def test_selected_pad_scope_is_allowed_and_observed_for_three_hundred_seconds(self):

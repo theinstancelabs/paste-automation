@@ -29,10 +29,24 @@ def read(path):
     return json.loads(path.read_bytes())
 
 
-def wait_report(report, ident, preview, seconds, clock=time.monotonic, sleep=time.sleep):
+def wait_report(report, ident, preview, seconds, clock=time.monotonic, sleep=time.sleep,
+                bridge_error=None, dispatch_started_ns=None):
     end = clock() + seconds
     terminal = 'completed-model-only-contiguous-batch-preview' if preview else 'completed-contiguous-batch-awaiting-observation'
     while clock() < end:
+        # The attach agent writes this file only when the reviewed JavaScript
+        # fails before it can create the normal per-ID report. Its contents have
+        # no request ID, so associate it only by a fresh filesystem timestamp
+        # recorded immediately before this runner's one-shot dispatch. Treat an
+        # unrelated fresh bridge error as a stop too; fail closed, never replay.
+        if bridge_error is not None and dispatch_started_ns is not None:
+            try:
+                if bridge_error.stat().st_mtime_ns >= dispatch_started_ns:
+                    detail = bridge_error.read_text(errors='replace')
+                    raise RuntimeError('Fresh OpenPnP bridge error after this one-shot dispatch; do not replay: '
+                                       + str(bridge_error) + '\n' + detail)
+            except FileNotFoundError:
+                pass
         if report.exists():
             try:
                 r = read(report)
@@ -64,6 +78,36 @@ def terminal_wait_seconds(scope):
     return 60
 
 
+def save_runner_error(prepared, mode, ident, binding, report, error,
+                      bridge_error=None, dispatch_started_ns=None):
+    """Keep a small durable failure record; the one-shot receipt remains authoritative."""
+    record = dict(schema=1, id=ident, mode=mode,
+                  requestSha256=binding['requestSha256'], report=str(report),
+                  recordedAt=time.time(), error=str(error))
+    if bridge_error is not None:
+        try:
+            if dispatch_started_ns is None or bridge_error.stat().st_mtime_ns >= dispatch_started_ns:
+                raw = bridge_error.read_bytes()
+                record['bridgeError'] = dict(path=str(bridge_error),
+                                             sha256=hashlib.sha256(raw).hexdigest(),
+                                             text=raw.decode('utf-8', errors='replace'))
+        except OSError:
+            pass
+    path = prepared / ('runner-' + mode + '-error.json')
+    temp = path.with_suffix(path.suffix + '.tmp')
+    with temp.open('w') as f:
+        json.dump(record, f, indent=2)
+        f.write('\n')
+        f.flush()
+        os.fsync(f.fileno())
+    os.replace(temp, path)
+    directory_fd = os.open(prepared, os.O_RDONLY | os.O_DIRECTORY)
+    try:
+        os.fsync(directory_fd)
+    finally:
+        os.close(directory_fd)
+
+
 def run(prepared_dir, preview, root=ROOT, invoke=subprocess.run, wait=wait_report):
     prepared = Path(prepared_dir).resolve(strict=True)
     request = prepared / 'preview-request.json'
@@ -75,6 +119,7 @@ def run(prepared_dir, preview, root=ROOT, invoke=subprocess.run, wait=wait_repor
     action = 'paste-contiguous-batch-preview' if preview else 'paste-contiguous-batch'
     report = root / 'automation/evidence' / (action + '-' + q['id']) / 'report.json'
     receipt = prepared / ('runner-' + mode + '-attempt.json')
+    dispatch_meta = prepared / ('runner-' + mode + '-dispatch.json')
     binding = dict(schema=1, id=q['id'], mode=mode, requestSha256=hashlib.sha256(original).hexdigest(), report=str(report))
     print('Report: ' + str(report), file=sys.stderr, flush=True)
     # Serializes this runner's use of the fixed bridge plan files. It does not
@@ -119,9 +164,47 @@ def run(prepared_dir, preview, root=ROOT, invoke=subprocess.run, wait=wait_repor
                 os.close(directory_fd)
             plan = root / 'automation/plans' / (action + '-request.json')
             plan.write_bytes(runtime_bytes)
-            invoke([sys.executable, str(root / 'automation/scripts/run_reviewed_action.py'), action, '--confirmed'], cwd=root, check=True, stdout=subprocess.DEVNULL)
+            dispatch_started_ns = time.time_ns()
+            # Persist the time boundary before entering the bridge. This makes
+            # a later bridge-error file attributable without making retry safe.
+            with dispatch_meta.open('x') as f:
+                json.dump(dict(schema=1, id=q['id'], mode=mode,
+                               requestSha256=binding['requestSha256'],
+                               dispatchStartedNs=dispatch_started_ns), f, indent=2)
+                f.write('\n')
+                f.flush()
+                os.fsync(f.fileno())
+            directory_fd = os.open(prepared, os.O_RDONLY | os.O_DIRECTORY)
+            try:
+                os.fsync(directory_fd)
+            finally:
+                os.close(directory_fd)
+            try:
+                invoke([sys.executable, str(root / 'automation/scripts/run_reviewed_action.py'), action, '--confirmed'], cwd=root, check=True, stdout=subprocess.DEVNULL)
+            except Exception as exc:
+                save_runner_error(prepared, mode, q['id'], binding, report, exc,
+                                  root / 'automation/plans/bridge-error.txt', dispatch_started_ns)
+                raise
+        else:
+            dispatch_started_ns = None
+            if dispatch_meta.exists():
+                meta = read(dispatch_meta)
+                if (meta.get('id') != q['id'] or meta.get('mode') != mode or
+                        meta.get('requestSha256') != binding['requestSha256']):
+                    raise ValueError('Existing dispatch metadata binds another request; do not replay')
+                dispatch_started_ns = meta.get('dispatchStartedNs')
+                if not isinstance(dispatch_started_ns, int):
+                    raise ValueError('Existing dispatch metadata has no valid time boundary')
         seconds = terminal_wait_seconds(q['scope'])
-        r = wait(report, q['id'], preview, seconds)
+        bridge_error = root / 'automation/plans/bridge-error.txt'
+        try:
+            r = wait(report, q['id'], preview, seconds,
+                     bridge_error=bridge_error, dispatch_started_ns=dispatch_started_ns)
+        except Exception as exc:
+            save_runner_error(prepared, mode, q['id'], binding, report, exc,
+                              bridge_error if dispatch_started_ns is not None else None,
+                              dispatch_started_ns)
+            raise
         summary = dict(report=str(report), id=q['id'], status=r['status'], existingIdObserved=existing, dispatchedThisInvocation=not existing)
         (prepared / ('runner-' + mode + '-result.json')).write_text(json.dumps(summary, indent=2) + '\n')
         return summary

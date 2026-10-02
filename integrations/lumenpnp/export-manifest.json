@@ -1118,8 +1118,8 @@
       "sourceRoot": "/home/lumen/lumenpnp",
       "sourcePath": "automation/paste/run-prepared-contiguous-batch.py",
       "destination": "integrations/lumenpnp/automation/paste/run-prepared-contiguous-batch.py",
-      "sha256": "acc483affcbaefb11561579d764391ec69a2c608fab4a55b2e5ace5091851bd4",
-      "bytes": 7487
+      "sha256": "f9cd6da48651ff7124f08960626abf806dd39b5eb96fe74e0a6b5b2ee3e4811a",
+      "bytes": 11896
     },
     {
       "sourceRoot": "/home/lumen/lumenpnp",
@@ -1356,8 +1356,8 @@
       "sourceRoot": "/home/lumen/lumenpnp",
       "sourcePath": "automation/paste/test_run_prepared_contiguous_batch.py",
       "destination": "integrations/lumenpnp/automation/paste/test_run_prepared_contiguous_batch.py",
-      "sha256": "b79100a250aacad131e42fa27b1eb900e673c24386fbfc2c2447be821a5ddb8c",
-      "bytes": 8218
+      "sha256": "94a7e06aa5668442f509eaa7cbee3b7c272e33a0e3edaa7da5f42018955d6828",
+      "bytes": 10115
     },
     {
       "sourceRoot": "/home/lumen/lumenpnp",
