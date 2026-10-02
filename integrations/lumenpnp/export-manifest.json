@@ -2171,6 +2171,27 @@
       "destination": "integrations/lumenpnp/automation/tests/java/EvaluateFractionalRetractionPolicy.java",
       "sha256": "6f227bab237b4d7054d0f0905ec89d4909d3a3ad7c22ac37d7a1342f71fa9577",
       "bytes": 699
+    },
+    {
+      "sourceRoot": "/home/lumen/lumenpnp",
+      "sourcePath": "automation/paste/measure_paste_change_batch.py",
+      "destination": "integrations/lumenpnp/automation/paste/measure_paste_change_batch.py",
+      "sha256": "a28e86e8265f8e3b3455cf929252b29f056d8317282531218521eef19605a99d",
+      "bytes": 13486
+    },
+    {
+      "sourceRoot": "/home/lumen/lumenpnp",
+      "sourcePath": "automation/paste/test_measure_paste_change_batch.py",
+      "destination": "integrations/lumenpnp/automation/paste/test_measure_paste_change_batch.py",
+      "sha256": "cc38b87dc7dd45b8874c0aad3ea9df0ea1adbc2b0b741ed517e5f7966a47154f",
+      "bytes": 1449
+    },
+    {
+      "sourceRoot": "/home/lumen/lumenpnp",
+      "sourcePath": "automation/operations/paste-retraction-comparison-20261001.md",
+      "destination": "integrations/lumenpnp/automation/operations/paste-retraction-comparison-20261001.md",
+      "sha256": "e55fea9224ccf2a3c4b39ef20bae6f380f0d3f18b9f70e9389218acfa9ee0b6d",
+      "bytes": 1106
     }
   ],
   "manifestSelfHash": "Excluded to avoid a recursive digest; this manifest enumerates every other exported/generated file.",
