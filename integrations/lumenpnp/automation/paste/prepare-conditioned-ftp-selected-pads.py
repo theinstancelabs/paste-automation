@@ -8,6 +8,14 @@ GENERIC=ROOT/'automation/paste/prepare-contiguous-batch.py'
 BASE=HERE/'prepare-conditioned-ftp-pair.py'
 spec=importlib.util.spec_from_file_location('selected_pair_base',BASE); M=importlib.util.module_from_spec(spec); spec.loader.exec_module(M)
 COMP,PREP=M.COMP,M.PREP
+FIFTEEN_TRAVEL_REVIEW_SHA256='eeefee9961e515d94840b8cb1d566d93910f203decc1958f81d07638a94f7551'
+
+def reviewed_fifteen_trial(template,target):
+    a=(template or {}).get('budgetAmendmentEvidence') or {};t=a.get('travelReviewEvidence') or {};c=(target or {}).get('compensatedSequence') or {}
+    refs=(target or {}).get('pairReferences') or []
+    refs_ok=refs in (['R29','R30','R31','R32'],['R25','R26','R27','R28'])
+    return refs_ok and a.get('newMaximumAbsoluteDegrees')==14410 and t.get('sha256')==FIFTEEN_TRAVEL_REVIEW_SHA256 and c.get('retractPercent')==15 and c.get('doseDegrees')==6 and c.get('preWipeReliefDegrees')==2 and c.get('conditioningRetractDegrees')==1.5
+
 MIN_SPEC=importlib.util.spec_from_file_location('minimum_travel_policy',HERE/'minimum_travel_policy.py');MIN=importlib.util.module_from_spec(MIN_SPEC);MIN_SPEC.loader.exec_module(MIN)
 
 def fail(s): raise ValueError(s)
@@ -96,7 +104,7 @@ def build(args):
         if (policy.get('schema')!=1 or policy.get('protocol')!='same-component-pair-no-interim-retract' or policy.get('pairReferences')!=pair_refs or
                 c.get('protocol')!='restore-dose-pair-carry-retract-lift-minimum-travel-eight-pad' or
                 c.get('doseDegrees')!=6 or policy.get('retractPercent')!=pct or
-                c.get('retractDegrees')!=3 or c.get('conditioningRetractDegrees')!=(1.5 if pct in (20,25) else 3) or c.get('dwellMilliseconds')!=2000 or
+                c.get('retractDegrees')!=3 or c.get('conditioningRetractDegrees')!=(1.5 if pct in (20,25) or pct==15 and reviewed_fifteen_trial(template,target) else 3) or c.get('dwellMilliseconds')!=2000 or
                 c.get('retractDwellMilliseconds')!=500 or c.get('idleReliefDegrees')!=40): fail('Exact minimum-travel eight-pad recipe required')
     if not isinstance(pads,list) or not 1<=len(pads)<=(32 if comparison else 40 if wide else 8) or c.get('protocol') not in (('restore-dose-retract-lift-retraction-comparison',) if comparison else ('restore-dose-pair-carry-retract-lift-minimum-travel-eight-pad',) if minimum_travel else ('restore-dose-retract-lift-selected-pads',)): fail('Selected-pad count/protocol mismatch')
     ids=[p.get('padId') for p in pads]
@@ -141,10 +149,10 @@ def build(args):
     prefix,_,prep_accounting=PREP.stages_for(experiment,re,gap,unc)
     if minimum_travel:
         requested_condition_retract=experiment.get('conditioningRetractDegrees',3)
-        expected_condition_retract=1.5 if c.get('retractPercent') in (20,25) else 3
+        expected_condition_retract=1.5 if c.get('retractPercent') in (20,25) or c.get('retractPercent')==15 and reviewed_fifteen_trial(template,target) else 3
         if (requested_condition_retract!=expected_condition_retract or prep_accounting.get('requestedConditioningRetractDegrees')!=requested_condition_retract or
                 requested_condition_retract!=3 and prep_accounting.get('conditioningDepositCount')!=3):
-            fail('Fractional conditioner retraction requires the exact reviewed 20%/25% three-dummy sequence; legacy conditioning remains R3')
+            fail('Fractional conditioner requires the exact reviewed 20%/25% or dedicated 15% three-dummy sequence; legacy conditioning remains R3')
     group_prefixes=[prefix]
     if comparison:
         for g in target['retractionComparison']['groups'][1:]:

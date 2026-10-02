@@ -14,6 +14,16 @@ SPEC=importlib.util.spec_from_file_location('prepare_conditioned_ftp_selected_pa
 M=importlib.util.module_from_spec(SPEC);SPEC.loader.exec_module(M)
 
 class SelectedPadsBuilderTests(unittest.TestCase):
+    def test_reviewed_fifteen_conditioner_requires_exact_cap_and_review_hash(self):
+        target={'pairReferences':['R29','R30','R31','R32'],'compensatedSequence':{'retractPercent':15,'doseDegrees':6,'preWipeReliefDegrees':2,'conditioningRetractDegrees':1.5}}
+        template={'budgetAmendmentEvidence':{'newMaximumAbsoluteDegrees':14410,'travelReviewEvidence':{'sha256':M.FIFTEEN_TRAVEL_REVIEW_SHA256}}}
+        self.assertTrue(M.reviewed_fifteen_trial(template,target))
+        self.assertTrue(M.reviewed_fifteen_trial(template,{**target,'pairReferences':['R25','R26','R27','R28']}))
+        self.assertFalse(M.reviewed_fifteen_trial(template,{**target,'pairReferences':['R33','R34','R35','R36']}))
+        for bad in [{'newMaximumAbsoluteDegrees':14050,'travelReviewEvidence':{'sha256':M.FIFTEEN_TRAVEL_REVIEW_SHA256}},{'newMaximumAbsoluteDegrees':14410,'travelReviewEvidence':{'sha256':'0'*64}}]:
+            self.assertFalse(M.reviewed_fifteen_trial({'budgetAmendmentEvidence':bad},target))
+        self.assertFalse(M.reviewed_fifteen_trial(template,{'compensatedSequence':{**target['compensatedSequence'],'preWipeReliefDegrees':3}}))
+
     def test_fractional_comparison_targets_bind_actual_absolute_count_phase(self):
         start=-3773.5
         for percent,steps in ((15,4),(20,5),(25,7),(30,8)):
@@ -148,9 +158,9 @@ class SelectedPadsBuilderTests(unittest.TestCase):
         def generic(cmd,**kwargs):
             out=Path(cmd[cmd.index('--output')+1]);out.mkdir(parents=True);(out/'preview-request.json').write_text('{"enabled":false}\n');return SimpleNamespace(stdout='/tmp/preview-request.json')
         with patch.object(M.subprocess,'run',side_effect=generic):
-            for case,(percent,first_ref) in enumerate(zip((15,20,25,30),(21,25,29,17))):
+            for case,(percent,first_ref) in enumerate(zip((15,20,25,30),(29,25,29,17))):
                 case_experiment=dict(experiment)
-                if percent in (20,25):
+                if percent in (15,20,25):
                     case_experiment['conditioningRetractDegrees']=1.5
                     case_experiment['targetsXY']=[{'X':2.0,'Y':0.0},{'X':3.0,'Y':0.0},{'X':4.0,'Y':0.0},{'X':5.0,'Y':0.0}]
                 case_experiment['preWipeReliefDegrees']=2
@@ -168,18 +178,21 @@ class SelectedPadsBuilderTests(unittest.TestCase):
                 target={**self.target,'pads':pads,'surface':pads[0]['surface'],'surfaceEvidence':pads[0]['surfaceEvidence'],'reviewedMs':self.now,
                   'pairReferences':refs,
                   'minimumTravelPolicy':{'schema':1,'protocol':'same-component-pair-no-interim-retract','retractPercent':percent,'pairReferences':refs,'plan':plan,'orderedPadIds':[p['padId'] for p in pads]},
-                  'compensatedSequence':{'schema':1,'protocol':'restore-dose-pair-carry-retract-lift-minimum-travel-eight-pad','doseDegrees':6,'retractDegrees':3,'retractPercent':percent,'requestedRetractionDegrees':requested,'conditioningRetractDegrees':1.5 if percent in (20,25) else 3,'dwellMilliseconds':2000,'retractDwellMilliseconds':500,'idleReliefDegrees':40}}
+                  'compensatedSequence':{'schema':1,'protocol':'restore-dose-pair-carry-retract-lift-minimum-travel-eight-pad','doseDegrees':6,'retractDegrees':3,'retractPercent':percent,'requestedRetractionDegrees':requested,'conditioningRetractDegrees':1.5 if percent in (15,20,25) else 3,'preWipeReliefDegrees':2,'dwellMilliseconds':2000,'retractDwellMilliseconds':500,'idleReliefDegrees':40}}
                 tf=self.json(f'minimum-travel-target-{percent}.json',target);outdir=self.root/f'minimum-travel-out-{percent}'
-                args=SimpleNamespace(template=str(self.template),barrier=str(self.barrier),target_record=str(tf),experiment=str(ef),profile=str(pf),clearance_review=str(review),image=str(self.image),previous_report=str(self.prev),ledger=str(self.ledger),output=str(outdir),xy_clearance_raw_z=53.4,minimum_travel_eight_pad=True)
+                case_template=self.template
+                if percent==15:
+                    template_doc=json.loads(self.template.read_text());travel={'path':'/review/14410.json','sha256':M.FIFTEEN_TRAVEL_REVIEW_SHA256};template_doc['budgetAmendmentEvidence']={'newMaximumAbsoluteDegrees':14410,'travelReviewEvidence':travel};template_doc['evidence']=[travel];case_template=self.json('minimum-travel-template-15.json',template_doc)
+                args=SimpleNamespace(template=str(case_template),barrier=str(self.barrier),target_record=str(tf),experiment=str(ef),profile=str(pf),clearance_review=str(review),image=str(self.image),previous_report=str(self.prev),ledger=str(self.ledger),output=str(outdir),xy_clearance_raw_z=53.4,minimum_travel_eight_pad=True)
                 M.build(args)
                 recipe=json.loads((outdir/'recipe.json').read_text());built=json.loads((outdir/'targets.json').read_text())
                 self.assertEqual(recipe['targetSurface'],'ftp-selected-pads-minimum-travel-eight-pad')
                 self.assertLessEqual(len(recipe['stages']),150);self.assertLessEqual(recipe['bAccounting']['grossChargedDegrees'],220)
                 self.assertEqual(built['pairReferences'],refs);self.assertEqual(built['compensatedSequence']['retractPercent'],percent)
                 self.assertEqual(built['compensatedSequence']['requestedRetractionDegrees'],requested)
-                self.assertEqual(built['compensatedSequence']['conditioningRetractDegrees'],1.5 if percent in (20,25) else 3)
+                self.assertEqual(built['compensatedSequence']['conditioningRetractDegrees'],1.5 if percent in (15,20,25) else 3)
                 self.assertEqual(built['inlineConditioning']['experiment']['preWipeReliefDegrees'],2)
-                if percent in (20,25):
+                if percent in (15,20,25):
                     inline=built['inlineConditioning']
                     self.assertEqual(inline['conditioningDepositCount'],3)
                     self.assertEqual(inline['requestedConditioningRetractDegrees'],1.5)

@@ -12,8 +12,8 @@ test('pair restore must reverse the conditioner or prior pair retract exactly in
  assert.equal(C.validateMinimumTrialRestore(pad,restore,source).restoreCountDelta,C.controllerStepCount(200)-C.controllerStepCount(203));
  assert.throws(()=>C.validateMinimumTrialRestore(pad,{...restore,targetRaw:{B:199.99}},source));
 });
-test('shared three-dot 1.5-degree conditioning retract is admitted for the exact 20% and 25% trials only',()=>{
- for(const percent of [20,25]){
+test('shared three-dot 1.5-degree conditioning retract is admitted for the exact 15%, 20% and 25% reviewed trials only',()=>{
+ for(const percent of [15,20,25]){
   const start=200,target=201.5,count=C.controllerStepCount(target)-C.controllerStepCount(start);
   const entry={batchScope:Group.minimumTravelTrialScope(false),batchId:'test-batch',stageIndex:0,startB:start,targetB:target,deltaDegrees:1.5,absoluteDegrees:1.5,status:'reserved',retractionComparisonGroup:1,retractionPercent:percent,retractionComparisonRole:'conditioning',controllerStepDelta:count};
   assert.equal(count,7);assert.equal(C.validateMinimumTrialLedgerEntry(entry,[]),true);

@@ -85,9 +85,11 @@ def derive(q,load,now):
   target['pairReferences']=refs
   target['minimumTravelPolicy']={'schema':1,'protocol':'same-component-pair-no-interim-retract','retractPercent':minimum_retract_percent,'pairReferences':refs,'plan':travel,'orderedPadIds':[p['padId'] for p in pads]}
   condition_retract=q.get('conditioningRetractDegrees',3)
-  expected_condition_retract=1.5 if minimum_retract_percent in (20,25) else 3
-  if condition_retract!=expected_condition_retract:fail('Minimum-travel conditioner retract must match exact 20%/25% comparison, otherwise R3')
-  target['compensatedSequence']={'schema':1,'protocol':'restore-dose-pair-carry-retract-lift-minimum-travel-eight-pad','doseDegrees':6,'retractDegrees':3,'retractPercent':minimum_retract_percent,'requestedRetractionDegrees':round(6*minimum_retract_percent/100,6),'conditioningRetractDegrees':condition_retract,'preWipeReliefDegrees':q.get('preWipeReliefDegrees',20),'dwellMilliseconds':2000,'retractDwellMilliseconds':500,'idleReliefDegrees':40}
+  review_target={'compensatedSequence':{'retractPercent':minimum_retract_percent,'doseDegrees':6,'preWipeReliefDegrees':q.get('preWipeReliefDegrees',20),'conditioningRetractDegrees':condition_retract}}
+  reviewed15=minimum_retract_percent==15 and P.reviewed_fifteen_trial(docs['template'],review_target)
+  expected_condition_retract=1.5 if minimum_retract_percent in (20,25) or reviewed15 else 3
+  if condition_retract!=expected_condition_retract:fail('Minimum-travel conditioner must match the exact reviewed 20%/25% or dedicated 15% comparison; other cases remain R3')
+  target['compensatedSequence']={'schema':1,'protocol':'restore-dose-pair-carry-retract-lift-minimum-travel-eight-pad','doseDegrees':6,'retractDegrees':3,'retractPercent':minimum_retract_percent,'requestedRetractionDegrees':round(6*minimum_retract_percent/100,6),'conditioningRetractDegrees':condition_retract,'preWipeReliefDegrees':int(q.get('preWipeReliefDegrees',20)),'dwellMilliseconds':2000,'retractDwellMilliseconds':500,'idleReliefDegrees':40}
  elif comparison:
   rc=copy.deepcopy(q.get('retractionComparison') or {});groups=rc.get('groups')
   if not isinstance(groups,list) or len(groups)!=4:fail('Four explicit comparison lane/group records required')
@@ -101,7 +103,7 @@ def derive(q,load,now):
  else:target['compensatedSequence']={'schema':1,'protocol':'restore-dose-retract-lift-selected-pads','doseDegrees':dose,'retractDegrees':retract,'dwellMilliseconds':dwell,'retractDwellMilliseconds':500,'idleReliefDegrees':40}
  exp=copy.deepcopy(docs['scrapExperiment']);exp.update(startRaw=copy.deepcopy(raw),doseDegrees=dose,retractDegrees=retract,conditioningDoseDegrees=conditioning,conditioningRestoreDegrees=restore,conditioningFinalWipeMm=final_wipe,targetsXY=copy.deepcopy(q.get('scrapTargetsXY')))
  if minimum_travel: exp['conditioningRetractDegrees']=q.get('conditioningRetractDegrees',3)
- if minimum_travel: exp['preWipeReliefDegrees']=q.get('preWipeReliefDegrees',20)
+ if minimum_travel: exp['preWipeReliefDegrees']=int(q.get('preWipeReliefDegrees',20))
  if comparison:
   exp['targetsXY']=copy.deepcopy(target['retractionComparison']['groups'][0]['scrapTargetsXY']);exp['comparisonGroupTargetsXY']=[{'group':g['group'],'primeRawXY':g['primeRawXY'],'targetsXY':g['scrapTargetsXY']} for g in target['retractionComparison']['groups']]
   if raw['X']!=target['retractionComparison']['groups'][0]['primeRawXY'][0] or raw['Y']!=target['retractionComparison']['groups'][0]['primeRawXY'][1]:fail('Barrier must be prepositioned at first reviewed conditioning lane')

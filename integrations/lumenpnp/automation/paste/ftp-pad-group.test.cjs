@@ -21,3 +21,14 @@ test('fractional comparison requires four exact ordered groups, bounded indices 
  const bad=JSON.parse(JSON.stringify(q));bad.ftpTargetRecord.retractionComparison.groups[1].groupStartStageIndex='106';assert.throws(()=>G.validateSelected(bad,900000),/stage boundaries/);
  const stale=JSON.parse(JSON.stringify(q));assert.throws(()=>G.validateSelected(stale,900951),/Fresh/);
 });
+
+test('15% minimum-travel conditioner is shared only under the hash-bound 14410 review',()=>{
+ const sha='eeefee9961e515d94840b8cb1d566d93910f203decc1958f81d07638a94f7551';
+ const q={scope:G.minimumTravelTrialScope(true),budgetAmendmentEvidence:{newMaximumAbsoluteDegrees:14410,travelReviewEvidence:{path:'/review/14410.json',sha256:sha}},ftpTargetRecord:{pairReferences:['R29','R30','R31','R32'],compensatedSequence:{retractPercent:15,doseDegrees:6,preWipeReliefDegrees:2,conditioningRetractDegrees:1.5}}};
+ assert.equal(G.isReviewedFifteenTrial(q),true);assert.equal(G.conditioningRetractionForPercent(15,q),1.5);
+ const second={...q,ftpTargetRecord:{...q.ftpTargetRecord,pairReferences:['R25','R26','R27','R28']}};assert.equal(G.isReviewedFifteenTrial(second),true);
+ const unrelated={...q,ftpTargetRecord:{...q.ftpTargetRecord,pairReferences:['R33','R34','R35','R36']}};assert.equal(G.isReviewedFifteenTrial(unrelated),false);
+ assert.equal(G.conditioningRetractionForPercent(15),3);
+ for(const edit of [x=>x.budgetAmendmentEvidence.newMaximumAbsoluteDegrees=14050,x=>x.budgetAmendmentEvidence.travelReviewEvidence.sha256='1'.repeat(64),x=>x.ftpTargetRecord.compensatedSequence.preWipeReliefDegrees=20]){const bad=JSON.parse(JSON.stringify(q));edit(bad);assert.equal(G.isReviewedFifteenTrial(bad),false);assert.equal(G.conditioningRetractionForPercent(15,bad),3);}
+ assert.equal(G.conditioningRetractionForPercent(20),1.5);assert.equal(G.conditioningRetractionForPercent(25),1.5);assert.equal(G.conditioningRetractionForPercent(30),3);
+});
