@@ -1950,8 +1950,8 @@
       "sourceRoot": "/home/lumen/lumenpnp",
       "sourcePath": "automation/scripts/live_viewer.py",
       "destination": "integrations/lumenpnp/automation/scripts/live_viewer.py",
-      "sha256": "be0edc799b72dd8fb77d17a7abb261f7cd72d28c7447dee4616ec51750f3d137",
-      "bytes": 83359
+      "sha256": "b737da1b7811499f812569f7920fe55f51c4a4c991791fc461a2b7dbde239302",
+      "bytes": 94787
     },
     {
       "sourceRoot": "/home/lumen/lumenpnp",
@@ -2027,8 +2027,8 @@
       "sourceRoot": "/home/lumen/lumenpnp",
       "sourcePath": "automation/tests/test_live_viewer_http.py",
       "destination": "integrations/lumenpnp/automation/tests/test_live_viewer_http.py",
-      "sha256": "836304911f44f16330652b462ab094f379291f79a30dcee96f3ce12cadd66589",
-      "bytes": 29036
+      "sha256": "688aca4f8d39ed5e7442ee7165eceafdf63f25703e65537b6e54ad5ba9935e48",
+      "bytes": 31378
     },
     {
       "sourceRoot": "/home/lumen/lumenpnp",
@@ -2162,6 +2162,20 @@
       "destination": "integrations/lumenpnp/automation/tests/test_run_prepared_contiguous_batch.py",
       "sha256": "7adaf852f63c4c5e8c06385ad02e3b7b6550c939ffb695ed277708c88c658c1d",
       "bytes": 784
+    },
+    {
+      "sourceRoot": "/home/lumen/lumenpnp",
+      "sourcePath": "automation/paste/generic_paste_adapter.py",
+      "destination": "integrations/lumenpnp/automation/paste/generic_paste_adapter.py",
+      "sha256": "e4482ebac108ef193b85cb048e946581ffb8da97500d9c88043d65aafda49433",
+      "bytes": 9239
+    },
+    {
+      "sourceRoot": "/home/lumen/lumenpnp",
+      "sourcePath": "automation/paste/test_generic_paste_adapter.py",
+      "destination": "integrations/lumenpnp/automation/paste/test_generic_paste_adapter.py",
+      "sha256": "4b83cd428ee26a4d9c2524fa2911535b81b7c0fc43d1546c8fde505328aae105",
+      "bytes": 4079
     }
   ],
   "manifestSelfHash": "Excluded to avoid a recursive digest; this manifest enumerates every other exported/generated file.",

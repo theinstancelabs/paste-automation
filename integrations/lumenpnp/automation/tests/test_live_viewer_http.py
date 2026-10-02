@@ -220,6 +220,26 @@ class LiveViewerHttpTest(unittest.TestCase):
                 self.assertEqual(image_status,200);self.assertTrue(data.startswith(b'\x89PNG'))
         self.assertIn('loadCurrentNativeBatch',live_viewer.PAGE.decode())
 
+    def test_dashboard_unlock_and_first_screen_navigation_are_explicit(self):
+        page=live_viewer.PAGE.decode()
+        self.assertIn('Unlock private dashboard',page)
+        self.assertIn("if(!token){unlock.hidden=false;return;}",page)
+        self.assertIn('sessionStorage.setItem(\'viewerToken\',proposed)',page)
+        self.assertIn('[hidden]{display:none!important}',page)
+        self.assertLess(page.index('id="current-native-batch"'),page.index('id="live-cameras"'))
+        self.assertLess(page.index('id="live-cameras"'),page.index('id="paste-planner"'))
+        self.assertIn('quality pending and variable',page)
+        self.assertIn('<details id="previous-runs">',page)
+
+    def test_whole_board_gallery_route_is_authenticated_and_fixed(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            gallery=Path(tmp)/'after-whole-pad-gallery.jpg';gallery.write_bytes(b'\xff\xd8jpg')
+            with mock.patch.object(live_viewer,'CURRENT_NATIVE_GALLERY',gallery):
+                status,_,_=self.request_with_headers('GET','/paste-results/current-native/gallery')
+                self.assertEqual(status,403)
+                status,data,headers=self.request_with_headers('GET','/paste-results/current-native/gallery',headers=self.private_headers())
+        self.assertEqual(status,200);self.assertEqual(headers['content-type'],'image/jpeg');self.assertTrue(data.startswith(b'\xff\xd8'))
+
     def test_private_kicad_planner_saves_job_and_svg_without_enabling_execution(self):
         boundary='----viewer-board-test'
         board=b'''(kicad_pcb (version 20240108) (net 0 "")
@@ -246,6 +266,12 @@ class LiveViewerHttpTest(unittest.TestCase):
         self.assertEqual((result['fileName'],result['padCount'],result['footprintCount'],result['fiducialCount']),('demo.kicad_pcb',1,2,1))
         self.assertFalse(result['executionAuthorized'])
         self.assertTrue(result['jobUrl'].endswith(result['jobId']))
+        status,checklist=self.request('GET',result['genericPreviewUrl'],headers=self.private_headers())
+        self.assertEqual(status,200);self.assertFalse(checklist['previewAuthorized']);self.assertFalse(checklist['executionAuthorized'])
+        self.assertTrue(any('CAD job' in item for item in checklist['missingRequirements']))
+        status,checklist=self.request('POST',result['genericPrepareUrl'],b'{}',self.private_headers(True,'generic-empty-review-01')|{'Content-Type':'application/json'})
+        self.assertEqual(status,200);self.assertEqual(checklist['reviewStatus'],'incomplete')
+        self.assertFalse(checklist['individualDotTargets'])
         status,job=self.request('GET',result['jobUrl'],headers=self.private_headers())
         self.assertEqual(status,200);self.assertEqual(job['scope'],'offline-kicad-paste-job');self.assertFalse(job['executionAuthorized'])
         status,readiness=self.request('GET',result['readinessUrl'],headers=self.private_headers())
@@ -259,7 +285,9 @@ class LiveViewerHttpTest(unittest.TestCase):
         status,data,headers=self.request_with_headers('GET',result['reviewBundleUrl'],headers=self.private_headers())
         self.assertEqual(status,200);self.assertEqual(headers['content-type'],'application/zip')
         with zipfile.ZipFile(BytesIO(data)) as archive:
-            self.assertEqual(set(archive.namelist()),{'job.json','preview.svg','readiness.json','pnp-draft.board.xml','pnp-draft.job.xml','README.txt'})
+            self.assertEqual(set(archive.namelist()),{'job.json','preview.svg','readiness.json','generic-preview.json','generic-target-preview.svg','pnp-draft.board.xml','pnp-draft.job.xml','README.txt'})
+            initial_generic=json.loads(archive.read('generic-preview.json'))
+            self.assertFalse(initial_generic['executionAuthorized'])
             self.assertIn(b'disabled OpenPnP-format draft',archive.read('README.txt'))
             board=ET.fromstring(archive.read('pnp-draft.board.xml'))
             placements=board.findall('./placements/placement')
@@ -290,6 +318,7 @@ class LiveViewerHttpTest(unittest.TestCase):
             self.assertTrue((job_dir/'mapping.json').is_file())
         self.assertIn('Start paste — blocked',live_viewer.PAGE.decode())
         self.assertIn('Download disabled OpenPnP draft',live_viewer.PAGE.decode())
+        self.assertIn('generic-preparation',live_viewer.PAGE.decode())
 
     def test_kicad_planner_upload_requires_auth_and_rejects_non_board_files(self):
         boundary='----viewer-board-invalid';body=(f'--{boundary}\r\nContent-Disposition: form-data; name="board"; filename="bad.txt"\r\n\r\nhello\r\n--{boundary}--\r\n').encode()
