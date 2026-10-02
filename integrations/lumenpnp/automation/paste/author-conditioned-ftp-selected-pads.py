@@ -30,7 +30,11 @@ def derive(q,load,now):
  if not isinstance(offset,list) or len(offset)!=2 or not all(P.COMP.finite(v) for v in offset):fail('Bound camera-minus-tip offset required')
  reviews=q.get('selectedPads');
  if not isinstance(reviews,list) or not 1<=len(reviews)<=(32 if comparison else 40 if wide else 8):fail('Select one to forty explicitly reviewed pads' if wide else 'Select one to eight explicitly reviewed pads')
- if minimum_travel and (len(reviews)!=8 or [x.get('padId') for x in reviews]!=[f'R{r}.{side}' for r in range(17,21) for side in (1,2)]):fail('Minimum-travel trial requires ordered R17-R20 complete adjacent pairs')
+ minimum_retract_percent=q.get('retractPercent',30) if minimum_travel else None
+ if minimum_travel:
+  if len(reviews)!=8 or type(minimum_retract_percent)is not int or minimum_retract_percent not in (15,20,25,30):fail('Minimum-travel trial requires eight pads and one approved whole-percent retract setting')
+  refs=[x.get('padId','').rsplit('.',1)[0] for x in reviews[::2]]
+  if any(not __import__('re').fullmatch(r'R(?:[1-9]|[1-3][0-9]|40)',r) for r in refs) or len(set(refs))!=4 or [x.get('padId') for i,r in enumerate(refs) for x in reviews[i*2:i*2+2]]!=[f'{r}.{side}' for r in refs for side in (1,2)]:fail('Minimum-travel trial requires four distinct ordered complete resistor pairs')
  dose=6 if comparison or minimum_travel else q.get('doseDegrees');dwell=2000 if minimum_travel else q.get('dwellMilliseconds',200);retract=3 if comparison or minimum_travel else q.get('retractDegrees',2)
  conditioning=6 if comparison or minimum_travel else q.get('conditioningDoseDegrees',20);restore=0 if comparison or minimum_travel else q.get('conditioningRestoreDegrees',0);final_wipe=q.get('conditioningFinalWipeMm',0)
  if type(dose)is not int or dose not in (2,3,4,6,12,20):fail('Selected-pad dose must be an allowed integer degree amount')
@@ -68,7 +72,7 @@ def derive(q,load,now):
   if comparison:
    idx=len(pads);group=idx//8+1;percent=[15,20,25,30][group-1];pad.update(group=group,retractPercent=percent)
   if minimum_travel:
-   reference,pair_order=padid.rsplit('.',1);pad.update(componentReference=reference,pairOrder=int(pair_order),retractPercent=30,requestedRetractionDegrees=1.8)
+   reference,pair_order=padid.rsplit('.',1);pad.update(componentReference=reference,pairOrder=int(pair_order),retractPercent=minimum_retract_percent,requestedRetractionDegrees=round(6*minimum_retract_percent/100,6))
   pads.append(pad)
   if surface_first is None:surface_first=copy.deepcopy(surface);surface_ev_first=copy.deepcopy(item['surfaceEvidence'])
  target.update(schema=1,scope='ftp-selected-pads-targets',reviewedBy=q['reviewedBy'],reviewedMs=stamp,**session)
@@ -78,9 +82,9 @@ def derive(q,load,now):
  if minimum_travel:
   travel=MIN.plan_minimum_travel_transitions([{'reference':p['componentReference'],'pad':p['padId'].rsplit('.',1)[1],'xy_mm':[p['rawPose']['X'],p['rawPose']['Y']]} for p in pads])
   if len(travel['transitions'])!=7 or any((i%2==0 and (t['reason']!='same-component-short-move' or t['retractBeforeMove'] or t['restoreAfterMove'] or not t['skipRequiresNoPriorRetract'])) or (i%2==1 and (t['reason']!='component-boundary' or not t['retractBeforeMove'] or not t['restoreAfterMove'])) or not t['preserveClearanceLift'] for i,t in enumerate(travel['transitions'])):fail('Pair transitions must be short same-component moves and component boundaries must retain retract/restore')
-  target['pairReferences']=['R17','R18','R19','R20']
-  target['minimumTravelPolicy']={'schema':1,'protocol':'same-component-pair-no-interim-retract','plan':travel,'orderedPadIds':[p['padId'] for p in pads]}
-  target['compensatedSequence']={'schema':1,'protocol':'restore-dose-pair-carry-retract-lift-minimum-travel-eight-pad','doseDegrees':6,'retractDegrees':3,'retractPercent':30,'requestedRetractionDegrees':1.8,'conditioningRetractDegrees':3,'dwellMilliseconds':2000,'retractDwellMilliseconds':500,'idleReliefDegrees':40}
+  target['pairReferences']=refs
+  target['minimumTravelPolicy']={'schema':1,'protocol':'same-component-pair-no-interim-retract','retractPercent':minimum_retract_percent,'pairReferences':refs,'plan':travel,'orderedPadIds':[p['padId'] for p in pads]}
+  target['compensatedSequence']={'schema':1,'protocol':'restore-dose-pair-carry-retract-lift-minimum-travel-eight-pad','doseDegrees':6,'retractDegrees':3,'retractPercent':minimum_retract_percent,'requestedRetractionDegrees':round(6*minimum_retract_percent/100,6),'conditioningRetractDegrees':3,'dwellMilliseconds':2000,'retractDwellMilliseconds':500,'idleReliefDegrees':40}
  elif comparison:
   rc=copy.deepcopy(q.get('retractionComparison') or {});groups=rc.get('groups')
   if not isinstance(groups,list) or len(groups)!=4:fail('Four explicit comparison lane/group records required')

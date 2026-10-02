@@ -88,22 +88,25 @@ def build(args):
         rc=target.get('retractionComparison') or {}
         if rc.get('schema')!=1 or rc.get('protocol')!='four-group-fractional-retraction-comparison' or rc.get('doseDegrees')!=6 or rc.get('stepsPerDegree')!=4.44 or c.get('protocol')!='restore-dose-retract-lift-retraction-comparison' or c.get('doseDegrees')!=6 or c.get('conditioningRetractDegrees')!=3 or c.get('retractDegrees')!=3: fail('Exact fractional comparison contract required')
     if minimum_travel:
-        if target.get('pairReferences')!=['R17','R18','R19','R20']: fail('Minimum-travel scope requires exact ordered resistor references')
+        pair_refs=target.get('pairReferences');pct=c.get('retractPercent');requested=6*pct/100 if type(pct)is int else None
+        if (not isinstance(pair_refs,list) or len(pair_refs)!=4 or len(set(pair_refs))!=4 or
+                any(not __import__('re').fullmatch(r'R(?:[1-9]|[1-3][0-9]|40)',str(ref)) for ref in pair_refs) or
+                type(pct)is not int or pct not in (15,20,25,30) or c.get('requestedRetractionDegrees')!=requested): fail('Minimum-travel scope requires four unique pair references and one approved retract percentage')
         policy=target.get('minimumTravelPolicy') or {}
-        if (policy.get('schema')!=1 or policy.get('protocol')!='same-component-pair-no-interim-retract' or
+        if (policy.get('schema')!=1 or policy.get('protocol')!='same-component-pair-no-interim-retract' or policy.get('pairReferences')!=pair_refs or
                 c.get('protocol')!='restore-dose-pair-carry-retract-lift-minimum-travel-eight-pad' or
-                c.get('doseDegrees')!=6 or c.get('retractPercent')!=30 or c.get('requestedRetractionDegrees')!=1.8 or
+                c.get('doseDegrees')!=6 or policy.get('retractPercent')!=pct or
                 c.get('retractDegrees')!=3 or c.get('conditioningRetractDegrees')!=3 or c.get('dwellMilliseconds')!=2000 or
                 c.get('retractDwellMilliseconds')!=500 or c.get('idleReliefDegrees')!=40): fail('Exact minimum-travel eight-pad recipe required')
     if not isinstance(pads,list) or not 1<=len(pads)<=(32 if comparison else 40 if wide else 8) or c.get('protocol') not in (('restore-dose-retract-lift-retraction-comparison',) if comparison else ('restore-dose-pair-carry-retract-lift-minimum-travel-eight-pad',) if minimum_travel else ('restore-dose-retract-lift-selected-pads',)): fail('Selected-pad count/protocol mismatch')
     ids=[p.get('padId') for p in pads]
     if len(set(ids))!=len(ids) or any(not isinstance(i,str) or not __import__('re').fullmatch(r'R(?:[1-9]|[1-3][0-9]|40)\.[12]',i) for i in ids): fail('Selected pads must be unique registered pad identities')
     if comparison and (len(pads)!=32 or [p['padId'] for p in pads]!=[f'R{r}.{side}' for r in range(1,17) for side in (1,2)]): fail('Comparison requires ordered R1-R16 pad pairs')
-    if minimum_travel and (len(pads)!=8 or [p['padId'] for p in pads]!=[f'R{r}.{side}' for r in range(17,21) for side in (1,2)]): fail('Minimum-travel scope requires exactly the ordered R17-R20 adjacent pad pairs')
+    if minimum_travel and (len(pads)!=8 or [p['padId'] for p in pads]!=[f'{r}.{side}' for r in target['pairReferences'] for side in (1,2)]): fail('Minimum-travel scope requires exactly four ordered adjacent pad pairs')
     if minimum_travel:
-        for p in pads:
+        for i,p in enumerate(pads):
             reference,side=p['padId'].rsplit('.',1)
-            if p.get('componentReference')!=reference or p.get('pairOrder')!=int(side) or p.get('retractPercent')!=30 or p.get('requestedRetractionDegrees')!=1.8: fail('Every minimum-travel pad must bind its exact component, pair order and fixed 30-percent request')
+            if p.get('componentReference')!=reference or p.get('pairOrder')!=int(side) or reference!=target['pairReferences'][i//2] or p.get('retractPercent')!=c['retractPercent'] or p.get('requestedRetractionDegrees')!=c['requestedRetractionDegrees']: fail('Every minimum-travel pad must bind its exact component, pair order and uniform requested retraction')
         travel=MIN.plan_minimum_travel_transitions([{'reference':p['padId'].rsplit('.',1)[0],'pad':p['padId'].rsplit('.',1)[1],'xy_mm':[p['rawPose']['X'],p['rawPose']['Y']]} for p in pads])
         if travel!=target['minimumTravelPolicy'].get('plan') or target['minimumTravelPolicy'].get('orderedPadIds')!=ids or len(travel['transitions'])!=7 or any((i%2==0 and (t['reason']!='same-component-short-move' or t['retractBeforeMove'] or t['restoreAfterMove'] or not t['skipRequiresNoPriorRetract'])) or (i%2==1 and (t['reason']!='component-boundary' or not t['retractBeforeMove'] or not t['restoreAfterMove'])) or not t['preserveClearanceLift'] for i,t in enumerate(travel['transitions'])): fail('Reviewed minimum-travel plan differs from current pad coordinates or pair boundaries')
     if comparison:
@@ -182,7 +185,7 @@ def build(args):
             p['restoreRawDelta']=-restore_amount;p['actualRetractRawDelta']=retract_amount;p['actualRetractControllerSteps']=retract_steps;p['actualQuantizedRetractionDegrees']=round(retract_steps/4.44,6)
             p['restoreStageIndex']=bstep(-restore_amount,0)
         elif minimum_travel:
-            p['componentReference']=ids[pi].rsplit('.',1)[0];p['pairOrder']=int(ids[pi].rsplit('.',1)[1]);p['retractPercent']=30;p['requestedRetractionDegrees']=1.8
+            p['componentReference']=ids[pi].rsplit('.',1)[0];p['pairOrder']=int(ids[pi].rsplit('.',1)[1]);p['retractPercent']=c['retractPercent'];p['requestedRetractionDegrees']=c['requestedRetractionDegrees']
             if p['pairOrder']==1:
                 if pi==0: restore_target=at['B']-3.0;p['restoreSourceStageIndex']=retract_i
                 else:
@@ -199,7 +202,7 @@ def build(args):
         if minimum_travel and p['pairOrder']==1:
             p['retractStageIndex']=None;p['actualRetractRawDelta']=None;p['actualRetractControllerSteps']=None;p['retractRestoreTargetB']=None
         elif minimum_travel:
-            before_retract=at['B'];desired_steps=round(1.8*4.44);amount,steps=fractional_target(before_retract,1.8,desired_steps,'positive')
+            before_retract=at['B'];desired_steps=math.floor(p['requestedRetractionDegrees']*4.44+.5);amount,steps=fractional_target(before_retract,p['requestedRetractionDegrees'],desired_steps,'positive')
             p['retractRestoreTargetB']=before_retract;p['actualRetractRawDelta']=amount;p['actualRetractControllerSteps']=steps;p['actualQuantizedRetractionDegrees']=round(steps/4.44,6)
             p['retractStageIndex']=bstep(amount,c['retractDwellMilliseconds'])
         else:p['retractStageIndex']=bstep(retract_degrees,c['retractDwellMilliseconds'])
