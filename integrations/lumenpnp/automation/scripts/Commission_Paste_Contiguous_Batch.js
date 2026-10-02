@@ -45,7 +45,7 @@ var PASTE_CONTIGUOUS_BATCH_ENABLED = true;
  function boundJson(e){var data=Fs.readAllBytes(new F(e.path).toPath());if(hash(data)!==e.sha256)throw Error('Bound evidence changed');return parseFrozenEvidence(data,e);}
  function manualHomeRead(e,json){var data=Fs.readAllBytes(new F(e.path).toPath());if(hash(data)!==e.sha256)throw Error('Manual-home evidence changed');return json?parseFrozenEvidence(data,e):String(new java.lang.String(data,UTF));}
  var manualHomeLedgerContinuity=null;if(q.manualHomeLedgerAnchorEvidence)manualHomeLedgerContinuity=PasteManualHomeLedgerAnchor.validate(boundJson(q.manualHomeLedgerAnchorEvidence),q,manualHomeRead,Number(java.lang.System.currentTimeMillis()));
- function ftpEvidence(e,json){var b=Fs.readAllBytes(new F(e.path).toPath());if(hash(b)!==e.sha256)throw Error('FTP source changed');return json?parseFrozenEvidence(b,e):null;}
+ function ftpEvidence(e,json){var b=Fs.readAllBytes(new F(e.path).toPath());if(hash(b)!==e.sha256)throw Error('FTP source changed');return json?parseFrozenEvidence(b,e):String(new java.lang.String(b,UTF));}
  var applicationRestartContext=null;if(q.applicationRestartEvidence){var restartRecord=boundJson(q.applicationRestartEvidence);applicationRestartContext=PasteApplicationRestartContinuity.validate(restartRecord,q,ftpEvidence,Number(java.lang.System.currentTimeMillis()));}
  function verifyFtpSources(){if(PasteFtpTwoPad.isFtp(q))PasteFtpTwoPad.verifySources(q,ftpEvidence);}
  verifyFtpSources();
