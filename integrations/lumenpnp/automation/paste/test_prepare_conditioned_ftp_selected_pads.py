@@ -14,6 +14,19 @@ SPEC=importlib.util.spec_from_file_location('prepare_conditioned_ftp_selected_pa
 M=importlib.util.module_from_spec(SPEC);SPEC.loader.exec_module(M)
 
 class SelectedPadsBuilderTests(unittest.TestCase):
+    def test_fractional_comparison_targets_bind_actual_absolute_count_phase(self):
+        start=-3773.5
+        for percent,steps in ((15,4),(20,5),(25,7),(30,8)):
+            requested=6*percent/100
+            actual,count=M.fractional_target(start,requested,steps,'positive')
+            target=round((start+actual)*100)/100
+            self.assertEqual(count,M.controller_steps(target)-M.controller_steps(start))
+            self.assertLessEqual(abs(count-requested*4.44),.5)
+            self.assertAlmostEqual(count/4.44,steps/4.44)
+        # At this B phase 1.5 degrees does not reliably make seven steps if sent raw.
+        raw=round((start+1.5)*100)/100
+        self.assertNotEqual(M.controller_steps(raw)-M.controller_steps(start),7)
+
     def setUp(self):
         self.tmp=tempfile.TemporaryDirectory();self.root=Path(self.tmp.name);self.now=int(time.time()*1000)
         self.session={'sessionId':'test-session','jvmStartMs':1,'liveConfigurationSha256':'a'*64,'syringeId':'test-syringe'}
@@ -88,5 +101,46 @@ class SelectedPadsBuilderTests(unittest.TestCase):
         self.assertGreater(len(recipe['stages']),96);self.assertLessEqual(len(recipe['stages']),400)
         self.assertEqual(recipe['bAccounting']['grossChargedDegrees'],recipe['bAccounting']['conditioningGrossDegrees']+35*12+40)
         self.assertNotIn('--up-to-40',called[0])  # Scope is selected by the recipe target, not a generic CLI bypass.
+
+
+    def test_four_group_fractional_comparison_builds_bounded_routes_offline(self):
+        lane_y=[0.0,2.14,4.29,6.44]
+        groups=[];lane_experiments=[];pads=[]
+        templates=self.pads
+        for gi,pct in enumerate((15,20,25,30)):
+            px,py=0.0,lane_y[gi]
+            wipes=[{'X':px+1.50,'Y':py},{'X':px+5.34,'Y':py}]
+            ids=[f'R{r}.{side}' for r in range(gi*4+1,gi*4+5) for side in (1,2)]
+            groups.append({'group':gi+1,'retractPercent':pct,'padIds':ids,'primeRawXY':[px,py],'scrapTargetsXY':wipes})
+            lane_experiments.append({'group':gi+1,'primeRawXY':[px,py],'targetsXY':wipes})
+            for j,padid in enumerate(ids):
+                base=templates[(gi*8+j)%2]
+                pads.append({**base,'padId':padid,'group':gi+1,'retractPercent':pct,'rawPose':{'X':20+gi*3+j*.1,'Y':20+j*.1,'Z':base['surface']['rawZ'],'A':720.0}})
+        self.experiment.update(primeDegrees=60,conditioningDoseDegrees=6,conditioningRestoreDegrees=0,targetsXY=groups[0]['scrapTargetsXY'],comparisonGroupTargetsXY=lane_experiments)
+        self.experiment_file=self.json('comparison-experiment.json',self.experiment)
+        review={'reviewedBy':'reviewer','reviewedMs':self.now,'experimentEvidence':M.ev(self.experiment_file),'imageEvidence':M.ev(self.image),'image':str(self.image)}
+        self.review=self.json('comparison-review.json',review)
+        profile=json.loads(self.profile.read_text());profile['measurementEvidence']=M.ev(self.review);self.profile=self.json('comparison-profile.json',profile)
+        target={**self.target,'pads':pads,'surface':pads[0]['surface'],'surfaceEvidence':pads[0]['surfaceEvidence'],'reviewedMs':self.now,
+                'compensatedSequence':{'schema':1,'protocol':'restore-dose-retract-lift-retraction-comparison','doseDegrees':6,'retractDegrees':3,'conditioningRetractDegrees':3,'dwellMilliseconds':2000,'retractDwellMilliseconds':500,'idleReliefDegrees':40},
+                'retractionComparison':{'schema':1,'protocol':'four-group-fractional-retraction-comparison','doseDegrees':6,'stepsPerDegree':4.44,'groups':groups}}
+        target_file=self.json('comparison-target.json',target)
+        args=SimpleNamespace(template=str(self.template),barrier=str(self.barrier),target_record=str(target_file),experiment=str(self.experiment_file),profile=str(self.profile),clearance_review=str(self.review),image=str(self.image),previous_report=str(self.prev),ledger=str(self.ledger),output=str(self.root/'comparison-out'),xy_clearance_raw_z=53.4,retraction_comparison=True,up_to_40=False)
+        def generic(cmd,**kwargs):
+            out=Path(cmd[cmd.index('--output')+1]);out.mkdir(parents=True);(out/'preview-request.json').write_text('{"enabled":false}\n');return SimpleNamespace(stdout='/tmp/preview-request.json')
+        with patch.object(M.subprocess,'run',side_effect=generic): M.build(args)
+        recipe=json.loads((self.root/'comparison-out'/'recipe.json').read_text());built=json.loads((self.root/'comparison-out'/'targets.json').read_text())
+        self.assertEqual(recipe['targetSurface'],'ftp-selected-pads-retraction-comparison')
+        self.assertEqual(len(recipe['stages']),len(built['stages']) if 'stages' in built else len(recipe['stages']))
+        self.assertLessEqual(len(recipe['stages']),400);self.assertLessEqual(recipe['bAccounting']['grossChargedDegrees'],813)
+        self.assertEqual([g['retractPercent'] for g in built['retractionComparison']['groups']],[15,20,25,30])
+        for gi,g in enumerate(built['retractionComparison']['groups']):
+            self.assertEqual(g['groupIdleReliefStageIndices'][1],g['groupEndStageIndex'])
+            self.assertEqual(recipe['stages'][g['groupIdleReliefStageIndices'][1]]['dwellMilliseconds'],2000)
+            self.assertEqual(len(g['padIds']),8)
+            block=built['pads'][gi*8:(gi+1)*8]
+            self.assertEqual(block[0]['restoreRawDelta'],-3.0)
+            for prev,pad in zip(block,block[1:]): self.assertAlmostEqual(pad['restoreRawDelta'],-prev['actualRetractRawDelta'],places=8)
+        self.assertFalse(json.loads((self.root/'comparison-out'/'native'/'preview-request.json').read_text()).get('enabled',True))
 
 if __name__=='__main__': unittest.main()

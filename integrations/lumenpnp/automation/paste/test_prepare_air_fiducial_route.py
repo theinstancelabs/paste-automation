@@ -57,6 +57,16 @@ class AirFiducialRouteTest(unittest.TestCase):
         self.assertIn(review['path'], profile['basis'])
         self.assertIn(historical['path'], profile['basis'])
 
+    def test_gap_rounding_preserves_exact_point_four_mm_clearance_boundary(self):
+        template = {'sessionId': 'template-session', 'syringeId': 'template-syringe'}
+        barrier = {'request': {'jvmStartMs': 1790898122720}, 'liveConfigurationSha256': 'a' * 64}
+        profile = MODULE.profile_record(
+            template, barrier, self.raw,
+            {'path': '/historical/surface-measurement.json', 'sha256': 'b' * 64},
+            {'path': '/current/clearance-review.json', 'sha256': 'c' * 64})
+        self.assertEqual(profile['estimatedGapMm'], 0.4)
+        self.assertGreater(profile['estimatedGapMm'], MODULE.NORTH_REFERENCE_UNCERTAINTY_MM)
+
 
 if __name__ == '__main__':
     unittest.main()

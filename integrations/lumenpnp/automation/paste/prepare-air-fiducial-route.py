@@ -129,7 +129,7 @@ def route(raw, poses, target_x, target_y, target_z=None):
 def profile_record(template, barrier, raw, historical_measurement_evidence, clearance_review_evidence):
     request = barrier.get('request') or {}
     start_z = raw['Z']
-    gap = NORTH_REFERENCE_RAW_Z - start_z
+    gap = round(NORTH_REFERENCE_RAW_Z - start_z, 8)
     if gap <= NORTH_REFERENCE_UNCERTAINTY_MM:
         fail('North-reference provisional gap lower bound must remain positive')
     basis = ('Provisional air-only gap estimate from north reference raw Z 58.85 mm '
