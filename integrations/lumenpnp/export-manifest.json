@@ -530,15 +530,15 @@
       "sourceRoot": "/home/lumen/lumenpnp",
       "sourcePath": "automation/paste/commissioning-stroke.cjs",
       "destination": "integrations/lumenpnp/automation/paste/commissioning-stroke.cjs",
-      "sha256": "44fc1622613f17b49d5020f297299570b5cafdb339495882dfc8734467f93cf1",
-      "bytes": 60734
+      "sha256": "beb4527886b5fa21223cd3a776c2560b0386d5e0b42bfb4b10b820bc342a09e4",
+      "bytes": 61993
     },
     {
       "sourceRoot": "/home/lumen/lumenpnp",
       "sourcePath": "automation/paste/commissioning-stroke.test.cjs",
       "destination": "integrations/lumenpnp/automation/paste/commissioning-stroke.test.cjs",
-      "sha256": "443d65c18bd764ffc5f3a6485ecb1c228dfdb78297895b42527299f83c17b519",
-      "bytes": 20933
+      "sha256": "a9fa9283ed0b024294b573b63a4f4c31edb95cdc96fe0bf011fd39c90ca70384",
+      "bytes": 23210
     },
     {
       "sourceRoot": "/home/lumen/lumenpnp",

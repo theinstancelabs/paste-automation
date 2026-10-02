@@ -20,6 +20,19 @@ test('reviewed stroke amendment preserves the 120-degree anchor and permits only
  const replay={...next,expectedRaw:{...next.expectedRaw,B:-278},expectedDriver:{...next.expectedDriver,B:-278},previousLedgerSha256:'9'.repeat(64)};assert.throws(()=>P.reserve(complete,replay,carry,f.context),/replay/);
  const atLimit=JSON.parse(JSON.stringify(f.anchor));let b=atLimit.lastVerifiedB;for(let i=0;i<6;i++){const d=20,start=b;b+=d;atLimit.entries.push({requestId:`7234567${i}-1234-1234-1234-123456789abc`,startB:start,targetB:b,deltaDegrees:d,absoluteDegrees:d,status:'verified'});}atLimit.lastVerifiedB=b;atLimit.totalAbsoluteDegrees=240;const over={...next,id:'82345678-1234-1234-1234-123456789abc',deltaDegrees:2,expectedRaw:{...next.expectedRaw,B:b},expectedDriver:{...next.expectedDriver,B:b},previousLedgerSha256:'8'.repeat(64)};assert.throws(()=>P.reserve(atLimit,over,carry,f.context),/budget exhausted/);
 });
+test('13750 ceiling preflight requires exact hash-bound three-dummy fixed25 scope',()=>{
+ const f=amendmentFixture(),travel={path:'/cap-13750-order-reviewed/review.json',sha256:'0b43e6cc7f169cda3529bf400e780bfe2420292b9f38ee20f4687ea8e931a343'};
+ f.record.newMaximumAbsoluteDegrees=13750;f.record.reviewedAt='2026-10-02T04:57:07.240Z';f.record.travelReviewEvidence=travel;f.envelope={...f.record,path:'/cap-13750-order-reviewed/budget-amendment.json',sha256:'d'.repeat(64),travelReviewEvidence:travel};
+ f.report.finishedAt='2026-10-02T04:57:06.240Z';
+ const q0={scope:'contiguous-native-ftp-minimum-travel-eight-pad-preview',mode:'wet',sessionId:uuid,syringeId:'s1',carryoverSha256:H,jvmStartMs:10,liveConfigurationSha256:H,createdMs:Date.parse(f.record.reviewedAt)+1000,budgetAmendmentEvidence:f.envelope,evidence:[travel],ftpTargetRecord:{compensatedSequence:{doseDegrees:6,retractPercent:25,retractDegrees:3,conditioningRetractDegrees:3,requestedRetractionDegrees:1.5}}};
+ q0.ftpTargetRecord.inlineConditioning={protocol:'scrap-condition-transit-minimum-travel-eight-pad',conditioningDepositCount:3,requestedConditioningRetractDegrees:1.5,conditioningRetractEvents:[{},{},{}],conditioningRestoreEvents:[{},{}],experiment:{mode:'transfer-preparation',conditioningDoseDegrees:6,conditioningRetractDegrees:1.5,retractDegrees:3,targetsXY:[{X:1,Y:1},{X:2,Y:1},{X:3,Y:1},{X:4,Y:1}]}};
+ assert.equal(P.validateBudgetAmendment(q0,f.record,f.anchor,f.report,f.anchor,carry),13750);
+ assert.throws(()=>P.validateBudgetAmendment({...q0,ftpTargetRecord:{...q0.ftpTargetRecord,inlineConditioning:null}},f.record,f.anchor,f.report,f.anchor,carry),/13750-degree ceiling/);
+ const altered={...travel,sha256:'1'.repeat(64)},badRecord={...f.record,travelReviewEvidence:altered},badEnvelope={...f.envelope,travelReviewEvidence:altered};
+ assert.throws(()=>P.validateBudgetAmendment({...q0,evidence:[altered],budgetAmendmentEvidence:badEnvelope},badRecord,f.anchor,f.report,f.anchor,carry),/13750-degree ceiling/);
+ const twoDots={...q0,ftpTargetRecord:{...q0.ftpTargetRecord,inlineConditioning:{...q0.ftpTargetRecord.inlineConditioning,conditioningDepositCount:2}}};
+ assert.throws(()=>P.validateBudgetAmendment(twoDots,f.record,f.anchor,f.report,f.anchor,carry),/13750-degree ceiling/);
+});
 test('amendment rejects a changed anchor prefix, digest, carryover refund, and missing runtime evidence',()=>{
  const f=amendmentFixture(),next=q(6);next.id='92345678-1234-1234-1234-123456789abc';next.expectedRaw.B=-284;next.expectedDriver.B=-284;next.previousLedgerSha256='e'.repeat(64);next.previousReportEvidence={path:'/prior-report',sha256:'f'.repeat(64)};next.budgetAmendmentEvidence=f.envelope;
  const changed=JSON.parse(JSON.stringify(f.anchor));changed.entries[0].targetB+=1;assert.throws(()=>P.reserve(f.anchor,next,carry,{...f.context,anchorLedger:changed}),/prefix/);
