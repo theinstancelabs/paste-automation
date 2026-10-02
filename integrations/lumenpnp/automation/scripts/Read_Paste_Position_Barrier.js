@@ -16,13 +16,13 @@
  var q=JSON.parse(read(root+'automation/plans/paste-position-barrier-request.json')),jvm=Number(Java.type('java.lang.management.ManagementFactory').getRuntimeMXBean().getStartTime());
  PastePositionBarrier.validate(q,Number(java.lang.System.currentTimeMillis()),jvm);
  var installFile=new F(q.installerEvidence.path);if(!installFile.isFile())throw Error('Installer evidence missing');var installBytes=Fs.readAllBytes(installFile.toPath());if(hash(installBytes)!==q.installerEvidence.sha256)throw Error('Installer evidence changed');var installation=JSON.parse(String(new java.lang.String(installBytes,UTF)));var installerRequest=q;
- if(installation.liveConfigurationAfterSha256!==q.liveConfigurationSha256){
+ if(installation.scope!=='pure-model-state-no-controller-access'&&installation.status!=='completed-native-home-enabled-awaiting-image-review'&&installation.liveConfigurationAfterSha256!==q.liveConfigurationSha256){
   var lineage=q.calibrationXmlEvidence;if(!lineage)throw Error('Explicit calibration XML lineage required');
   function checkedXml(e,expected){if(!e||e.sha256!==expected||typeof e.path!=='string'||e.path.charAt(0)!=='/')throw Error('Exact calibration XML hash required');var data=Fs.readAllBytes(new F(e.path).toPath());if(hash(data)!==expected)throw Error('Calibration XML changed');return String(new java.lang.String(data,UTF));}
   PastePositionBarrier.calibrationXml(checkedXml(lineage.before,installation.liveConfigurationAfterSha256),checkedXml(lineage.after,q.liveConfigurationSha256));
   installerRequest={};Object.keys(q).forEach(function(k){installerRequest[k]=q[k];});installerRequest.liveConfigurationSha256=installation.liveConfigurationAfterSha256;
  }
- PastePositionBarrier.installer(installation,installerRequest);if(installation.installedRegex!==NativePasteAir.nativeErrorRegex)throw Error('Installer pattern differs');
+ PastePositionBarrier.installer(installation,installerRequest);if(installation.scope!=='pure-model-state-no-controller-access'&&installation.status!=='completed-native-home-enabled-awaiting-image-review'&&installation.installedRegex!==NativePasteAir.nativeErrorRegex)throw Error('Installer pattern differs');
  var panel=Java.type('org.openpnp.gui.MainFrame').get().getJobTab(),state=panel.getClass().getDeclaredField('state');state.setAccessible(true);
  if(m.getDrivers().size()!==1)throw Error('Unexpected driver topology');var d=m.getDrivers().get(0);
  if(String(d.getClass().getName())!=='org.openpnp.machine.reference.driver.GcodeDriver'||String(d.getId())!=='DRV16982438146c1dd4')throw Error('Unknown driver');

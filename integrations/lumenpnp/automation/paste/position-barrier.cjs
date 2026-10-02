@@ -6,6 +6,7 @@ function validate(q,now,jvm){
  if(typeof q.id!=='string'||!/^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/.test(q.id))throw Error('Fresh UUID required');
  if(!finite(q.createdMs)||q.createdMs>now||now-q.createdMs>300000||q.jvmStartMs!==jvm)throw Error('Stale/different JVM');
  if(typeof q.operator!=='string'||!q.operator.trim()||q.reviewedReadOnlyQuery!==true)throw Error('Reviewed operator required');
+ if(q.manualHomeAcknowledgement!==true)throw Error('Explicit operator acknowledgement of completed manual home required');
  if(typeof q.liveConfigurationSha256!=='string'||!/^[a-f0-9]{64}$/.test(q.liveConfigurationSha256))throw Error('Exact live configuration hash required');
  if(!q.installerEvidence||typeof q.installerEvidence.path!=='string'||q.installerEvidence.path.charAt(0)!=='/'||!/^[a-f0-9]{64}$/.test(q.installerEvidence.sha256))throw Error('Exact successful installer evidence required');
  ['expectedRaw','expectedDriver'].forEach(function(k){if(!q[k]||Object.keys(q[k]).sort().join(',')!=='A,B,X,Y,Z'||Object.keys(q[k]).some(function(a){return !finite(q[k][a]);}))throw Error('Exact five-axis snapshot required');});
@@ -15,6 +16,13 @@ function validate(q,now,jvm){
  return q;
 }
 function installer(record,q){
+ if(record&&record.scope==='pure-model-state-no-controller-access'){
+  var driver=record.drivers&&record.drivers.length===1?record.drivers[0]:null;
+  var n2=record.nozzles&&record.nozzles.filter(function(n){return n.name==='N2';})[0];
+  if(record.jvmStartMs!==q.jvmStartMs||record.liveConfigurationSha256!==q.liveConfigurationSha256||record.enabled!==true||record.homed!==true||record.busy!==false||record.controllerPoseTrusted!==false||record.motionQueue!==0||record.preRotate!==false||!record.executor||record.executor.shutdown!==false||record.executor.terminated!==false||record.executor.active!==0||record.executor.queued!==0||!driver||driver.connected!==true||driver.readerAlive!==true||driver.error!==null||driver.motionPending!==false||!n2||!n2.manualNozzleTipChangeLocation||n2.manualNozzleTipChangeLocation.initialized!==false||n2.tip!==null||n2.compatible!==0||n2.changer!==false||n2.part!==null)throw Error('Verified same-JVM idle homed model snapshot with N2 quarantine required');
+  if(record.taskOwner&&record.taskOwner.alive===true)throw Error('Model snapshot has active task owner');
+  return;
+ }
  if(record&&record.status==='completed-native-home-enabled-awaiting-image-review'){
   if(!record.request||record.request.jvmStartMs!==q.jvmStartMs||record.liveConfigurationSha256!==q.liveConfigurationSha256||record.request.liveConfigurationSha256!==q.liveConfigurationSha256||record.controllerPositionVerified!==true||record.rotationUnchangedVerified!==true||record.nativeMotionCompletionReported!==true||record.uncertainCompletion!==false||record.diskUnchanged!==true||record.machineEnabled!==true||record.machineHomed!==true)throw Error('Verified same-JVM home configuration required');return;
  }

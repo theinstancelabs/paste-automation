@@ -8,7 +8,7 @@ class SelectedNativeGroupTests(unittest.TestCase):
  def setUp(self):
   self.tmp=tempfile.TemporaryDirectory();self.root=Path(self.tmp.name);self.now=int(time.time()*1000)
   self.session={'sessionId':'unit-session','jvmStartMs':17,'liveConfigurationSha256':'a'*64,'syringeId':'unit-syringe'}
-  self.raw={'X':300.0,'Y':210.0,'Z':58.45,'A':720,'B':-3000}
+  self.raw={'X':300.0,'Y':210.0,'Z':58.45,'A':200,'B':-3000}
   self.template=self.json('template.json',self.session)
   self.barrier=self.json('barrier.json',{'status':'completed-read-only-position-barrier','controllerPositionVerified':True,'noMotionCommandSubmitted':True,'uncertainCompletion':False,'request':{'jvmStartMs':17},'liveConfigurationSha256':'a'*64,'afterQuerySnapshot':{'raw':self.raw}})
   self.stationary=self.file('stationary.png',b'\x89PNG\r\n\x1a\ntest');self.tip=self.file('tip.png',b'\x89PNG\r\n\x1a\ntest')
@@ -77,6 +77,20 @@ class SelectedNativeGroupTests(unittest.TestCase):
    '--output','x','--template','t','--barrier','b','--stationary-image','s','--tip-image','i','--registration','r','--target-base','tb',
    '--profile-base','p','--tip-offset','o','--previous-report','pr','--ledger','l','--scrap-experiment','e','--surface','sf','--reports','rp',
    '--refs','R1','--prime-x','1','--prime-y','2','--dummy-x','3','--dummy-y','4','--reviewer','xx','--review','a'*60]).dwell_milliseconds,1000)
+ def test_R3_conditioning6_recipe_budget_and_legacy_defaults(self):
+  exp=dict(json.loads(self.experiment.read_text()),retractDegrees=3)
+  _,prefix,_,accounting=M.conditioning_prefix(exp,self.raw,json.loads(self.profile.read_text()),M.evidence(self.stationary),300,210,302.5,211,6)
+  budget=M.route_gross(1,accounting['grossCommandedDegrees'],dose=6,retract=3)
+  self.assertEqual(budget,{'conditioningGrossDegrees':89,'selectedPadsGrossDegrees':24,'idleReliefGrossDegrees':40,'grossDegrees':153})
+  self.assertEqual(M.route_gross(1,102,dose=12,retract=2)['grossDegrees'],174)
+  parser=M.make_parser()
+  self.assertEqual(parser.parse_args(['--conditioning-dose-degrees','6','--retract-degrees','3',
+   '--output','x','--template','t','--barrier','b','--stationary-image','s','--tip-image','i','--registration','r','--target-base','tb',
+   '--profile-base','p','--tip-offset','o','--previous-report','pr','--ledger','l','--scrap-experiment','e','--surface','sf','--reports','rp',
+   '--refs','R1','--prime-x','1','--prime-y','2','--dummy-x','3','--dummy-y','4','--reviewer','xx','--review','a'*60]).conditioning_dose_degrees,6)
+  self.assertEqual(M.make_parser().parse_args(['--output','x','--template','t','--barrier','b','--stationary-image','s','--tip-image','i','--registration','r','--target-base','tb',
+   '--profile-base','p','--tip-offset','o','--previous-report','pr','--ledger','l','--scrap-experiment','e','--surface','sf','--reports','rp',
+   '--refs','R1','--prime-x','1','--prime-y','2','--dummy-x','3','--dummy-y','4','--reviewer','xx','--review','a'*60]).conditioning_dose_degrees,20)
  def test_no_historical_control_fallback_and_report_provenance(self):
   bad=dict(self.report_map);bad.pop('R16.1');self.reports=self.json('reports-missing-control.json',bad)
   with self.assertRaisesRegex(ValueError,'all current controls|all controls'):M.build_inputs(self.args(),self.now)

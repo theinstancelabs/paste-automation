@@ -137,6 +137,7 @@ def build(args):
     gross=sum(abs(b['B']-a['B']) for a,b in zip(route,route[1:]));recipe={'mode':'wet','stages':stages,'rawBounds':bounds,'headClearanceBounds':heads,'xyClearanceRawZ':clear,'clearanceReviewEvidence':re,'profileEvidence':ev(pp),'previousReportEvidence':ev(prevp),'previousLedgerPath':str(lp),'targetSurface':'ftp-selected-pads','ftpTargetEvidence':ev(tpout),'sourceTargetEvidence':ev(tp0),'bAccounting':{'initialB':raw['B'],'finalB':route[-1]['B'],'grossChargedDegrees':gross,'netDegrees':route[-1]['B']-raw['B'],'conditioningGrossDegrees':prep_accounting['grossCommandedDegrees'],'selectedPadCount':len(pads)}}
     rpout=out/'recipe.json';rpout.write_text(json.dumps(recipe,indent=2,allow_nan=False)+'\n');nativeout=out/'native';cmd=[sys.executable,str(GENERIC),'prepare','--template',str(tp),'--barrier',str(bp),'--image',str(image),'--recipe',str(rpout),'--output',str(nativeout)]
     if getattr(args,'application_restart_evidence',None):cmd.extend(['--application-restart-evidence',str(Path(args.application_restart_evidence).resolve(strict=True))])
+    if getattr(args,'manual_home_ledger_anchor_evidence',None):cmd.extend(['--manual-home-ledger-anchor-evidence',str(Path(args.manual_home_ledger_anchor_evidence).resolve(strict=True))])
     try:result=subprocess.run(cmd,check=True,text=True,capture_output=True)
     except subprocess.CalledProcessError as exc:fail('Generic offline native validator rejected selected route: '+(exc.stderr or exc.stdout).strip())
     for path,b in snaps.items():
@@ -148,6 +149,7 @@ def main():
  p=argparse.ArgumentParser(description=__doc__)
  for name in ('template','barrier','target-record','experiment','profile','clearance-review','image','previous-report','ledger','output'):p.add_argument('--'+name,required=True)
  p.add_argument('--application-restart-evidence',help='explicit continuity proof when resuming across an application restart')
+ p.add_argument('--manual-home-ledger-anchor-evidence',help='narrow reviewed manual-home ledger continuity evidence')
  p.add_argument('--xy-clearance-raw-z',type=float,required=True);a=p.parse_args()
  try:build(a)
  except Exception as exc:p.error(str(exc))

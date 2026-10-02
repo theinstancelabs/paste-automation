@@ -27,6 +27,7 @@ def node_previous(report,ledger,ledger_sha,captured_ms):
 def node_validate(q,preview,now=None):
  js="const P=require(process.argv[1]);const q=JSON.parse(require('fs').readFileSync(0,'utf8'));P.validateBatch(q,Date.now(),q.jvmStartMs,"+("true" if preview else "false")+");"
  js+="if(q.applicationRestartEvidence){const C=require(require('path').join(require('path').dirname(process.argv[1]),'application-restart-continuity.cjs')),fs=require('fs'),crypto=require('crypto');const read=(e,json)=>{const b=fs.readFileSync(e.path);if(crypto.createHash('sha256').update(b).digest('hex')!==e.sha256)throw Error('continuity evidence hash mismatch');return json?JSON.parse(b):null;};C.validate(read(q.applicationRestartEvidence,true),q,read,Date.now());}"
+ js+="if(q.manualHomeLedgerAnchorEvidence){const C=require(require('path').join(require('path').dirname(process.argv[1]),'manual-home-ledger-anchor.cjs')),fs=require('fs'),crypto=require('crypto');const read=(e,json)=>{const b=fs.readFileSync(e.path);if(crypto.createHash('sha256').update(b).digest('hex')!==e.sha256)throw Error('manual-home evidence hash mismatch');return json?JSON.parse(b):b.toString('utf8');};C.validate(read(q.manualHomeLedgerAnchorEvidence,true),q,read,Date.now());}"
  js+="const F=require(require('path').join(require('path').dirname(process.argv[1]),'ftp-two-pad.cjs'));if(F.isFtp(q))F.verifySources(q,(e,json)=>{const b=require('fs').readFileSync(e.path);if(require('crypto').createHash('sha256').update(b).digest('hex')!==e.sha256)throw Error('FTP source hash changed');return json?JSON.parse(b):null;});"
  try: subprocess.run(['node','-e',js,str(POLICY)],input=json.dumps(q),text=True,check=True,capture_output=True)
  except subprocess.CalledProcessError as e: err('Installed Node validateBatch rejected request: '+(e.stderr or e.stdout).strip())
@@ -58,7 +59,11 @@ def prepare(args):
  except Exception: err('Barrier lacks a valid finishedAt timestamp')
  if bdone>now or now-bdone>300000: err('Barrier must be no more than five minutes old')
  reqb=required_dict(barrier,'request'); snap=required_dict(barrier,'afterQuerySnapshot')
- if reqb.get('jvmStartMs')!=base.get('jvmStartMs') or barrier.get('liveConfigurationSha256')!=base.get('liveConfigurationSha256'): err('Barrier JVM/configuration differs from immutable template session')
+ manual_ref=evidence(args.manual_home_ledger_anchor_evidence) if getattr(args,'manual_home_ledger_anchor_evidence',None) else None
+ manual_record=read(manual_ref['path'])[0] if manual_ref else None
+ current_jvm=reqb.get('jvmStartMs'); current_config=barrier.get('liveConfigurationSha256')
+ if (current_jvm!=base.get('jvmStartMs') or current_config!=base.get('liveConfigurationSha256')) and not (manual_record and manual_record.get('scope')=='manual-home-ledger-anchor-continuity' and manual_record.get('sessionId')==base.get('sessionId') and manual_record.get('currentJvmStartMs')==current_jvm and manual_record.get('currentConfigurationSha256')==current_config and manual_record.get('currentBarrierEvidence')==evidence(bp2)):
+  err('Barrier JVM/configuration differs from immutable template; exact manual-home ledger continuity required')
  raw=snap.get('raw'); driver=snap.get('driver'); poses=snap.get('nativePoses')
  if not all(isinstance(x,dict) for x in (raw,driver,poses)) or set(raw)!={'X','Y','Z','A','B'} or set(driver)!=set(raw) or set(poses)!={'N1','N2','top','bottom'}: err('Barrier lacks complete five-axis and four-pose snapshot')
  mode=recipe.get('mode')
@@ -71,7 +76,7 @@ def prepare(args):
  if not isinstance(zrange,list) or len(zrange)!=2 or zrange!=[bounds.get('Z',{}).get('min'),bounds.get('Z',{}).get('max')]: err('Reviewed clearance Z range must exactly match raw Z bounds')
  if not isinstance(review.get('reviewedMs'),(int,float)) or review['reviewedMs']<captured or review['reviewedMs']>now or now-review['reviewedMs']>300000: err('Clearance review timestamp must follow image capture and be current')
  if profile.get('provenance')!='commissioning-provisional' or profile.get('precisionCalibrated') is not False or profile.get('flowCalibrated') is not False: err('Profile must remain explicitly provisional and uncalibrated')
- if profile.get('sessionId')!=base.get('sessionId') or profile.get('jvmStartMs')!=base.get('jvmStartMs') or profile.get('liveConfigurationSha256')!=base.get('liveConfigurationSha256'): err('Profile session/configuration identity mismatch')
+ if profile.get('sessionId')!=base.get('sessionId') or profile.get('jvmStartMs')!=current_jvm or profile.get('liveConfigurationSha256')!=current_config: err('Profile must bind the current barrier session/configuration; old registration/profile cannot carry forward')
  pr=required_dict(profile,'rawPose')
  for k in ('X','Y','Z','A'):
   if not isinstance(pr.get(k),(int,float)) or not math.isclose(pr[k],raw[k],abs_tol=1e-4): err(f'Profile does not match barrier {k}')
@@ -98,9 +103,14 @@ def prepare(args):
  out.mkdir(parents=True,exist_ok=False)
  stop=str(out/'cooperative-stop.requested')
  receiving={'provenance':profile['provenance'],'precisionCalibrated':False,'flowCalibrated':False,'sha256':profile_ev['sha256'],'estimatedGapMm':profile['estimatedGapMm'],'gapUncertaintyMm':profile['gapUncertaintyMm'],'basis':profile['basis'],'rawPose':pr}
- q={'schema':1,'scope':'contiguous-native-scrap-batch-preview','enabled':False,'mode':mode,'stopPath':stop,'id':ident,'sessionId':base['sessionId'],'jvmStartMs':base['jvmStartMs'],'createdMs':now,'imageCapturedMs':captured,'reviewedImageMs':int(review['reviewedMs']),'liveConfigurationSha256':barrier['liveConfigurationSha256'],'expectedRaw':raw,'expectedDriver':driver,'expectedNativePoses':poses,'rawBounds':bounds,'headClearanceBounds':heads,'bothHeadsClearanceReview':True,'clearanceReviewEvidence':clear,'xyClearanceRawZ':recipe['xyClearanceRawZ'],'receivingProfile':receiving,'previewStages':built,'finalTargetRaw':start,
+ q={'schema':1,'scope':'contiguous-native-scrap-batch-preview','enabled':False,'mode':mode,'stopPath':stop,'id':ident,'sessionId':base['sessionId'],'jvmStartMs':current_jvm,'createdMs':now,'imageCapturedMs':captured,'reviewedImageMs':int(review['reviewedMs']),'liveConfigurationSha256':current_config,'expectedRaw':raw,'expectedDriver':driver,'expectedNativePoses':poses,'rawBounds':bounds,'headClearanceBounds':heads,'bothHeadsClearanceReview':True,'clearanceReviewEvidence':clear,'xyClearanceRawZ':recipe['xyClearanceRawZ'],'receivingProfile':receiving,'previewStages':built,'finalTargetRaw':start,
     'evidence':[],'previousReportEvidence':prev,'nativePreviewEvidence':None,'profileEvidence':profile_ev,'barrierEvidence':evidence(bp2),'reviewedImageEvidence':{'path':str(image),'sha256':imgsha},'previousLedgerSha256':hashlib.sha256(lb).hexdigest(),'syringeId':base['syringeId'],'primeLedgerSha256':base['primeLedgerSha256'],'carryoverSha256':base['carryoverSha256'],'budgetAmendmentEvidence':base.get('budgetAmendmentEvidence'),
     'primeLedgerEvidence':sha_evidence(base.get('primeLedgerEvidence'),'template primeLedgerEvidence'),'priorLedgerEvidence':sha_evidence(base.get('priorLedgerEvidence'),'template priorLedgerEvidence'),'carryoverEvidence':sha_evidence(base.get('carryoverEvidence'),'template carryoverEvidence')}
+ manual_anchor_ev=manual_ref
+ if manual_anchor_ev:
+  proof=manual_record
+  if proof.get('currentLedgerEvidence')!={'path':str(lp),'sha256':q['previousLedgerSha256']} or proof.get('latestTerminalReportEvidence')!=prev: err('Manual-home continuity must bind exact current ledger and latest terminal report')
+  q['manualHomeLedgerAnchorEvidence']=manual_anchor_ev
  restart_ev=None
  if getattr(args,'application_restart_evidence',None):
   restart_ev,restart_summary=restart_binding(args.application_restart_evidence,base.get('sessionId'),barrier.get('liveConfigurationSha256'),reqb.get('jvmStartMs'))
@@ -108,14 +118,19 @@ def prepare(args):
  amendment=q.get('budgetAmendmentEvidence')
  if amendment and amendment.get('anchorReportEvidence'):
   amendment_record,_,_=read(amendment['path']); anchor_report,_,_=read(amendment_record['anchorReportEvidence']['path']); anchor_jvm=anchor_report.get('request',{}).get('jvmStartMs')
-  if anchor_jvm!=q['jvmStartMs'] and (not q.get('applicationRestartEvidence') or anchor_jvm not in q['applicationRestartEvidence']['allowedJvmStartMs']): err('A prior-JVM amendment anchor requires explicit application-restart evidence')
+  if anchor_jvm!=q['jvmStartMs'] and (not q.get('applicationRestartEvidence') or anchor_jvm not in q['applicationRestartEvidence']['allowedJvmStartMs']):
+   linked=False
+   if manual_anchor_ev:
+    proof,_,_=read(manual_anchor_ev['path'])
+    linked=any(a.get('ledgerEvidence')==amendment_record.get('anchorLedgerEvidence') and a.get('reportEvidence')==amendment_record.get('anchorReportEvidence') for a in proof.get('historicalAnchorReports',[]))
+   if not linked: err('A prior-JVM amendment anchor requires exact ledger-prefix continuity evidence')
  if recipe.get('targetSurface')=='scrap-sequence-comparison':
   q.update(scope='contiguous-native-scrap-sequence-comparison-preview',targetSurface='scrap-sequence-comparison',sequenceProtocol=recipe.get('sequenceProtocol'))
  elif recipe.get('targetSurface') in ('cleaned-ftp-demo','scrap-conditioned-ftp-demo','scrap-conditioned-ftp-eight-pad','ftp-one-pad-cleanup','ftp-selected-pads'):
   target_ev=sha_evidence(recipe.get('ftpTargetEvidence'),'ftpTargetEvidence'); target,_,_=read(target_ev['path'])
   q.update(scope='contiguous-native-ftp-one-pad-cleanup-preview' if recipe['targetSurface']=='ftp-one-pad-cleanup' else 'contiguous-native-ftp-selected-pads-preview' if recipe['targetSurface']=='ftp-selected-pads' else 'contiguous-native-ftp-conditioned-eight-pad-preview' if recipe['targetSurface']=='scrap-conditioned-ftp-eight-pad' else 'contiguous-native-ftp-conditioned-two-pad-preview' if recipe['targetSurface']=='scrap-conditioned-ftp-demo' else 'contiguous-native-ftp-two-pad-preview',ftpTargetEvidence=target_ev,ftpTargetRecord=target)
  elif recipe.get('targetSurface') not in (None,'scrap') or 'ftpTargetEvidence' in recipe: err('Explicit supported target surface required')
- q['evidence']=[q[k] for k in ('barrierEvidence','reviewedImageEvidence','profileEvidence','previousReportEvidence','primeLedgerEvidence','priorLedgerEvidence','carryoverEvidence')]+[{'path':str(lp),'sha256':q['previousLedgerSha256']},clear]+([restart_ev] if restart_ev else [])
+ q['evidence']=[q[k] for k in ('barrierEvidence','reviewedImageEvidence','profileEvidence','previousReportEvidence','primeLedgerEvidence','priorLedgerEvidence','carryoverEvidence')]+[{'path':str(lp),'sha256':q['previousLedgerSha256']},clear]+([restart_ev] if restart_ev else [])+([manual_anchor_ev] if manual_anchor_ev else [])
  amendment=q.get('budgetAmendmentEvidence')
  if amendment and amendment.get('newMaximumAbsoluteDegrees') in (3600,8400,11800):
   ceiling=amendment['newMaximumAbsoluteDegrees']
@@ -151,7 +166,7 @@ def finalize(args):
 
 def main():
  p=argparse.ArgumentParser(description=__doc__); sub=p.add_subparsers(dest='cmd',required=True)
- a=sub.add_parser('prepare'); a.add_argument('--template',required=True); a.add_argument('--barrier',required=True); a.add_argument('--image',required=True); a.add_argument('--recipe',required=True); a.add_argument('--output',required=True); a.add_argument('--application-restart-evidence'); a.set_defaults(fn=prepare)
+ a=sub.add_parser('prepare'); a.add_argument('--template',required=True); a.add_argument('--barrier',required=True); a.add_argument('--image',required=True); a.add_argument('--recipe',required=True); a.add_argument('--output',required=True); a.add_argument('--application-restart-evidence'); a.add_argument('--manual-home-ledger-anchor-evidence'); a.set_defaults(fn=prepare)
  b=sub.add_parser('finalize'); b.add_argument('--request',required=True); b.add_argument('--preview',required=True); b.set_defaults(fn=finalize)
  args=p.parse_args()
  try: args.fn(args)

@@ -4,7 +4,7 @@ import argparse,copy,datetime,hashlib,importlib.util,json,subprocess,sys,time
 from pathlib import Path
 HERE=Path(__file__).resolve().parent
 spec=importlib.util.spec_from_file_location('selected_preparer',HERE/'prepare-conditioned-ftp-selected-pads.py');P=importlib.util.module_from_spec(spec);spec.loader.exec_module(P)
-SOURCES=('template','barrier','stationaryImage','tipImage','registration','registrationRevalidation','targetBase','profileBase','tipOffset','previousReport','ledger','scrapExperiment','applicationRestartEvidence')
+SOURCES=('template','barrier','stationaryImage','tipImage','registration','registrationRevalidation','targetBase','profileBase','tipOffset','previousReport','ledger','scrapExperiment','applicationRestartEvidence','manualHomeLedgerAnchorEvidence')
 ATTEST=('boardCleaned','padsAvailable','boardUnmovedSinceRegistration','bothHeadsClearanceReviewed','clearTransitCorridorReviewed','scrapPrimeAndWipeReviewed','tipReviewedNoLongStrand')
 def fail(s):raise ValueError(s)
 def load_hash(e,json_mode=True):
@@ -19,7 +19,7 @@ def derive(q,load,now):
   if not isinstance(q.get(key),str) or len(q[key].strip())<12:fail('Explicit '+key+' required')
  attest=q.get('attestations') or {}
  if any(attest.get(k)is not True for k in ATTEST):fail('Explicit route/cleaning attestations required')
- src=q.get('sources') or {};docs={k:load(src.get(k),k not in ('stationaryImage','tipImage')) for k in SOURCES if k not in ('registrationRevalidation','applicationRestartEvidence') or k in src}
+ src=q.get('sources') or {};docs={k:load(src.get(k),k not in ('stationaryImage','tipImage')) for k in SOURCES if k not in ('registrationRevalidation','applicationRestartEvidence','manualHomeLedgerAnchorEvidence') or k in src}
  raw=(docs['barrier'].get('afterQuerySnapshot') or {}).get('raw')
  if not isinstance(raw,dict) or set(raw)!=set('XYZAB') or q.get('startRaw')!=raw:fail('Explicit startRaw must exactly equal source barrier')
  if docs['barrier'].get('status')!='completed-read-only-position-barrier' or docs['barrier'].get('controllerPositionVerified') is not True or docs['barrier'].get('noMotionCommandSubmitted') is not True or docs['barrier'].get('uncertainCompletion') is not False:fail('Successful read-only barrier required')
@@ -91,6 +91,7 @@ def build(inputs,output):
  src=q['sources'];cmd=[sys.executable,str(HERE/'prepare-conditioned-ftp-selected-pads.py')]
  for k,p in [('template',src['template']['path']),('barrier',src['barrier']['path']),('target-record',tp),('experiment',ep),('profile',pp),('clearance-review',rp),('image',src['stationaryImage']['path']),('previous-report',src['previousReport']['path']),('ledger',src['ledger']['path']),('output',out/'prepared'),('xy-clearance-raw-z',q['xyClearanceRawZ'])]:cmd.extend(['--'+k,str(p)])
  if 'applicationRestartEvidence' in src:cmd.extend(['--application-restart-evidence',src['applicationRestartEvidence']['path']])
+ if 'manualHomeLedgerAnchorEvidence' in src:cmd.extend(['--manual-home-ledger-anchor-evidence',src['manualHomeLedgerAnchorEvidence']['path']])
  try:result=subprocess.run(cmd,check=True,text=True,capture_output=True)
  except subprocess.CalledProcessError as exc:fail('Selected-pad disabled preparer rejected inputs: '+(exc.stderr or exc.stdout or str(exc)).strip())
  for p,b in snap.items():

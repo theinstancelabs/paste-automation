@@ -68,6 +68,58 @@ class PrepareStartupQuarantineRequestTest(unittest.TestCase):
         with self.assertRaises(ValueError):
             MODULE.prepare(self.path, 'Root', 'too short', now_ms=1790886300000)
 
+    def test_explicit_homed_connected_variant_binds_idle_reader_and_current_manual_location(self):
+        value = report(
+            enabled=True, homed=True,
+            drivers=[{'connected': True, 'readerAlive': True, 'error': None,
+                      'motionPending': False}],
+            taskOwner=None, motionQueue=0, preRotate=False,
+            executor={'shutdown': False, 'terminated': False, 'active': 0, 'queued': 0},
+            nozzles=[{'name': 'N2', 'tip': None, 'compatible': 0,
+                      'changer': False, 'part': None,
+                      'manualNozzleTipChangeLocation': {
+                          'initialized': True, 'location': 'X:1.0 Y:2.0 Z:3.0 R:0.0'}}])
+        self.path.write_text(json.dumps(value))
+        q = MODULE.prepare(self.path, 'Root operator',
+                           'Reviewed current connected homed idle state; unset only the N2 manual exclusion location.',
+                           now_ms=1790886300000, request_id='b62bec34-6c6b-4dfd-8b2e-006ad312ce10',
+                           restore_variant=MODULE.HOMED)
+        self.assertTrue(q['expectedHomed'])
+        self.assertTrue(q['expectedDriverConnected'])
+        self.assertEqual(q['expectedManualLocation'], 'X:1.0 Y:2.0 Z:3.0 R:0.0')
+        self.assertEqual(q['restoreVariant'], MODULE.HOMED)
+
+    def test_homed_variant_rejects_any_live_work_or_fault(self):
+        base = report(
+            enabled=True, homed=True,
+            drivers=[{'connected': True, 'readerAlive': True, 'error': None,
+                      'motionPending': False}],
+            taskOwner=None, motionQueue=0, preRotate=False,
+            executor={'shutdown': False, 'terminated': False, 'active': 0, 'queued': 0},
+            nozzles=[{'name': 'N2', 'tip': None, 'compatible': 0,
+                      'changer': False, 'part': None,
+                      'manualNozzleTipChangeLocation': {'initialized': True, 'location': 'old'}}])
+        mutations = [
+            {'drivers': [{'connected': True, 'readerAlive': False, 'error': None, 'motionPending': False}]},
+            {'drivers': [{'connected': True, 'readerAlive': True, 'error': 'fault', 'motionPending': False}]},
+            {'drivers': [{'connected': True, 'readerAlive': True, 'error': None, 'motionPending': True}]},
+            {'motionQueue': 1}, {'executor': {'shutdown': False, 'terminated': False, 'active': 1, 'queued': 0}},
+            {'executor': {'shutdown': False, 'terminated': False, 'active': 0, 'queued': 1}},
+            {'preRotate': True}, {'taskOwner': {'name': 'worker'}},
+            {'nozzles': [{'name': 'N2', 'tip': None, 'compatible': 0, 'changer': False,
+                          'part': None, 'manualNozzleTipChangeLocation': {'initialized': False, 'location': None}}]},
+        ]
+        for mutation in mutations:
+            with self.subTest(mutation=mutation):
+                self.path.unlink(missing_ok=True)
+                candidate = dict(base)
+                candidate.update(mutation)
+                self.path.write_text(json.dumps(candidate))
+                with self.assertRaises(ValueError):
+                    MODULE.prepare(self.path, 'Root operator',
+                                   'Reviewed current connected homed idle state; unset only the N2 manual exclusion location.',
+                                   now_ms=1790886300000, restore_variant=MODULE.HOMED)
+
 
 if __name__ == '__main__':
     unittest.main()
