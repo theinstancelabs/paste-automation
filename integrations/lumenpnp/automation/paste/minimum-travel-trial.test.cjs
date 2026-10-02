@@ -21,6 +21,16 @@ test('shared three-dot 1.5-degree conditioning retract is admitted for the exact
  const bad={batchScope:Group.minimumTravelTrialScope(false),batchId:'test-batch',stageIndex:0,startB:200,targetB:201.5,deltaDegrees:1.5,absoluteDegrees:1.5,status:'reserved',retractionComparisonGroup:1,retractionPercent:30,retractionComparisonRole:'conditioning',controllerStepDelta:7};
  assert.throws(()=>C.validateMinimumTrialLedgerEntry(bad,[]),/reviewed shared/);
 });
+test('minimum-travel ledger separates true conditioner events from legacy generic B stages',()=>{
+ const scope=Group.minimumTravelTrialScope(false),base={batchScope:scope,batchId:'test-batch',stageIndex:0,absoluteDegrees:20,status:'verified',retractionComparisonGroup:1,retractionPercent:20,retractionComparisonRole:'other'};
+ const prime={...base,startB:-4316.05,targetB:-4336.05,deltaDegrees:-20,controllerStepDelta:C.controllerStepCount(-4336.05)-C.controllerStepCount(-4316.05)};
+ assert.equal(C.validateMinimumTrialLedgerEntry(prime,[]),true);
+ const historicalLegacyPrime={...prime,retractionComparisonRole:'conditioning'};
+ assert.equal(C.validateMinimumTrialLedgerEntry(historicalLegacyPrime,[]),true);
+ const requested={...base,absoluteDegrees:1.56,startB:-4380.05,targetB:-4378.49,deltaDegrees:1.56,retractionComparisonRole:'conditioning',controllerStepDelta:C.controllerStepCount(-4378.49)-C.controllerStepCount(-4380.05)};
+ assert.equal(requested.controllerStepDelta,7);assert.equal(C.validateMinimumTrialLedgerEntry(requested,[]),true);
+ const wrongCount={...requested,controllerStepDelta:8};assert.throws(()=>C.validateMinimumTrialLedgerEntry(wrongCount,[]),/controller count mismatch/);
+});
 test('trial scope and four reviewed same-component moves are explicit',()=>{
  const q=trial();assert.equal(Group.isMinimumTravelTrial(q),true);assert.equal(Group.minimumTravelTrialScope(true),q.scope);
  q.ftpTargetRecord.minimumTravelPolicy.plan.transitions[0].xyTravelMm=2;assert.throws(()=>Group.validateMinimumTravelTrial(q));
