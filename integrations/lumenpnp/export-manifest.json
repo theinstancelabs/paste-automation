@@ -2192,6 +2192,20 @@
       "destination": "integrations/lumenpnp/automation/operations/paste-retraction-comparison-20261001.md",
       "sha256": "e55fea9224ccf2a3c4b39ef20bae6f380f0d3f18b9f70e9389218acfa9ee0b6d",
       "bytes": 1106
+    },
+    {
+      "sourceRoot": "/home/lumen/lumenpnp",
+      "sourcePath": "automation/paste/minimum_travel_policy.py",
+      "destination": "integrations/lumenpnp/automation/paste/minimum_travel_policy.py",
+      "sha256": "42a4058ffa54c19adecf1660eb47b4912460d3926ede41ffbc7ed3e8532bd0f4",
+      "bytes": 2651
+    },
+    {
+      "sourceRoot": "/home/lumen/lumenpnp",
+      "sourcePath": "automation/paste/test_minimum_travel_policy.py",
+      "destination": "integrations/lumenpnp/automation/paste/test_minimum_travel_policy.py",
+      "sha256": "af9bf3bdbbd609af6411849add9dae34e9fe8eaad6a3cde1e3259e261a2ad393",
+      "bytes": 1974
     }
   ],
   "manifestSelfHash": "Excluded to avoid a recursive digest; this manifest enumerates every other exported/generated file.",
