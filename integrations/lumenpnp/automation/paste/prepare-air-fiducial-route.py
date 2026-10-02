@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
-"""Prepare an offline, disabled XY fiducial route after manual homing.
+"""Prepare an offline, disabled XY fiducial route after a reviewed home.
 
 Consumes an explicit, hash-bound surface/clearance review and delegates to the
-existing contiguous-batch preparer. It does not author review attestations or
-dispatch motion.
+existing contiguous-batch preparer. A same-session application restart record
+may bridge the prior wet ledger into the newly homed JVM. It does not author
+review attestations or dispatch motion.
 """
 import argparse
 import copy
@@ -27,6 +28,13 @@ CLEARANCE_Z = 32.25
 
 def fail(message):
     raise ValueError(message)
+
+
+def air_identity_template(template):
+    """Copy wet identity/provenance into AIR without its unused wet budget authority."""
+    result = copy.deepcopy(template)
+    result.pop('budgetAmendmentEvidence', None)
+    return result
 
 
 def finite(value):
@@ -55,7 +63,7 @@ def chunks(start, end, limit):
     return [round(start + delta * i / count, 2) for i in range(1, count)] + [round(end, 2)]
 
 
-def route(raw, poses, target_x, target_y, target_z=None):
+def route(raw, poses, target_x, target_y, target_z=None, allow_initial_clearance_lift=False):
     if not isinstance(raw, dict) or set(raw) != set('XYZAB') or any(not finite(raw[k]) for k in 'XYZAB'):
         fail('Barrier raw pose must contain finite X/Y/Z/A/B')
     if not isinstance(poses, dict) or set(poses) != {'N1', 'N2', 'top', 'bottom'}:
@@ -75,8 +83,10 @@ def route(raw, poses, target_x, target_y, target_z=None):
     final_z = CLEARANCE_Z if target_z is None else round(target_z, 2)
     if target_z is not None and abs(target_z * 100 - round(target_z * 100)) > 1e-7:
         fail('Optional final Z must lie on the 0.01 mm coordinate grid')
-    if abs(raw['Z'] - CLEARANCE_Z) > 1e-7 and raw['Z'] < CLEARANCE_Z:
-        fail('Barrier Z is below requested 32.25 mm clearance; automatic lowering is prohibited')
+    if raw['Z'] < CLEARANCE_Z - 1e-7 and (not allow_initial_clearance_lift
+                                          or abs(raw['Z'] - 31.5) > 1e-7
+                                          or final_z < CLEARANCE_Z - 1e-7):
+        fail('Below-clearance start is allowed only for the reviewed 31.50 mm application-restart pose with an initial lift to at least 32.25 mm')
     at = dict(raw)
     stages = []
     route_points = [dict(at)]
@@ -151,6 +161,16 @@ def profile_record(template, barrier, raw, historical_measurement_evidence, clea
     }
 
 
+def restart_record_matches(record, session_id, configuration_sha256, current_jvm_start_ms):
+    transitions = record.get('transitions') if isinstance(record, dict) else None
+    return (record.get('schema') == 1
+            and record.get('scope') == 'same-session-application-restart-continuity'
+            and record.get('sessionId') == session_id
+            and record.get('liveConfigurationSha256') == configuration_sha256
+            and isinstance(transitions, list) and bool(transitions)
+            and transitions[-1].get('newJvmStartMs') == current_jvm_start_ms)
+
+
 def prepare(args):
     template, template_path, template_bytes = load(args.template)
     # Accept either the historical request template or its completed report.
@@ -160,8 +180,12 @@ def prepare(args):
     wet_report, wet_path, wet_bytes = load(args.previous_report)
     ledger, ledger_path, ledger_bytes = load(args.ledger)
     review, review_path, review_bytes = load(args.clearance_review)
-    manual_ev = evidence(args.manual_home_ledger_anchor_evidence)
-    proof, proof_path, proof_bytes = load(manual_ev['path'])
+    manual_path = getattr(args, 'manual_home_ledger_anchor_evidence', None)
+    restart_path_arg = getattr(args, 'application_restart_evidence', None)
+    if bool(manual_path) == bool(restart_path_arg):
+        fail('Supply exactly one manual-home continuity proof or application-restart continuity record')
+    continuity_ev = evidence(manual_path or restart_path_arg)
+    continuity_record, continuity_path, continuity_bytes = load(continuity_ev['path'])
     image_ev = evidence(args.image)
     image = Path(image_ev['path'])
     image_bytes = image.read_bytes()
@@ -189,7 +213,10 @@ def prepare(args):
         fail('Current successful no-motion barrier required')
     raw = snap.get('raw')
     poses = snap.get('nativePoses')
-    stages, points, bounds, heads = route(raw, poses, args.target_x, args.target_y, args.target_z)
+    restart_mode = bool(restart_path_arg)
+    stages, points, bounds, heads = route(
+        raw, poses, args.target_x, args.target_y, args.target_z,
+        allow_initial_clearance_lift=restart_mode)
     z_values = [p['Z'] for p in points]
     if expected_review_range != [min(z_values), max(z_values)]:
         fail('Explicit review rawZRange must exactly cover the route Z envelope')
@@ -204,15 +231,20 @@ def prepare(args):
             or wet_report.get('completedLedgerSha256') != hashlib.sha256(ledger_bytes).hexdigest()
             or wet_report.get('id') != source_request.get('id')):
         fail('Verified wet terminal report and ledger must match the immutable template identities')
-    manual_review = proof
-    if (manual_review.get('scope') not in ('manual-home-ledger-anchor-continuity', 'manual-home-ledger-anchor-continuation')
-            or manual_review.get('sessionId') != template.get('sessionId')
-            or manual_review.get('currentJvmStartMs') != barrier.get('request', {}).get('jvmStartMs')
-            or manual_review.get('currentConfigurationSha256') != barrier.get('liveConfigurationSha256')
-            or manual_review.get('currentBarrierEvidence') != evidence(barrier_path)
-            or manual_review.get('currentLedgerEvidence') != {'path': str(ledger_path), 'sha256': hashlib.sha256(ledger_bytes).hexdigest()}
-            or manual_review.get('latestTerminalReportEvidence') != {'path': str(wet_path), 'sha256': hashlib.sha256(wet_bytes).hexdigest()}):
-        fail('Manual-home continuity proof must bind this exact wet report and ledger')
+    if restart_mode:
+        if not restart_record_matches(continuity_record, template.get('sessionId'),
+                                      barrier.get('liveConfigurationSha256'), req.get('jvmStartMs')):
+            fail('Application-restart continuity must bind this session/configuration and end at the current barrier JVM')
+    else:
+        manual_review = continuity_record
+        if (manual_review.get('scope') not in ('manual-home-ledger-anchor-continuity', 'manual-home-ledger-anchor-continuation')
+                or manual_review.get('sessionId') != template.get('sessionId')
+                or manual_review.get('currentJvmStartMs') != req.get('jvmStartMs')
+                or manual_review.get('currentConfigurationSha256') != barrier.get('liveConfigurationSha256')
+                or manual_review.get('currentBarrierEvidence') != evidence(barrier_path)
+                or manual_review.get('currentLedgerEvidence') != {'path': str(ledger_path), 'sha256': hashlib.sha256(ledger_bytes).hexdigest()}
+                or manual_review.get('latestTerminalReportEvidence') != {'path': str(wet_path), 'sha256': hashlib.sha256(wet_bytes).hexdigest()}):
+            fail('Manual-home continuity proof must bind this exact wet report and ledger')
     profile_evidence = template.get('profileEvidence')
     if not isinstance(profile_evidence, dict) or not isinstance(profile_evidence.get('path'), str):
         fail('Historical template profile evidence is required')
@@ -255,18 +287,24 @@ def prepare(args):
         'previousLedgerPath': str(ledger_path),
     }
     recipe_path = write('recipe.json', recipe)
-    generated_template = write('template.json', template)
+    # The wet template may carry a high-ceiling B-budget amendment anchored
+    # before an application restart. AIR never reserves B budget; preserve the
+    # verified ledger/report identity in the recipe and request, but do not
+    # propagate that wet-only amendment into an AIR request.
+    generated_template = write('template.json', air_identity_template(template))
     prepared = output / 'prepared'
     cmd = [sys.executable, str(PREP), 'prepare', '--template', str(generated_template),
            '--barrier', str(barrier_path), '--image', str(image), '--recipe', str(recipe_path),
-           '--output', str(prepared), '--manual-home-ledger-anchor-evidence', str(proof_path)]
+           '--output', str(prepared)]
+    continuity_flag = '--application-restart-evidence' if restart_mode else '--manual-home-ledger-anchor-evidence'
+    cmd.extend([continuity_flag, str(continuity_path)])
     try:
         result = subprocess.run(cmd, cwd=ROOT, check=True, text=True, capture_output=True)
     except subprocess.CalledProcessError as exc:
         fail('Existing disabled contiguous-batch preparer rejected route: ' + (exc.stderr or exc.stdout or str(exc)).strip())
     for path, before in ((template_path, template_bytes), (barrier_path, barrier_bytes),
                          (wet_path, wet_bytes), (ledger_path, ledger_bytes),
-                         (review_path, review_bytes), (proof_path, proof_bytes),
+                         (review_path, review_bytes), (continuity_path, continuity_bytes),
                          (image, image_bytes), (historical_profile_path, historical_profile_bytes),
                          (measurement_path, measurement_bytes)):
         if path.read_bytes() != before:
@@ -287,7 +325,9 @@ def main():
     p.add_argument('--barrier', required=True, help='current read-only position barrier report')
     p.add_argument('--previous-report', required=True, help='verified current wet terminal report')
     p.add_argument('--ledger', required=True, help='current verified wet ledger')
-    p.add_argument('--manual-home-ledger-anchor-evidence', required=True, help='current manual-home continuity proof')
+    continuity = p.add_mutually_exclusive_group(required=True)
+    continuity.add_argument('--manual-home-ledger-anchor-evidence', help='current manual-home continuity proof')
+    continuity.add_argument('--application-restart-evidence', help='reviewed application-restart continuity record for the current JVM')
     p.add_argument('--image', required=True, help='current reviewed stationary image')
     p.add_argument('--clearance-review', required=True, help='separately authored explicit surface/clearance review JSON')
     p.add_argument('--target-x', required=True, type=float)

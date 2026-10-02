@@ -922,8 +922,8 @@
       "sourceRoot": "/home/lumen/lumenpnp",
       "sourcePath": "automation/paste/prepare-air-fiducial-route.py",
       "destination": "integrations/lumenpnp/automation/paste/prepare-air-fiducial-route.py",
-      "sha256": "cd1d9706b41907e3e262899c77452f2b219b6f2ddd577141527ca15e9db50b43",
-      "bytes": 16366
+      "sha256": "fe2dfda1f8a1aef67d1ec7c8231a12e178ba04f759fb41b81a57a2690cc005ce",
+      "bytes": 18945
     },
     {
       "sourceRoot": "/home/lumen/lumenpnp",
@@ -964,8 +964,8 @@
       "sourceRoot": "/home/lumen/lumenpnp",
       "sourcePath": "automation/paste/prepare-contiguous-batch.py",
       "destination": "integrations/lumenpnp/automation/paste/prepare-contiguous-batch.py",
-      "sha256": "bd88ff92564297a8599f66406db729b39ea6a07d4db5d5a6a86b5030e5a7aa46",
-      "bytes": 21137
+      "sha256": "617570a1c95b78c9c1515510e1881987f72606d7460fe43346966b67e6b32e89",
+      "bytes": 22358
     },
     {
       "sourceRoot": "/home/lumen/lumenpnp",
@@ -1293,8 +1293,8 @@
       "sourceRoot": "/home/lumen/lumenpnp",
       "sourcePath": "automation/paste/test_prepare_air_fiducial_route.py",
       "destination": "integrations/lumenpnp/automation/paste/test_prepare_air_fiducial_route.py",
-      "sha256": "b6ae495a67307f7503a662b7fafcdb462fc7be1cb9b22851e8b90305fd4a73ac",
-      "bytes": 3875
+      "sha256": "d2a366280d73c21f549830884af3c22b5501381928e9483bb764742234f5f756",
+      "bytes": 7927
     },
     {
       "sourceRoot": "/home/lumen/lumenpnp",

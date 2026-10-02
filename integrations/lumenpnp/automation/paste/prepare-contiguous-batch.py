@@ -48,13 +48,23 @@ def sha_evidence(e,label):
  if got['sha256']!=e['sha256']: err(f'{label} SHA-256 mismatch')
  return got
 def restart_binding(path,session_id,config,jvm):
- ref=evidence(path); record,_,_=read(ref['path']); transitions=record.get('transitions')
+ supplied=evidence(path); value,_,_=read(supplied['path'])
+ if isinstance(value,dict) and isinstance(value.get('path'),str) and isinstance(value.get('sha256'),str):
+  ref=sha_evidence(value,'application restart record');record,_,_=read(ref['path'])
+  if value.get('sessionId')!=record.get('sessionId') or value.get('newJvmStartMs')!=jvm or value.get('liveConfigurationSha256')!=config:err('Application-restart reference summary differs from its record')
+ else:ref=supplied;record=value
+ transitions=record.get('transitions')
  if record.get('sessionId')!=session_id or record.get('liveConfigurationSha256')!=config or not isinstance(transitions,list) or not transitions or transitions[-1].get('newJvmStartMs')!=jvm: err('Application-restart evidence must end at the exact current barrier JVM and match session/configuration')
  allowed=[]
  for tr in transitions:
   for value in (tr.get('oldJvmStartMs'),tr.get('newJvmStartMs')):
    if value not in allowed: allowed.append(value)
  return ref,{'sessionId':record['sessionId'],'newJvmStartMs':transitions[-1]['newJvmStartMs'],'liveConfigurationSha256':record['liveConfigurationSha256'],'allowedJvmStartMs':allowed}
+
+def barrier_continuity_allowed(base,current_jvm,current_config,barrier_ref,manual_record,restart_evidence):
+ if current_jvm==base.get('jvmStartMs') and current_config==base.get('liveConfigurationSha256'): return True
+ if restart_evidence: return True
+ return bool(manual_record and manual_record.get('scope') in ('manual-home-ledger-anchor-continuity','manual-home-ledger-anchor-continuation') and manual_record.get('sessionId')==base.get('sessionId') and manual_record.get('currentJvmStartMs')==current_jvm and manual_record.get('currentConfigurationSha256')==current_config and manual_record.get('currentBarrierEvidence')==barrier_ref)
 
 def prepare(args):
  base,bp,_=read(args.template); barrier,bp2,_=read(args.barrier); recipe,rp,_=read(args.recipe)
@@ -69,8 +79,11 @@ def prepare(args):
  manual_ref=evidence(args.manual_home_ledger_anchor_evidence) if getattr(args,'manual_home_ledger_anchor_evidence',None) else None
  manual_record=read(manual_ref['path'])[0] if manual_ref else None
  current_jvm=reqb.get('jvmStartMs'); current_config=barrier.get('liveConfigurationSha256')
- if (current_jvm!=base.get('jvmStartMs') or current_config!=base.get('liveConfigurationSha256')) and not (manual_record and manual_record.get('scope') in ('manual-home-ledger-anchor-continuity','manual-home-ledger-anchor-continuation') and manual_record.get('sessionId')==base.get('sessionId') and manual_record.get('currentJvmStartMs')==current_jvm and manual_record.get('currentConfigurationSha256')==current_config and manual_record.get('currentBarrierEvidence')==evidence(bp2)):
-  err('Barrier JVM/configuration differs from immutable template; exact manual-home ledger continuity required')
+ restart_ev=restart_summary=None
+ if getattr(args,'application_restart_evidence',None):
+  restart_ev,restart_summary=restart_binding(args.application_restart_evidence,base.get('sessionId'),current_config,current_jvm)
+ if not barrier_continuity_allowed(base,current_jvm,current_config,evidence(bp2),manual_record,restart_ev):
+  err('Barrier JVM/configuration differs from immutable template; exact reviewed manual-home or application-restart continuity required')
  raw=snap.get('raw'); driver=snap.get('driver'); poses=snap.get('nativePoses')
  if not all(isinstance(x,dict) for x in (raw,driver,poses)) or set(raw)!={'X','Y','Z','A','B'} or set(driver)!=set(raw) or set(poses)!={'N1','N2','top','bottom'}: err('Barrier lacks complete five-axis and four-pose snapshot')
  mode=recipe.get('mode')
@@ -118,9 +131,7 @@ def prepare(args):
   proof=manual_record
   if proof.get('currentLedgerEvidence')!={'path':str(lp),'sha256':q['previousLedgerSha256']} or proof.get('latestTerminalReportEvidence')!=prev: err('Manual-home continuity must bind exact current ledger and latest terminal report')
   q['manualHomeLedgerAnchorEvidence']=manual_anchor_ev
- restart_ev=None
- if getattr(args,'application_restart_evidence',None):
-  restart_ev,restart_summary=restart_binding(args.application_restart_evidence,base.get('sessionId'),barrier.get('liveConfigurationSha256'),reqb.get('jvmStartMs'))
+ if restart_ev:
   q['applicationRestartEvidence']={**restart_ev,**restart_summary}
  amendment=q.get('budgetAmendmentEvidence')
  if amendment and amendment.get('anchorReportEvidence'):
@@ -130,6 +141,13 @@ def prepare(args):
    if manual_anchor_ev:
     proof,_,_=read(manual_anchor_ev['path'])
     linked=any(a.get('ledgerEvidence')==amendment_record.get('anchorLedgerEvidence') and a.get('reportEvidence')==amendment_record.get('anchorReportEvidence') for a in proof.get('historicalAnchorReports',[]))
+   if not linked and q.get('applicationRestartEvidence'):
+    restart,_,_=read(q['applicationRestartEvidence']['path'])
+    historical=restart.get('historicalBudgetAnchorContinuity',{})
+    proof_ref=historical.get('proofEvidence')
+    if proof_ref:
+     proof,_,_=read(proof_ref['path'])
+     linked=any(a.get('ledgerEvidence')==amendment_record.get('anchorLedgerEvidence') and a.get('reportEvidence')==amendment_record.get('anchorReportEvidence') for a in proof.get('historicalAnchorReports',[]))
    if not linked: err('A prior-JVM amendment anchor requires exact ledger-prefix continuity evidence')
  if recipe.get('targetSurface')=='scrap-sequence-comparison':
   q.update(scope='contiguous-native-scrap-sequence-comparison-preview',targetSurface='scrap-sequence-comparison',sequenceProtocol=recipe.get('sequenceProtocol'))
