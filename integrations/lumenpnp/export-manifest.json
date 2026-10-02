@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "exportDate": "2026-10-01",
+  "exportDate": "2026-10-02",
   "baseCommit": "c497bfbef2f7347538966c129bf7ac7bdc2c1a0f",
   "canonicalSourceRoot": "/home/lumen/lumenpnp",
   "purpose": "Source-only reviewable mirror; no deployment, machine operation, or private machine evidence included.",
@@ -159,8 +159,8 @@
       "sourceRoot": "/home/lumen/lumenpnp",
       "sourcePath": "automation/paste/analysis/native_fiducial_registration.py",
       "destination": "integrations/lumenpnp/automation/paste/analysis/native_fiducial_registration.py",
-      "sha256": "a33437061157e5dc551c588e6ac6175f58f9c4a6d3613be720291b6182f25da3",
-      "bytes": 17174
+      "sha256": "e0121d9690a55df3bf34a473356eb7a27d5693b67746ff9465310dd3110467cb",
+      "bytes": 18680
     },
     {
       "sourceRoot": "/home/lumen/lumenpnp",
@@ -215,8 +215,8 @@
       "sourceRoot": "/home/lumen/lumenpnp",
       "sourcePath": "automation/paste/analysis/test_native_fiducial_registration.py",
       "destination": "integrations/lumenpnp/automation/paste/analysis/test_native_fiducial_registration.py",
-      "sha256": "7f87feee1d50a2b36f8b6b621ecbca0d93a0702be225b86e896539af2639fb7b",
-      "bytes": 10776
+      "sha256": "a69c507175bbb8a82da1c39dbfc70a60ece7c92c48dc84df69c59654928b09b6",
+      "bytes": 12695
     },
     {
       "sourceRoot": "/home/lumen/lumenpnp",
@@ -2276,6 +2276,13 @@
       "destination": "integrations/lumenpnp/automation/tests/java/fast-camera-policy-fixtures.js",
       "sha256": "0be05f8d0753865344dfde84d1a7ea9195f656ad98784b7031f10f80582cc410",
       "bytes": 4997
+    },
+    {
+      "sourceRoot": "/home/lumen/lumenpnp",
+      "sourcePath": "automation/paste/analysis/coarse_fiducial_check.py",
+      "destination": "integrations/lumenpnp/automation/paste/analysis/coarse_fiducial_check.py",
+      "sha256": "557bb119927576cce41768deac1bdb39d7d9aee841500fdced88d57e6e701fc4",
+      "bytes": 2169
     }
   ],
   "manifestSelfHash": "Excluded to avoid a recursive digest; this manifest enumerates every other exported/generated file.",

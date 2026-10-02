@@ -9,6 +9,7 @@ from pathlib import Path
 
 from fiducial_registration import bound, cad, fiducials
 from fresh_ftp_registration import apply, similarity_from_pair, MIN_SCALE, MAX_SCALE, MAX_THIRD_RESIDUAL_MM
+from coarse_fiducial_check import require_bright_disk
 
 REFERENCES = ('FID1', 'FID2', 'FID3')
 MAX_REPORT_AGE_MS = 30 * 60 * 1000
@@ -183,6 +184,7 @@ def analyze(request, now_ms=None):
         if not any(isinstance(k, dict) and pair(k.get('machineXYMm'), 'native keypoint location') == measured and abs(float(k.get('cameraCenterResidualMm', float('nan'))) - residual) <= 1e-6 for k in keypoints):
             raise ValueError(f'{ref} detected location is absent from native keypoints')
         images = report.get('images') or {}
+        coarse_checks = []
         for name in ('raw', 'nativeInput'):
             item = images.get(name)
             if not isinstance(item, dict) or not isinstance(item.get('path'), str) or len(item.get('sha256', '')) != 64:
@@ -193,8 +195,26 @@ def analyze(request, now_ms=None):
             image_sha = hashlib.sha256(image_path.read_bytes()).hexdigest()
             if image_sha != item['sha256']:
                 raise ValueError(f'{ref} source image hash changed')
+            # Native keypoint coordinates belong to the transformed image supplied to
+            # the vision pipeline (`nativeInput`), not necessarily captureRaw(). On
+            # this camera captureRaw() is 180° from captureTransformed(); checking
+            # those coordinates against raw pixels can reject a real disk (or accept
+            # an unrelated feature at the mirrored point).
+            if name == 'nativeInput':
+                from PIL import Image
+                with Image.open(image_path) as image:
+                    for keypoint in keypoints:
+                        pixel = keypoint.get('pixel') if isinstance(keypoint, dict) else None
+                        if (not isinstance(pixel, list) or len(pixel) != 2
+                                or any(type(v) not in (int, float) or not math.isfinite(v) for v in pixel)):
+                            raise ValueError(f'{ref} native keypoint pixel coordinates required for coarse circle check')
+                        check = require_bright_disk(image, pixel, radius_px=40, threshold=100, min_occupancy=.65)
+                        if not check['passes']:
+                            raise ValueError(f'{ref} native keypoint does not overlap a coarse bright circular fiducial mask')
+                        coarse_checks.append({'image': 'nativeInput', 'pixel': pixel, **check})
         samples[ref] = {'designXYMm': design[ref], 'measuredTopCameraXYMm': measured,
                         'nativeFiducialDetection': detection, 'report': prov,
+                        'coarseBrightDiskChecks': coarse_checks,
                         'reportId': report['requestId'], 'finishedAt': report['finishedAt'],
                         'partId': fid['partId'], 'savedJobLocalXYMm': local,
                         'sourceBarrier': barrier_prov}

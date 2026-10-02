@@ -30,8 +30,13 @@ class NativeFiducialRegistrationTests(unittest.TestCase):
             folder = root/ref
             folder.mkdir()
             raw_image, native_image = folder/'top-raw.png', folder/'native-pipeline-input.png'
-            raw_image.write_bytes(b'raw synthetic image '+ref.encode())
-            native_image.write_bytes(b'native synthetic image '+ref.encode())
+            from PIL import Image, ImageDraw
+            image = Image.new('RGB', (240, 300), (5, 5, 5))
+            ImageDraw.Draw(image).ellipse((100+i-45, 200+i-45, 100+i+45, 200+i+45), fill=(20, 170, 240))
+            # Detector pixels are in captureTransformed/native-pipeline space;
+            # captureRaw is 180° oriented on the installed camera.
+            image.rotate(180).save(raw_image)
+            image.save(native_image)
             before = {k: {'model': v, 'driver': v} for k, v in
                       {'X': expected[ref][0], 'Y': expected[ref][1], 'Z': 32.25, 'A': 720, 'B': -2982}.items()}
             detected = [expected[ref][0]+.01, expected[ref][1]-.01]
@@ -153,6 +158,32 @@ class NativeFiducialRegistrationTests(unittest.TestCase):
         bad = request(rejected_ids)
         with self.assertRaisesRegex(ValueError, 'Independent native FID3 check'):
             analyze(bad['request'], now_ms=bad['now'])
+
+    def test_current_static_reports_check_disk_in_native_pipeline_pixel_frame(self):
+        evidence = Path(__file__).resolve().parents[2] / 'evidence'
+        folders = {'FID1': 'native-fiducial-static-1790924184710',
+                   'FID3': 'native-fiducial-static-1790924341712',
+                   'FID2': 'native-fiducial-static-1790924462837'}
+        if any(not (evidence / folder / 'report.json').is_file() for folder in folders.values()):
+            self.skipTest('current static native fiducial reports are unavailable')
+        reports = {}
+        finished = []
+        for ref, folder in folders.items():
+            path = evidence / folder / 'report.json'
+            raw = path.read_bytes(); report = json.loads(raw)
+            reports[ref] = {'path': str(path), 'sha256': hashlib.sha256(raw).hexdigest()}
+            finished.append(report['finishedAt'])
+        now = max(int(__import__('datetime').datetime.fromisoformat(t.replace('Z', '+00:00')).timestamp()*1000)
+                  for t in finished) + 1
+        board_path = Path(__file__).resolve().parents[3] / 'pnp/pcb/ftp/ftp.kicad_pcb'
+        result = analyze({'schema':1,'scope':'native-fiducial-registration-input',
+                          'operator':'orientation regression test','board':str(board_path),
+                          'reports':reports}, now_ms=now)
+        for ref in folders:
+            checks = result['measurements'][ref]['coarseBrightDiskChecks']
+            self.assertEqual(len(checks), 1)
+            self.assertEqual(checks[0]['image'], 'nativeInput')
+            self.assertGreaterEqual(checks[0]['occupancy'], .65)
 
 
 if __name__ == '__main__':
