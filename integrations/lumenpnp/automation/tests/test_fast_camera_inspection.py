@@ -25,9 +25,17 @@ class FastCameraPolicyTests(unittest.TestCase):
   self.assertEqual(builder.report_grid(-10.0049),-10.0)
  def test_existing_global_lock_remains_locked(self):
   module.check_paste_installation_lock(ROOT.parent,'paste-fast-camera-inspection')
+ def test_no_motion_inspection_loader_allowed_under_intact_lock(self):
+  with tempfile.TemporaryDirectory() as td:
+   root=Path(td);p=root/'automation/paste/installation-lock.json';p.parent.mkdir(parents=True);p.write_text('{"schema":1,"locked":true}')
+   module.check_paste_installation_lock(root,'load-fast-camera-inspection')
+   p.write_text('{')
+   with self.assertRaises(RuntimeError):module.check_paste_installation_lock(root,'load-fast-camera-inspection')
  def test_nashorn_policy_uses_synthetic_stubs_only(self):
   with tempfile.TemporaryDirectory() as td:
-   subprocess.run(['javac','-d',td,str(ROOT/'tests/java/EvaluateFastCameraPolicy.java')],check=True,timeout=20)
+   subprocess.run(['javac','-d',td,str(ROOT/'tests/java/EvaluateFastCameraPolicy.java'),str(ROOT/'tests/java/CheckNativeAir.java')],check=True,timeout=20)
    result=subprocess.check_output(['java','-cp',td+':/opt/openpnp/lib/*','EvaluateFastCameraPolicy',str(ROOT/'paste/fast-camera-inspection.cjs'),str(ROOT/'tests/java/fast-camera-policy-fixtures.js')],text=True,timeout=20)
    self.assertIn('synthetic route/lock stubs passed',result)
+   for script in ('Fast_Camera_Inspection.js','Load_Registered_Inspection_Job.js'):
+    subprocess.check_call(['java','-cp',td+':/opt/openpnp/lib/*','CheckNativeAir',str(ROOT/'paste/native-air.cjs'),str(ROOT/'scripts'/script)],timeout=20)
 if __name__=='__main__':unittest.main()

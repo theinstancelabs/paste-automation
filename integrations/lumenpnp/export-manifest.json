@@ -1615,8 +1615,8 @@
       "sourceRoot": "/home/lumen/lumenpnp",
       "sourcePath": "automation/scripts/Automation_Reviewed_Command.js",
       "destination": "integrations/lumenpnp/automation/scripts/Automation_Reviewed_Command.js",
-      "sha256": "06df96599284275fa43e19a54ae4476624dc565611d4530081e545784493e616",
-      "bytes": 7056
+      "sha256": "66de7f3ceb4f7ed7d5562673e68c822745fe3efa5e61c3f22f2202e34dee2f3f",
+      "bytes": 7736
     },
     {
       "sourceRoot": "/home/lumen/lumenpnp",
@@ -1951,8 +1951,8 @@
       "sourceRoot": "/home/lumen/lumenpnp",
       "sourcePath": "automation/scripts/run_reviewed_action.py",
       "destination": "integrations/lumenpnp/automation/scripts/run_reviewed_action.py",
-      "sha256": "5e87f86c9a7dd3b98b8debb274dd12c31d700adc7960e5aac2a67a513485ecd4",
-      "bytes": 20239
+      "sha256": "0c47b1e404070f851d34ea7d1627d9be4412dc15bddba99c85399f47a278706a",
+      "bytes": 20867
     },
     {
       "sourceRoot": "/home/lumen/lumenpnp",
@@ -2225,8 +2225,8 @@
       "sourceRoot": "/home/lumen/lumenpnp",
       "sourcePath": "automation/paste/fast-camera-inspection.cjs",
       "destination": "integrations/lumenpnp/automation/paste/fast-camera-inspection.cjs",
-      "sha256": "cbe96be680d39f98bede10416651c015a8c085fb382df1f750266f40b08f8944",
-      "bytes": 10690
+      "sha256": "7a82adb9e6fdaf1be47ccf9ad12d994dd04b9c2d1b8177475e4ad5935ca14218",
+      "bytes": 10870
     },
     {
       "sourceRoot": "/home/lumen/lumenpnp",
@@ -2260,8 +2260,8 @@
       "sourceRoot": "/home/lumen/lumenpnp",
       "sourcePath": "automation/tests/test_fast_camera_inspection.py",
       "destination": "integrations/lumenpnp/automation/tests/test_fast_camera_inspection.py",
-      "sha256": "99ee5ae2195a8ca6a38907139eaf72f2960479644065925663cc58e4ec8fc312",
-      "bytes": 2753
+      "sha256": "9c892ebae4060b03a656d17d94ca2329d7927c6fc384edf57fd6bfbd57c3fc8a",
+      "bytes": 3498
     },
     {
       "sourceRoot": "/home/lumen/lumenpnp",
@@ -2274,8 +2274,8 @@
       "sourceRoot": "/home/lumen/lumenpnp",
       "sourcePath": "automation/tests/java/fast-camera-policy-fixtures.js",
       "destination": "integrations/lumenpnp/automation/tests/java/fast-camera-policy-fixtures.js",
-      "sha256": "88a509b82d8247ab509da8b6a6d0253eb82c702925f5ef918e241eeba78e969b",
-      "bytes": 4321
+      "sha256": "0be05f8d0753865344dfde84d1a7ea9195f656ad98784b7031f10f80582cc410",
+      "bytes": 4997
     }
   ],
   "manifestSelfHash": "Excluded to avoid a recursive digest; this manifest enumerates every other exported/generated file.",

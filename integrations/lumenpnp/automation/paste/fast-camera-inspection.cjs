@@ -48,9 +48,9 @@ function verifySourceReport(source,q){
  object(snap.nativePoses,'Source native poses');['N1','N2','top','bottom'].forEach(function(n){object(snap.nativePoses[n],n+' source pose');['x','y','z','rotation'].forEach(function(k){close(snap.nativePoses[n][k],q.expectedNativePoses[n][k],0,n+' source '+k);});});return true;
 }
 function verifyStep(q,before,step,model,reported){
- object(before,'Before step');object(model,'After model');object(reported,'After M114');
+ object(before,'Before step');object(model,'After model');object(reported,'After M114');axes(model.raw,'After model raw');axes(model.driver,'After model driver');
  var dx=finite(step.x,'step X')-finite(before.raw.X,'before X'),dy=finite(step.y,'step Y')-finite(before.raw.Y,'before Y');
- close(model.raw.X,step.x,.02,'model X');close(model.raw.Y,step.y,.02,'model Y');close(model.raw.Z,q.expectedRaw.Z,.02,'model Z');close(model.raw.A,q.expectedRaw.A,.3,'model A');close(model.raw.B,q.expectedRaw.B,.3,'model B');
+ close(model.raw.X,step.x,.02,'model X');close(model.raw.Y,step.y,.02,'model Y');close(model.raw.Z,q.expectedRaw.Z,.02,'model Z');close(model.raw.A,q.expectedRaw.A,.3,'model A');close(model.raw.B,q.expectedRaw.B,.3,'model B');Object.keys(model.raw).forEach(function(k){close(model.driver[k],model.raw[k],.0001,'model driver '+k);});
  close(reported.X,step.x,.02,'M114 X');close(reported.Y,step.y,.02,'M114 Y');close(reported.Z,q.expectedRaw.Z,.02,'M114 Z');close(reported.A,q.expectedRaw.A,.3,'M114 A');close(reported.B,q.expectedRaw.B,.3,'M114 B');
  Object.keys(q.expectedNativePoses).forEach(function(n){var a=before.nativePoses[n],b=model.nativePoses[n];object(a,'before '+n);object(b,'after '+n);if(n==='bottom'){close(b.x,a.x,.0001,n+' fixed X');close(b.y,a.y,.0001,n+' fixed Y');}else{close(b.x,a.x+dx,.02,n+' expected X');close(b.y,a.y+dy,.02,n+' expected Y');}close(b.z,a.z,.0001,n+' unchanged Z');close(b.rotation,a.rotation,.0001,n+' unchanged rotation');});return true;
 }
