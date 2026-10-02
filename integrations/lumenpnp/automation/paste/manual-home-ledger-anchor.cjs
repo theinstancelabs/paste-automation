@@ -10,7 +10,7 @@ function sha256(text){var h;if(typeof require==='function'){h=require('crypto').
 function line(lines,label){if(!Array.isArray(lines))fail(label+' responses required');var found=[];lines.forEach(function(s,i){var m=String(s).match(/^X:(-?\d+\.\d+) Y:(-?\d+\.\d+) Z:(-?\d+\.\d+) A:(-?\d+\.\d+) B:(-?\d+\.\d+) Count X:(-?\d+) Y:(-?\d+) Z:(-?\d+) A:(-?\d+) B:(-?\d+)$/);if(m)found.push({index:i,raw:{X:+m[1],Y:+m[2],Z:+m[3],A:+m[4],B:+m[5]},counts:{X:+m[6],Y:+m[7],Z:+m[8],A:+m[9],B:+m[10]}});else if(/[XYZAB]:/.test(String(s)))fail(label+' has malformed M114 line');});if(found.length!==1||!lines.slice(found[0].index+1).some(function(s){return /^ok/.test(String(s));}))fail(label+' requires one full M114 line followed by ACK');return found[0];}
 function close(a,b,label){if(typeof a!=='number'||typeof b!=='number'||!isFinite(a)||!isFinite(b)||Math.abs(a-b)>1e-7)fail(label+' mismatch');}
 function terminal(report,ledger,ledgerHash,label){var last=ledger.entries&&ledger.entries.length?ledger.entries[ledger.entries.length-1]:null,linked=last&&(last.requestId===report.id||last.cycleId===report.id||last.batchId===report.id);if(!report||['completed-partial-batch-ledger-reconciliation-no-motion','completed-pre-dose-batch-reconciliation-no-motion','completed-commissioning-stroke-awaiting-observation','completed-dose-cycle-awaiting-observation','completed-contiguous-batch-awaiting-observation'].indexOf(report.status)<0||report.uncertainCompletion!==false||report.completedLedgerSha256!==ledgerHash||!report.request||report.id!==report.request.id||!last||last.status!=='verified'||!linked)fail(label+' must be the exact terminal report for the verified ledger');}
-function motionContinuation(record,q,read,now){
+function motionContinuation(record,q,read,now,validationContext){
  var c=record.continuationEvidence;if(!isObj(c))fail('Hash-bound manual-home continuation evidence required');
  var baseRef=evidence(c.baselineManualHomeProofEvidence,'original manual-home proof');
  if(q.manualHomeLedgerAnchorEvidence&&baseRef.sha256===q.manualHomeLedgerAnchorEvidence.sha256)fail('Continuation must delegate to a distinct immutable original manual-home proof');
@@ -24,7 +24,7 @@ function motionContinuation(record,q,read,now){
  var reconstructedBytes=JSON.stringify(reconstructed,null,2)+'\n',reconstructedSha=sha256(reconstructedBytes),declaration=c.reconstructedBaseLedger;
  if(!declaration||!same(declaration.sourceLedgerEvidence,currentRef)||declaration.prefixEntryCount!==cut||declaration.sha256!==reconstructedSha||reconstructedSha!==baseLedgerRef.sha256)fail('Original manual-home ledger must reconstruct byte-identically from the verified current ledger prefix');
  function baselineRead(e,json){if(e&&e.path===baseLedgerRef.path&&e.sha256===baseLedgerRef.sha256)return json?reconstructed:reconstructedBytes;return read(e,json);}
- var baseProof=validate(base,baseQ,baselineRead,now),ledger=reconstructed,ledgerHash=baseLedgerRef.sha256,lastReportRef=evidence(base.latestTerminalReportEvidence,'pre-motion terminal report'),lastReport=read(lastReportRef,true);
+ var baseProof=validateInternal(base,baseQ,baselineRead,now,validationContext),ledger=reconstructed,ledgerHash=baseLedgerRef.sha256,lastReportRef=evidence(base.latestTerminalReportEvidence,'pre-motion terminal report'),lastReport=read(lastReportRef,true);
  var originalFresh=read(evidence(base.currentBarrierEvidence,'original same-B barrier'),true),prevLine=line(originalFresh.position&&originalFresh.position.responses,'Original same-B barrier');
  if(baseProof.currentJvmStartMs!==q.jvmStartMs||baseProof.currentConfigurationSha256!==q.liveConfigurationSha256)fail('Continuation cannot cross another JVM or configuration change');
  reports.forEach(function(item,index){
@@ -41,7 +41,7 @@ function motionContinuation(record,q,read,now){
   else {
    var priorRef=evidence(rq.manualHomeLedgerAnchorEvidence,'prior continuation proof'),prior=read(priorRef,true);
    if(!prior||prior.scope!=='manual-home-ledger-anchor-continuation'||!same(prior.continuationEvidence.baselineManualHomeProofEvidence,baseRef))fail('Each later wet report must delegate to a prior continuation anchored to original manual home');
-   var priorResult=validate(prior,rq,read,now),priorReports=prior.continuationEvidence.verifiedBMotionReports;
+   var priorResult=validateInternal(prior,rq,read,now,validationContext),priorReports=prior.continuationEvidence.verifiedBMotionReports;
    if(priorResult.currentLedgerSha256!==ledgerHash||!same(priorResult.currentBarrierEvidence,rq.barrierEvidence)||!same(prior.latestTerminalReportEvidence,rq.previousReportEvidence)||!Array.isArray(priorReports)||priorReports.length!==index)fail('Prior continuation must validate exact ledger, barrier, terminal report and unchanged motion-prefix length');
    for(var pi=0;pi<index;pi++)if(!same(priorReports[pi],reports[pi]))fail('Prior continuation wet-motion prefix drift');
   }
@@ -72,8 +72,17 @@ function motionContinuation(record,q,read,now){
  if(!model||model.scope!=='pure-model-state-no-controller-access'||model.jvmStartMs!==q.jvmStartMs||model.liveConfigurationSha256!==q.liveConfigurationSha256||model.enabled!==true||model.homed!==true||model.busy!==false||model.controllerPoseTrusted!==false||model.motionQueue!==0||!model.executor||model.executor.shutdown!==false||model.executor.terminated!==false||model.executor.active!==0||model.executor.queued!==0||model.taskOwner&&model.taskOwner.alive===true||!d||d.connected!==true||d.readerAlive!==true||d.error!==null||d.motionPending!==false||!n2||!n2.manualNozzleTipChangeLocation||n2.manualNozzleTipChangeLocation.initialized!==false||n2.tip!==null||n2.compatible!==0||n2.changer!==false||n2.part!==null)fail('Continuation barrier model snapshot or N2 quarantine invalid');
  return {scope:'manual-home-ledger-anchor-continuity',sessionId:baseProof.sessionId,syringeId:baseProof.syringeId,currentLedgerSha256:ledgerHash,currentBarrierEvidence:currentBarrierRef,oldJvmStartMs:baseProof.oldJvmStartMs,oldConfigurationSha256:baseProof.oldConfigurationSha256,currentJvmStartMs:q.jvmStartMs,currentConfigurationSha256:q.liveConfigurationSha256,historicalAnchorReports:baseProof.historicalAnchorReports,verifiedBMotionReports:reports.map(function(x){return {reportEvidence:x.reportEvidence,ledgerEvidence:x.ledgerEvidence};})};
 }
-function validate(record,q,read,now){
- if(record&&record.scope==='manual-home-ledger-anchor-continuation'){if(!q||['contiguous-native-scrap-batch','contiguous-native-scrap-batch-preview','contiguous-native-ftp-selected-pads','contiguous-native-ftp-selected-pads-preview','contiguous-native-ftp-selected-pads-up-to-40','contiguous-native-ftp-selected-pads-up-to-40-preview','contiguous-native-ftp-retraction-comparison','contiguous-native-ftp-retraction-comparison-preview','contiguous-native-ftp-minimum-travel-eight-pad','contiguous-native-ftp-minimum-travel-eight-pad-preview'].indexOf(q.scope)<0)fail('Exact scrap or selected-FTP continuation scope required');return motionContinuation(record,q,read,now);}
+function findValidationEntry(entries,record,q,read,now){for(var i=0;i<entries.length;i++){var v=entries[i];if(v.record===record&&v.request===q&&v.reader===read&&v.now===now)return i;}return -1;}
+function validateInternal(record,q,read,now,context){
+ var cached=findValidationEntry(context.cache,record,q,read,now);if(cached>=0)return JSON.parse(JSON.stringify(context.cache[cached].result));
+ if(findValidationEntry(context.active,record,q,read,now)>=0)fail('Manual-home continuation evidence cycle detected');
+ var key={record:record,request:q,reader:read,now:now};context.active.push(key);var result;
+ try{result=validateRecord(record,q,read,now,context);}catch(ex){context.active.pop();throw ex;}
+ context.active.pop();context.cache.push({record:record,request:q,reader:read,now:now,result:result});
+ return JSON.parse(JSON.stringify(result));
+}
+function validateRecord(record,q,read,now,validationContext){
+ if(record&&record.scope==='manual-home-ledger-anchor-continuation'){if(!q||['contiguous-native-scrap-batch','contiguous-native-scrap-batch-preview','contiguous-native-ftp-selected-pads','contiguous-native-ftp-selected-pads-preview','contiguous-native-ftp-selected-pads-up-to-40','contiguous-native-ftp-selected-pads-up-to-40-preview','contiguous-native-ftp-retraction-comparison','contiguous-native-ftp-retraction-comparison-preview','contiguous-native-ftp-minimum-travel-eight-pad','contiguous-native-ftp-minimum-travel-eight-pad-preview'].indexOf(q.scope)<0)fail('Exact scrap or selected-FTP continuation scope required');return motionContinuation(record,q,read,now,validationContext);}
  if(!record||record.schema!==1||record.scope!=='manual-home-ledger-anchor-continuity'||!q||['contiguous-native-scrap-batch','contiguous-native-scrap-batch-preview','contiguous-native-ftp-selected-pads','contiguous-native-ftp-selected-pads-preview','contiguous-native-ftp-selected-pads-up-to-40','contiguous-native-ftp-selected-pads-up-to-40-preview','contiguous-native-ftp-retraction-comparison','contiguous-native-ftp-retraction-comparison-preview','contiguous-native-ftp-minimum-travel-eight-pad','contiguous-native-ftp-minimum-travel-eight-pad-preview'].indexOf(q.scope)<0)fail('Exact scrap or selected-FTP batch manual-home scope required');
  if(record.sessionId!==q.sessionId||record.syringeId!==q.syringeId||record.currentJvmStartMs!==q.jvmStartMs||record.currentConfigurationSha256!==q.liveConfigurationSha256)fail('Manual-home proof session/current JVM/configuration differs');
  if(typeof record.reviewedBy!=='string'||!record.reviewedBy.trim()||typeof record.reviewedMs!=='number'||!isFinite(record.reviewedMs)||record.reviewedMs>now||now-record.reviewedMs>86400000)fail('Current named manual-home evidence review required');
@@ -92,5 +101,6 @@ function validate(record,q,read,now){
  if(!anchorReports.length)allowed=[];
  return {scope:record.scope,sessionId:record.sessionId,syringeId:record.syringeId,currentLedgerSha256:ledgerRef.sha256,currentBarrierEvidence:currentRef,oldJvmStartMs:old.request.jvmStartMs,oldConfigurationSha256:old.liveConfigurationSha256,currentJvmStartMs:q.jvmStartMs,currentConfigurationSha256:q.liveConfigurationSha256,historicalAnchorReports:allowed};
 }
+function validate(record,q,read,now){return validateInternal(record,q,read,now,{cache:[],active:[]});}
 var api={validate:validate,line:line,terminal:terminal,close:close};if(typeof module!=='undefined'&&module.exports)module.exports=api;else root.PasteManualHomeLedgerAnchor=api;
 })(this);
