@@ -49,7 +49,7 @@
         number('workZ','Raw work Z — larger = lower (mm)',profile.workZ,55,profile.workZ,0.05);
         var heightMode=new (J('javax.swing.JComboBox'))(Java.to(['gap','raw'],'java.lang.String[]'));heightMode.setSelectedItem(profile.vacuumReference?'gap':'raw');row('Height mode: gap above touch / raw Z',heightMode);
         number('gapMm','Commanded gap above needle touch (mm)',.20,.15,1,.05);
-        var touchButton=null,touchLoaded=false;
+        var touchButton=null,threeTouchButton=null,touchApproachLabel=null,touchLoaded=false;
         controls.add(new (J('javax.swing.JLabel'))('XY/Z travel stays at 100%. No retraction between the two pads.'));
         controls.add(new (J('javax.swing.JLabel'))('Gap mode follows measured needle touch plus relative board slope; it is not precision gap metrology.'));
         var confirm=new (J('javax.swing.JCheckBox'))('I am watching; board is secured, selected pads usable, and motion area is clear.');
@@ -57,16 +57,17 @@
         function selected(){var a=[],values=list.getSelectedValuesList();for(var i=0;i<values.size();i++)a.push(String(values.get(i)));if(!a.length)throw Error('Select at least one resistor');return a;}
         function recipe(){if(busy)throw Error('Wait for the current run to finish');var r={};Object.keys(fields).forEach(function(k){fields[k].commitEdit();r[k]=Number(fields[k].getValue());});r.heightMode=String(heightMode.getSelectedItem());return r;}
         function update(){
-            var c=api?api.calibrationStatus():{ready:false};
-            calibrationLabel.setText((c.alignmentApplied?'XY ready':'XY required')+' | '+(c.needleTouchRecorded?'Needle touch recorded — gap is commanded above this zero':c.vacuumReferenceAvailable?'Relative vacuum plane ready — NEEDLE TOUCH REQUIRED':('Measured gap references: '+(c.zReferences||[]).join(', ')+'; '+(c.zApplied?'Z ready':'Z required'))));
+            var c=api?api.calibrationStatus():{ready:false};var chosen=String(list.getSelectedValue()||''),canRecordTouch=!!(c.lastApproach&&c.lastApproach.ref===chosen&&c.lastApproach.pad==='1');if(touchApproachLabel)touchApproachLabel.setText(canRecordTouch?'Needle approach matches '+chosen+' Pad 1; confirm actual metal contact before recording':'Touch recording locked: use NEEDLE Approach Pad 1 first; Camera buttons move only the camera.');
+            calibrationLabel.setText((c.alignmentApplied?'XY ready':'XY required')+' | '+(c.needleTouchRecorded?'Needle touch recorded — gap is commanded above this zero':c.vacuumReferenceAvailable?'Relative vacuum plane ready — NEEDLE TOUCH REQUIRED':('Touch references: '+(c.touchReferences||[]).join(', ')+' | measured gaps: '+(c.zReferences||[]).join(', ')+'; '+(c.zApplied?'Z ready':'Z required'))));
             if(c.needleTouchRecorded&&!touchLoaded){touchLoaded=true;heightMode.setSelectedItem('gap');if(c.commandedGapMm!==undefined&&c.commandedGapMm!==null)fields.gapMm.setValue(new java.lang.Double(c.commandedGapMm));touchLoaded=true;}if(!c.needleTouchRecorded)touchLoaded=false;
             if(c.workZ!==undefined&&fields.workZ){fields.workZ.getModel().setMaximum(new java.lang.Double(c.workZ));if(Number(fields.workZ.getValue())>c.workZ)fields.workZ.setValue(new java.lang.Double(c.workZ));}
             buttons.forEach(function(b){b.setEnabled(armed&&!busy);});
             dispenseButtons.forEach(function(b){b.setEnabled(armed&&!busy&&c.ready===true);});
             idleButtons.forEach(function(b){b.setEnabled(!busy);});
-            Object.keys(fields).forEach(function(k){fields[k].setEnabled(!busy);});heightMode.setEnabled(!busy);fields.workZ.setEnabled(!busy&&String(heightMode.getSelectedItem())==='raw');fields.gapMm.setEnabled(!busy&&String(heightMode.getSelectedItem())==='gap');if(touchButton)touchButton.setEnabled(armed&&!busy&&c.vacuumReferenceAvailable===true);list.setEnabled(!busy);confirm.setEnabled(!busy);
+            Object.keys(fields).forEach(function(k){fields[k].setEnabled(!busy);});heightMode.setEnabled(!busy);fields.workZ.setEnabled(!busy&&String(heightMode.getSelectedItem())==='raw');fields.gapMm.setEnabled(!busy&&String(heightMode.getSelectedItem())==='gap');if(touchButton)touchButton.setEnabled(armed&&!busy&&canRecordTouch&&c.vacuumReferenceAvailable===true);if(threeTouchButton)threeTouchButton.setEnabled(armed&&!busy&&canRecordTouch);list.setEnabled(!busy);confirm.setEnabled(!busy);
             stateLabel.setText(lastError?'ERROR — '+lastError:(busy?'BUSY — completing controller action':(!armed?'DISARMED — check supervision, then Connect/check controller':(c.ready?'READY — alignment and height recorded':'CALIBRATION REQUIRED — camera controls available; dispense locked'))));
         }
+        list.addListSelectionListener(new (J('javax.swing.event.ListSelectionListener'))({valueChanged:function(){if(api)update();}}));
         heightMode.addActionListener(new (J('java.awt.event.ActionListener'))({actionPerformed:function(){update();}}));
         api=PasteOperator.create(profile,function(event){Swing.invokeLater(new (J('java.lang.Runnable'))({run:function(){if(event.busy!==undefined)busy=!!event.busy;if(event.armed!==undefined){armed=!!event.armed;if(armed)lastError='';}if(event.error){armed=false;lastError=String(event.error);note('STOPPED: '+event.error);}if(event.message)note(event.message);if(event.record)note('Saved: '+event.record);update();}}));});
         function call(fn){try{fn();}catch(e){note('Not run: '+e);}}
@@ -75,7 +76,7 @@
         var connection=row('1. Controller',new (J('javax.swing.JLabel'))(''));
         button(connection,'Connect/check controller',function(){if(!confirm.isSelected())throw Error('First check the supervision / clear-area checkbox');api.arm();note('Checking existing OpenPnP connection; no motion…');},false);
         button(connection,'Board replaced / Reset calibration',function(){api.invalidateCalibration();note('Previous alignment and height invalidated. Recheck R1, R15 and R40.');update();},false);
-        var nav=row('Camera',new (J('javax.swing.JLabel'))('Selected resistor:'));
+        var nav=row('CAMERA ONLY — does not position the needle',new (J('javax.swing.JLabel'))('Selected resistor:'));
         ['1','2','center'].forEach(function(p){button(nav,p==='center'?'Center':'Pad '+p,function(){api.jump(selected()[0],p);},true);});
         var jogStep=new (J('javax.swing.JSpinner'))(new (J('javax.swing.SpinnerNumberModel'))(new java.lang.Double(.1),new java.lang.Double(.01),new java.lang.Double(1),new java.lang.Double(.05)));
         var jog=row('2. Align camera (mm)',jogStep);
@@ -85,8 +86,9 @@
         button(align,'Apply 3-point XY',function(){api.applyAlignment();note('Three-point board alignment applied locally. Now check height.');update();},true);
         var checkZ=new (J('javax.swing.JSpinner'))(new (J('javax.swing.SpinnerNumberModel'))(new java.lang.Double(55),new java.lang.Double(55),new java.lang.Double(profile.rawBounds.Z.max),new java.lang.Double(.05)));
         var height=row('3. Inspect needle at raw Z',checkZ);
-        button(height,'Approach selected Pad 1 (no paste)',function(){checkZ.commitEdit();api.approach(selected()[0],'1',Number(checkZ.getValue()));},true);
+        button(height,'NEEDLE: approach selected Pad 1 (no paste)',function(){checkZ.commitEdit();api.approach(selected()[0],'1',Number(checkZ.getValue()));},true);
         button(height,'Lift both heads to clearance',function(){api.lift();},true);
+        touchApproachLabel=new (J('javax.swing.JLabel'))('Use NEEDLE Approach before recording touch.');controls.add(touchApproachLabel);
         var touchRow=row('Single needle touch-off (after relative vacuum plane)',new (J('javax.swing.JLabel'))(''));
         touchButton=button(touchRow,'Record needle barely touching Pad 1',function(){
             var c=api.calibrationStatus();if(!c.vacuumReferenceAvailable)throw Error('Fresh relative vacuum-plane reference required');
@@ -96,12 +98,20 @@
             api.recordNeedleTouch(selected()[0],'1',desired);heightMode.setSelectedItem('gap');note('Operator needle-touch capture requested. Lift to clearance before dispensing.');
         },true);
         controls.add(new (J('javax.swing.JLabel'))('Vacuum provides relative board slope only. The explicit metal-needle touch establishes the working zero.'));
+        var threeTouch=row('No gauge needed: touch R1 → R15 → R40 Pad 1',new (J('javax.swing.JLabel'))(''));
+        threeTouchButton=button(threeTouch,'Record bare-needle touch at selected reference',function(){
+            var answer=J('javax.swing.JOptionPane').showConfirmDialog(frame,'Confirm the bare METAL needle is barely touching '+selected()[0]+' Pad 1 now. This records the current height; it does not move.','Record one of three needle touches',J('javax.swing.JOptionPane').YES_NO_OPTION);
+            if(answer!==J('javax.swing.JOptionPane').YES_OPTION)return;
+            api.recordNeedleTouchPoint(selected()[0],'1');note('Needle touch captured for '+selected()[0]+'. Lift before moving to the next reference.');
+        },true);
+        button(threeTouch,'Apply 3 needle touches',function(){fields.gapMm.commitEdit();api.applyNeedleTouches(Number(fields.gapMm.getValue()));heightMode.setSelectedItem('gap');note('Three confirmed needle touches applied. Gap is commanded above the touch plane; Lift, then dispense.');update();},true);
+        controls.add(new (J('javax.swing.JLabel'))('After board reset: align XY, record three bare-needle touches, Apply 3 touches, Lift. No vacuum plane or gauge required.'));
         var gap=new (J('javax.swing.JTextField'))(6);gap.setToolTipText('Enter a physically measured gap from 0.1 to 3 mm; no assumed default.');
         var zrecord=row('Measured needle-to-board gap (mm)',gap);
         button(zrecord,'Record measured gap',function(){var entered=String(gap.getText()).trim();if(!entered)throw Error('Enter the gap you physically measured at this position');api.recordZ(selected()[0],Number(entered));gap.setText('');note('Measured gap capture requested for '+selected()[0]);update();},true);
         button(zrecord,'Apply 3-point Z',function(){api.applyZ();heightMode.setSelectedItem('raw');note('Height model applied. Lift to clearance before dispensing.');update();},true);
         controls.add(new (J('javax.swing.JLabel'))('Repeat height measurements at R1, R15, R40. Gap must be physically measured; this is not auto-probing.'));
-        controls.add(new (J('javax.swing.JLabel'))('Start high (raw Z 55); larger Z lowers the needle. Inspect before every lower approach.'));
+        controls.add(new (J('javax.swing.JLabel'))('Use NEEDLE Approach for the tip. Never use OpenPnP Move Nozzle to a placement: its rotation turns the paste gear.'));
         var run=row('4. Dispense',new (J('javax.swing.JLabel'))('Selected group:'));
         button(run,'Both pads',function(){var r=recipe();r.padMode='both';lastPadMode='both';api.dispense(selected(),r);},'dispense');
         button(run,'Pad 1 only',function(){var r=recipe();r.padMode='1';lastPadMode='1';api.dispense(selected(),r);},'dispense');

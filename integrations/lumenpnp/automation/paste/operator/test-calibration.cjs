@@ -23,3 +23,16 @@ assert.throws(()=>P.fitSurface(zs.map(s=>({...s,measuredGap:NaN})),aligned),/fin
 assert.throws(()=>P.fitSurface(zs.map(s=>({...s,rawZ:59})),aligned),/outside/);
 console.log('operator calibration transform, offset, clearance, and invalid-input checks passed');
 const pending={...aligned,heightCalibrationPending:true};const calibrated=P.fitSurface(zs,pending).profile;assert.equal(calibrated.heightCalibrationPending,undefined);assert.equal(calibrated.vacuumReference,undefined);
+
+const touchProfile={...aligned,workZ:60,heightCalibrationPending:true,rawBounds:{...aligned.rawBounds,Z:{min:32.25,max:60}}};
+const touches=Object.keys(touchProfile.pads).map(ref=>({ref,pad:'1',rawZ:57.75+.001*touchProfile.pads[ref]['1'].tipXY[0],operatorConfirmedBarelyTouching:true}));
+const touched=P.fitNeedleTouches(touches,touchProfile).profile;
+assert.equal(touched.needleTouchCalibrated,true);assert.equal(touched.heightCalibrationPending,undefined);assert.equal(touched.vacuumReference,undefined);
+assert(Math.abs(touched.pads.R15['1'].touchRawZ-touched.pads.R1['1'].touchRawZ-.04)<1e-9);
+assert.throws(()=>P.fitNeedleTouches(touches.slice(0,2),touchProfile),/three/);
+assert.throws(()=>P.fitNeedleTouches(touches.map(t=>({...t,operatorConfirmedBarelyTouching:false})),touchProfile),/confirmation/);
+assert.throws(()=>P.fitNeedleTouches(touches.map(t=>({...t,rawZ:60.1})),touchProfile),/55..60/);
+const executable={...touched,safeZ:32.25,travelZ:53.45,rodBudget:{maximumAdditionalGrossDegrees:1000}};
+const touchRecipe={padMode:'1',doseDegrees:6,retractPercent:15,dwellMs:0,retractDwellMs:0,bSpeedFraction:.05,workZ:60,heightMode:'gap',gapMm:.2};
+const touchPlan=P.plan(['R1','R15','R40'],touchRecipe,executable,{X:20,Y:20,Z:32.25,A:200,B:-10},0,0);
+let commandedZ=32.25,index=0;for(const stage of touchPlan.stages){if(stage.axis==='Z')commandedZ=stage.target;if(stage.tag==='dose'){const ref=['R1','R15','R40'][index++];assert.equal(commandedZ,Math.round((touched.pads[ref]['1'].touchRawZ-.2)*100)/100);}}assert.equal(index,3);
