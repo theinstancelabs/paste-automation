@@ -2379,29 +2379,29 @@
       "sourceRoot": "/home/lumen/lumenpnp",
       "sourcePath": "automation/paste/OPERATOR_CONSOLE.md",
       "destination": "integrations/lumenpnp/automation/paste/OPERATOR_CONSOLE.md",
-      "sha256": "e36f6e04a2e5660048df980935d2689271aecfd50cc2ec12f3b282de68cfeb99",
-      "bytes": 7785
+      "sha256": "34d6b090cb72941c93d8eee0e36b8374f6e5b990ff4d340f70fac8278aca277f",
+      "bytes": 8085
     },
     {
       "sourceRoot": "/home/lumen/lumenpnp",
       "sourcePath": "automation/paste/operator-console-native.js",
       "destination": "integrations/lumenpnp/automation/paste/operator-console-native.js",
-      "sha256": "d1f57687968768d14e83ae7d80444ca01f0888bd5b395609a46c0ef6673ec783",
-      "bytes": 55616
+      "sha256": "340065972f5089e7c6bd584eeb1ffcb7651f7fc3ee25f0004c6167bb00bea5dc",
+      "bytes": 55787
     },
     {
       "sourceRoot": "/home/lumen/lumenpnp",
       "sourcePath": "automation/paste/operator-console-policy.cjs",
       "destination": "integrations/lumenpnp/automation/paste/operator-console-policy.cjs",
-      "sha256": "f3b2d441fdeff37c1f46c0f1b39560209e154988651e36fc714f7fd0c8c9224e",
-      "bytes": 18128
+      "sha256": "2995cec93da97707c3bad7ba6fc32ecd9d2ba6ad3c05be9b90103ece1d560a91",
+      "bytes": 18638
     },
     {
       "sourceRoot": "/home/lumen/lumenpnp",
       "sourcePath": "automation/paste/operator/test-policy.cjs",
       "destination": "integrations/lumenpnp/automation/paste/operator/test-policy.cjs",
-      "sha256": "545051b8010f85ec9e2899302d1f4ccba8f1fab4e1bfa066d6a0311ce08a2dbc",
-      "bytes": 7607
+      "sha256": "752f8f790a81152dbebb1abad5d9ac20cc52a7e62b1d29ed7c6877a836e7e9f2",
+      "bytes": 8093
     },
     {
       "sourceRoot": "/home/lumen/lumenpnp",
@@ -2449,8 +2449,8 @@
       "sourceRoot": "/home/lumen/lumenpnp",
       "sourcePath": "automation/paste/operator/test-native-preflight.cjs",
       "destination": "integrations/lumenpnp/automation/paste/operator/test-native-preflight.cjs",
-      "sha256": "7dd833f6d0a12d24117cd75c8b78a7e24d696b7887b71fbf6fef33ed4e58c62a",
-      "bytes": 3427
+      "sha256": "c92880f6adc8d5ec92ff6d2944dc5d6759c3115c5aa12134073f127ac5eccaef",
+      "bytes": 4834
     },
     {
       "sourceRoot": "/home/lumen/lumenpnp",

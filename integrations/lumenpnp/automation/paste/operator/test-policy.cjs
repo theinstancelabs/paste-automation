@@ -82,3 +82,8 @@ console.log('operator policy checks passed');
 assert.throws(()=>P.plan(['R1'],recipe,p,start,0,15.01),/Large relief: purge/);
 assert.throws(()=>P.plan(['R1'],recipe,p,start,0,27),/Large relief: purge/);
 assert(P.plan(['R1'],recipe,p,start,0,0).stages.length>0);
+
+const verifiedB=(from,to,tag,verified=true)=>({axis:'B',startRaw:{B:from},reportedRaw:{B:to},tag,verified});
+assert.equal(P.pendingFromVerifiedStages(1.2,[]),1.2);
+assert.equal(P.pendingFromVerifiedStages(1.2,[verifiedB(10,8.8,'restore-prior-inter-resistor-retract'),verifiedB(8.8,2.8,'dose'),verifiedB(2.8,3.7,'inter-resistor-retract')]),.9);
+assert.equal(P.pendingFromVerifiedStages(1.2,[verifiedB(10,8.8,'restore-prior-inter-resistor-retract'),verifiedB(8.8,2.8,'dose',false)]),0);
