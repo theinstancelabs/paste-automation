@@ -12,3 +12,5 @@ console.log('Actual batch request/profile/STOP/no-replay guard blocks pass');
 valid({...q,mode:'dispense-and-survey',conditioning:{references:['R3'],recipe:{doseDegrees:.25}}});
 assert.throws(()=>valid({...q,mode:'dispense-and-survey',conditioning:{references:['R1'],recipe:{}}}),/overlapping/);
 assert.throws(()=>valid({...q,mode:'dispense-and-survey',conditioning:{references:['R99'],recipe:{}}}),/Unknown/);
+const settle=src.slice(src.indexOf('notStopped();java.lang.Thread.sleep(150);'),src.indexOf('var file=new F(dir,ref'));
+let captures=0,stopped=false;const pose={X:1,Y:2,Z:32.25,A:0,B:0},settleContext={notStopped:()=>{if(stopped)throw Error('STOP');},java:{lang:{Thread:{sleep:ms=>assert.equal(ms,150)}}},before:{raw:pose},api:{status:()=>({raw:pose,busy:false})},m:{isBusy:()=>false},camera:{capture:()=>{captures++;return 'image'+captures;}}};vm.runInNewContext(settle,settleContext);assert.equal(captures,2);assert.equal(settleContext.image,'image2');captures=0;settleContext.api.status=()=>({raw:{...pose,X:2},busy:false});assert.throws(()=>vm.runInNewContext(settle,settleContext),/settle/);assert.equal(captures,0);

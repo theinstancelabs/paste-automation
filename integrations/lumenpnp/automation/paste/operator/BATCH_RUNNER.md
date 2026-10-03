@@ -94,3 +94,16 @@ recipe's push speed and gap but sets conditioning retraction and both waits to z
 Its preview includes gross travel for both groups and pending retraction between
 them. No extrusion occurs during preview; `--execute` dispatches the prepared
 request once through the existing reviewed-action mechanism.
+
+For an explicit per-pad pressure-relief experiment, add recipe
+`"retractEachPad": true`, or CLI `--retract-each-pad`. The default remains false.
+Enabled mode retracts immediately after each dose, before lifting, then restores
+that tracked amount before the next dose (including the other pad of the same
+component). It does not also apply the old end-of-pair retract. Example: four pads
+at 100° with 10% relief consume 470° gross from zero initial pending relief and
+leave 10° pending. This is experimental behavior, not verified deposit quality.
+
+Camera inspection waits 150 ms after a verified jump, checks the machine remains
+idle at the same pose, discards one captured frame, then saves the next frame.
+STOP and unchanged-pose checks surround this capture sequence. This settling is
+only for the survey after dispensing; it never inserts a pause between doses.
