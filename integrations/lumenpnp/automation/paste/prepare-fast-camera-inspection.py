@@ -30,12 +30,25 @@ def file_hash(path):
     path=Path(path).resolve(strict=True)
     return {'path':str(path),'sha256':sha(path)}
 def build(source_path=SOURCE,registration_path=REG,job_path=JOB,references=None,
-          operator='Root',review='',camera_target=None,target_mode='midpoint',now_ms=None,fiducial_sample='base',fiducial_centering_report=None):
+          operator='Root',review='',camera_target=None,target_mode='midpoint',now_ms=None,fiducial_sample='base',fiducial_centering_report=None,replacement_board_recenter=False):
     now_ms=time.time_ns()//1_000_000 if now_ms is None else now_ms
+    if type(replacement_board_recenter) is not bool:fail('Replacement-board recenter flag must be boolean')
+    recenter_limit=.5 if replacement_board_recenter else .2
     source_path=Path(source_path).resolve(strict=True);registration_path=Path(registration_path).resolve(strict=True);job_path=Path(job_path).resolve(strict=True)
-    source=json.loads(source_path.read_text());request=source.get('request',{});snap=source.get('afterQuerySnapshot',{})
+    source=json.loads(source_path.read_text());request=source.get('request',{});snap=source.get('afterQuerySnapshot',{});operator_profile=None
+    if source.get('status')=='completed-awaiting-operator-inspection':
+        pp=ROOT/'automation/plans/paste-operator-profile.json';op=json.loads(pp.read_text())
+        if (source.get('schema')!=1 or not str(source.get('action','')).startswith('camera-jump ') or source.get('error') or source.get('uncertainCompletion') is not False or source.get('transportUncertain') is True or source.get('noReplay') is not True or source.get('controllerQuerySubmitted') is not True or source.get('profileId')!=op.get('id') or source.get('sessionId')!=op.get('sessionId') or source.get('liveConfigurationSha256')!=op.get('liveConfigurationSha256')):fail('Certain profile-bound operator camera report required')
+        snap=source.get('after',{});before=axes_map(source.get('before',{}).get('raw'),'Operator before');terminal=axes_map(snap.get('raw'),'Operator terminal');stages=source.get('stages',[])
+        if not stages or any(st.get('axis') not in ('X','Y') or st.get('verified') is not True or st.get('reportedRaw')!=st.get('targetRaw') or st.get('reportedDriver')!=st.get('targetRaw') for st in stages):fail('Verified camera-only operator stages required')
+        if any(before[k]!=terminal[k] for k in ('Z','A','B')) or stages[-1].get('reportedRaw')!=terminal or request.get('target')!=[terminal['X'],terminal['Y']]:fail('Operator camera endpoint/held axes mismatch')
+        responses=source.get('lastQueryResponses',[])
+        if not responses or not any(str(line).startswith('ok') for line in responses) or not source.get('lastQueryCounts'):fail('Operator terminal controller query counts and ACK required')
+        operator_profile=file_hash(pp)
+        request={'id':source['id'],'jvmStartMs':op['jvmStartMs'],'liveConfigurationSha256':op['liveConfigurationSha256']}
+
     raw=axes_map(snap.get('raw'),'Source raw');driver=axes_map(snap.get('driver'),'Source driver')
-    if (source.get('status') not in TERMINAL_SOURCE_STATUSES or source.get('motionSubmitted') is not True
+    if not operator_profile and (source.get('status') not in TERMINAL_SOURCE_STATUSES or source.get('motionSubmitted') is not True
             or source.get('controllerPositionVerified') is not True or source.get('uncertainCompletion') is not False
             or source.get('transportUncertain') is True or source.get('id')!=request.get('id')):
         fail('Source must be a completed, certain same-session terminal camera report')
@@ -93,7 +106,7 @@ def build(source_path=SOURCE,registration_path=REG,job_path=JOB,references=None,
             base=det.get('detectedMachineXYMm')
             if not isinstance(base,list) or len(base)!=2 or any(type(v) not in (int,float) or not math.isfinite(v) for v in base):fail('Native FID detector machine center required')
             regbase=measurements.get(ref,{}).get('measuredTopCameraXYMm')
-            if not isinstance(regbase,list) or math.dist(base,regbase)>.2:fail('Detected FID center must remain within 0.2 mm of accepted registration')
+            if not isinstance(regbase,list) or math.dist(base,regbase)>recenter_limit:fail(f'Detected FID center must remain within {recenter_limit} mm of navigation seed')
             raw_image=center_report.get('images',{}).get('raw',{});ip=Path(cp.parent/raw_image.get('path','')).resolve(strict=True)
             if ip.parent!=cp.parent or sha(ip)!=raw_image.get('sha256'):fail('Hash-bound raw image must belong to centering report')
             centering_evidence={**file_hash(cp),'id':center_report.get('requestId'),'reference':ref,'detectedMachineXYMm':base,'finishedAt':center_report.get('finishedAt'),'jvmStartMs':jvm,'liveConfigurationSha256':config,'fixedRawZAB':[center_raw[k] for k in ('Z','A','B')],'image':file_hash(ip)}
@@ -137,19 +150,20 @@ def build(source_path=SOURCE,registration_path=REG,job_path=JOB,references=None,
     plan={'schema':1,'scope':'camera-only-registered-fast-inspection','enabled':True,'id':str(uuid.uuid4()),'createdMs':now_ms,'jvmStartMs':jvm,
       'liveConfigurationSha256':config,'mode':mode,'targetMode':target_mode,'operatorReviewed':True,'reviewedBy':operator,'review':review or 'Registered-reference camera-only inspection; all component placements remain disabled.',
       'speedFraction':1.0,'speedOverPrecision':True,'maxSegmentMm':MAX_SEGMENT,'maxTotalTravelMm':MAX_TOTAL,'plannedDistanceMm':round(total,6),
+      'operatorProfile':operator_profile,
       'sourceReport':{**file_hash(source_path),'id':source['id'],'finishedAt':source.get('finishedAt'),'status':source['status']},
       'registration':{**file_hash(registration_path),'scope':reg['scope'],'targets':[{'padId':k,'machineXYMm':v} for k,v in sorted(targets.items()) if any(k.startswith(r+'.') for r in refs)],'fiducials':[{'reference':r,'measuredTopCameraXYMm':reg['measurements'][r]['measuredTopCameraXYMm']} for r in refs if r in reg.get('measurements',{})]},
       'inspectionJob':{'jobPath':str(job_path),'jobSha256':sha(job_path),'boardPath':str(board_path),'boardSha256':sha(board_path)},
       'expectedRaw':raw,'expectedDriver':driver,'expectedNativePoses':poses,'references':refs,'targets':target_list,'routeSteps':steps,
-      'fiducialCenteringReport':centering_evidence,
+      'fiducialCenteringReport':centering_evidence,'replacementBoardRecenter':replacement_board_recenter,
       'fiducialSample':fiducial_sample if mode=='registered-fiducials' else None,
       'completionScope':'Camera frames and XY position reports only; no paste, calibration, or placement acceptance.'}
     return plan
 
 def main():
- p=argparse.ArgumentParser(description=__doc__);p.add_argument('--source-report',type=Path,default=SOURCE);p.add_argument('--registration',type=Path,default=REG);p.add_argument('--inspection-job',type=Path,default=JOB);p.add_argument('--references',help='Comma-separated registered references (R1–R40), or native measured FID1,FID2,FID3 targets');p.add_argument('--camera-target',help='Only exact reviewed scratch coordinate 310,232.27');p.add_argument('--target-mode',choices=('midpoint','pad1','pad2'),default='midpoint',help='Registered resistor target: midpoint (default), pad1 or pad2 center');p.add_argument('--fiducial-sample',choices=('base','xplus','yplus'),default='base',help='For one registered FID only: base, +1 mm X, or +1 mm Y camera sample');p.add_argument('--fiducial-centering-report',type=Path,help='Completed native FID detector report to use as the measured center (within 0.2 mm of registration)');p.add_argument('--operator',default='Root');p.add_argument('--review',default='');p.add_argument('--output',type=Path,required=True);a=p.parse_args()
+ p=argparse.ArgumentParser(description=__doc__);p.add_argument('--source-report',type=Path,default=SOURCE);p.add_argument('--registration',type=Path,default=REG);p.add_argument('--inspection-job',type=Path,default=JOB);p.add_argument('--references',help='Comma-separated registered references (R1–R40), or native measured FID1,FID2,FID3 targets');p.add_argument('--camera-target',help='Only exact reviewed scratch coordinate 310,232.27');p.add_argument('--target-mode',choices=('midpoint','pad1','pad2'),default='midpoint',help='Registered resistor target: midpoint (default), pad1 or pad2 center');p.add_argument('--fiducial-sample',choices=('base','xplus','yplus'),default='base',help='For one registered FID only: base, +1 mm X, or +1 mm Y camera sample');p.add_argument('--fiducial-centering-report',type=Path,help='Completed native FID detector report to use as the measured center (within 0.2 mm of registration)');p.add_argument('--replacement-board-recenter',action='store_true',help='Explicit replacement-board reacquisition: allow detected FID center up to 0.5 mm from historical navigation seed (default 0.2 mm)');p.add_argument('--operator',default='Root');p.add_argument('--review',default='');p.add_argument('--output',type=Path,required=True);a=p.parse_args()
  refs=[x.strip() for x in a.references.split(',') if x.strip()] if a.references else None
  target=tuple(map(float,a.camera_target.split(','))) if a.camera_target else None
- result=build(a.source_report,a.registration,a.inspection_job,refs,a.operator,a.review,target,a.target_mode,fiducial_sample=a.fiducial_sample,fiducial_centering_report=a.fiducial_centering_report)
+ result=build(a.source_report,a.registration,a.inspection_job,refs,a.operator,a.review,target,a.target_mode,fiducial_sample=a.fiducial_sample,fiducial_centering_report=a.fiducial_centering_report,replacement_board_recenter=a.replacement_board_recenter)
  a.output.parent.mkdir(parents=True,exist_ok=True);a.output.write_text(json.dumps(result,indent=2)+'\n');print(json.dumps({'output':str(a.output),'id':result['id'],'mode':result['mode'],'references':result['references'],'waypoints':len(result['routeSteps']),'distanceMm':result['plannedDistanceMm']},indent=2))
 if __name__=='__main__':main()

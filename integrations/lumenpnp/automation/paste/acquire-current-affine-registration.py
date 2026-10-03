@@ -54,13 +54,17 @@ def wait_report(p: Path, timeout=75):
         time.sleep(.15)
     raise TimeoutError(f'No terminal report; inspect before any retry: {p}')
 
+REPLACEMENT_BOARD_RECENTER=False
+
 def dispatch_survey(source: Path, outdir: Path, label: str, ref: str, *,
-                    sample=None, center_report=None, target_mode=None, registration=REG):
+                    sample=None, center_report=None, target_mode=None, registration=None):
+    registration = registration or REG
     plan=outdir/f'{label}-request.json'
     cmd=['python3',PREP,'--source-report',source,'--registration',registration,'--inspection-job',JOB,
          '--references',ref,'--review',REVIEW,'--output',plan]
     if sample: cmd += ['--fiducial-sample',sample]
     if center_report: cmd += ['--fiducial-centering-report',center_report]
+    if REPLACEMENT_BOARD_RECENTER: cmd += ['--replacement-board-recenter']
     if target_mode: cmd += ['--target-mode',target_mode]
     run(cmd); q=json.loads(plan.read_text())
     (ROOT/'automation/plans/fast-camera-inspection-request.json').write_bytes(plan.read_bytes())
@@ -148,13 +152,15 @@ def validate_heldout_registration(path, jvm, config):
     return {'path':str(path),'sha256':sha(path),'scope':value['scope'],'acceptancePassed':True}
 
 def main():
-    global HELDOUT_PAD3
+    global HELDOUT_PAD3, REG, REPLACEMENT_BOARD_RECENTER
     ap=argparse.ArgumentParser(description=__doc__)
     ap.add_argument('--source',type=Path,required=True,help='Fresh completed current-JVM AIR survey report at FID2')
     ap.add_argument('--heldout-registration',type=Path,help='Accepted affine registration used only for held-out pad targets; FID requests retain historical native registration')
     ap.add_argument('--heldout-pads',default='R1.2,R16.1,R40.1',help='Exactly R1.2,R16.1,R40.1 (default) or R1.2,R16.1,R24.1 when R40.1 is unsuitable')
+    ap.add_argument('--approximation-registration',type=Path,default=REG,help='Accepted historical registration used only for approximate navigation')
+    ap.add_argument('--replacement-board-recenter',action='store_true',help='Allow up to 0.5 mm historical-seed offset only during replacement-board reacquisition')
     ap.add_argument('--output',type=Path,required=True,help='New empty directory for acquisition manifest')
-    a=ap.parse_args(); source=a.source.resolve(strict=True); out=a.output.resolve(); heldout_ids=[v.strip() for v in a.heldout_pads.split(',')]
+    a=ap.parse_args(); REPLACEMENT_BOARD_RECENTER=a.replacement_board_recenter; REG=a.approximation_registration.resolve(strict=True); source=a.source.resolve(strict=True); out=a.output.resolve(); heldout_ids=[v.strip() for v in a.heldout_pads.split(',')]
     if heldout_ids not in (['R1.2','R16.1','R40.1'],['R1.2','R16.1','R24.1']):
         raise ValueError('--heldout-pads must be exactly R1.2,R16.1,R40.1 or R1.2,R16.1,R24.1 in that order')
     HELDOUT_PAD3=heldout_ids[2]

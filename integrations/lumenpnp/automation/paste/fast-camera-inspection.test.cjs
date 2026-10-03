@@ -18,3 +18,14 @@ assert.throws(()=>F.verifyCalibrationReport(fixture(),'FID2'));
 var reference=fixture();reference.request.mode='registered-references';reference.request.references=['R1'];reference.request.targets=[{reference:'R1',x:100.1,y:200,pads:[{padId:'R1.1',x:99.2,y:200},{padId:'R1.2',x:100.1,y:200}]}];reference.request.routeSteps[0].captureReferences=['R1'];reference.frames[0].reference='R1';assert.strictEqual(F.verifyCalibrationReport(reference,'R1'),true);
 var duplicateReference=fixture();duplicateReference.request.mode='registered-references';duplicateReference.request.references=['R1'];duplicateReference.request.targets=[{reference:'R1',x:100.1,y:200,pads:[{padId:'R1.1',x:99.2,y:200},{padId:'R1.1',x:100.1,y:200}]}];duplicateReference.request.routeSteps[0].captureReferences=['R1'];assert.throws(()=>F.verifyCalibrationReport(duplicateReference,'R1'));
 console.log('fast-camera-inspection.test.cjs: passed');
+// Operator UI records retain their native schema; their separate hash-bound
+// profile supplies session/JVM identity, never a rewritten legacy report.
+function operatorFixture(){
+ const f=fixture(),op={id:H,sessionId:'session',jvmStartMs:1,liveConfigurationSha256:H};
+ const source={schema:1,id:f.id,status:'completed-awaiting-operator-inspection',action:'camera-jump R1.center',profileId:H,sessionId:'session',liveConfigurationSha256:H,uncertainCompletion:false,noReplay:true,motionSubmitted:true,controllerQuerySubmitted:true,before:f.beforeQuerySnapshot,after:f.afterQuerySnapshot,request:{target:[100.1,200]},lastQueryResponses:['ok'],lastQueryCounts:{X:1},stages:[{axis:'X',speedFraction:1,verified:true,startRaw:f.beforeReported,targetRaw:f.afterReported,reportedRaw:f.afterReported,reportedDriver:f.afterReported}]};
+ const q={sourceReport:{id:f.id},operatorProfile:{sha256:H},jvmStartMs:1,liveConfigurationSha256:H,expectedRaw:f.afterReported,expectedDriver:f.afterReported,expectedNativePoses:f.afterQuerySnapshot.nativePoses};
+ return JSON.parse(JSON.stringify({source,q,op}));
+}
+{const {source,q,op}=operatorFixture();assert.equal(F.verifySourceReport(source,q,op),true);}
+for(const mutate of [x=>x.op.jvmStartMs++,x=>x.source.stages[0].axis='B',x=>x.source.stages[0].verified=false,x=>x.source.stages[0].startRaw.X++,x=>x.source.after.raw.B++,x=>x.source.request.target[0]++,x=>x.source.lastQueryResponses=[],x=>x.source.uncertainCompletion=true]){const x=operatorFixture();mutate(x);assert.throws(()=>F.verifySourceReport(x.source,x.q,x.op));}
+console.log('operator camera terminal-source regressions: passed');
