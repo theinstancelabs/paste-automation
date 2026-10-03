@@ -37,7 +37,7 @@ There is no automatic priming or tip cleaning. Inspect the tip and use a sacrifi
 
 **PURGE at current position (no XYZ)** is available while idle, including while disarmed. First position the needle above scrap/waste outside the PCB, clear of the surface, then check both the supervision box and the purge-location confirmation. The defaults are **300° at 50% motor speed**. It sends forward B-only chunks of at most 30° at the current XYZ position, charges gross travel to the existing budget, and consumes any prior pending retract relief. **STOP** finishes the current B chunk and holds XYZ; it does not retract or lift.
 
-**RELIEVE pressure (positive B, no XYZ)** uses the same confirmed scrap position and B-speed setting. It defaults to **1°** per request and never lets total pending relief exceed **15°**. Verified positive B travel is charged to the same gross budget and tracked as pending; the next pad dose restores that pending amount immediately before extrusion. **STOP** finishes the current B move and holds XYZ.
+**RELIEVE pressure (positive B, no XYZ)** uses the same confirmed scrap position and B-speed setting. It defaults to **15°** per request and accepts **1–300°** in whole-degree increments, split into positive-B chunks of at most 15°. Verified positive B travel is charged to the same gross budget and tracked as pending. A pending amount above 15° blocks pad dispensing; use PURGE over scrap to re-prime and consume the pending relief before dispensing. **STOP** finishes the current B move and holds XYZ.
 
 **STOP after current move** is cooperative: it finishes the active controller operation, then lifts to clearance. Use the physical emergency stop for an immediate stop.
 

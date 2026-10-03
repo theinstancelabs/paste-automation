@@ -79,3 +79,6 @@ console.log('operator policy checks passed');
 {const p=profile();p.workZ=61.4;assert.throws(()=>P.validateProfile(p),/raw bounds/);p.rawBounds.Z.max=61.4;P.validateProfile(p);}
 
 {const p=profile();p.workZ=60;p.rawBounds.Z.max=63;p.calibrationRawZMax=63;P.validateProfile(p);p.calibrationRawZMax=63.1;assert.throws(()=>P.validateProfile(p),/Calibration Z/);p.calibrationRawZMax=63;p.rawBounds.Z.max=62;assert.throws(()=>P.validateProfile(p),/Calibration Z/);}
+assert.throws(()=>P.plan(['R1'],recipe,p,start,0,15.01),/Large relief: purge/);
+assert.throws(()=>P.plan(['R1'],recipe,p,start,0,27),/Large relief: purge/);
+assert(P.plan(['R1'],recipe,p,start,0,0).stages.length>0);
