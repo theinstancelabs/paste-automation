@@ -53,7 +53,7 @@ let previous={...start};for(const step of first.stages){if(['X','Y'].includes(st
 console.log('operator policy checks passed');
 
 // Extended work Z requires an explicitly rebuilt bounded profile.
-{const p=profile();p.workZ=59.1;assert.throws(()=>P.validateProfile(p),/raw bounds/);p.rawBounds.Z.max=59.1;assert.equal(P.validateProfile(p).workZ,59.1);p.rawBounds.Z.max=60.01;assert.throws(()=>P.validateProfile(p),/maximum 60/);p.workZ=60.01;assert.throws(()=>P.validateProfile(p),/55..60/);}
+{const p=profile();p.workZ=59.1;assert.throws(()=>P.validateProfile(p),/raw bounds/);p.rawBounds.Z.max=59.1;assert.equal(P.validateProfile(p).workZ,59.1);p.rawBounds.Z.max=63.01;assert.throws(()=>P.validateProfile(p),/maximum 63/);p.workZ=63.01;assert.throws(()=>P.validateProfile(p),/55..63/);}
 
 // Vacuum onset provides relative slope only; an explicit needle zero is required.
 {const p=profile();p.workZ=60;p.rawBounds.Z.max=60;p.vacuumReference={plane:{a:.01,b:0,c:4.5}};Object.values(p.pads).forEach(pads=>Object.values(pads).forEach(t=>t.gapAtWorkZ=null));P.validateProfile(p);
@@ -75,3 +75,5 @@ console.log('operator policy checks passed');
 {const p=profile();p.rodBudget.maximumAdditionalGrossDegrees=12000;P.validateProfile(p);const evidence={planningRemainingMm:19.6737783,mmPerMotorDegreeNominal:.0008246527777777778};const capacity=P.validateRodCapacity(p.rodBudget,evidence);assert(Math.abs(capacity.plannedTravelMm-9.895833333333334)<1e-9);assert.throws(()=>P.validateRodCapacity(p.rodBudget,{...evidence,planningRemainingMm:9}),/capacity/);p.rodBudget.maximumAdditionalGrossDegrees=20001;assert.throws(()=>P.validateProfile(p),/planning budget/);assert.throws(()=>P.validateRodCapacity(p.rodBudget,evidence),/capacity/);}
 
 {const raw={X:10,Y:20,Z:32.25,A:200,B:87.97308191775504},driver={...raw,B:87.97};P.validateManualHandoff({raw,driver},87.97);assert.throws(()=>P.validateManualHandoff({raw,driver},88.97),/B changed/);assert.throws(()=>P.validateManualHandoff({raw,driver:{...driver,B:88.97}},87.97),/mismatch/);}
+
+{const p=profile();p.workZ=61.4;assert.throws(()=>P.validateProfile(p),/raw bounds/);p.rawBounds.Z.max=61.4;P.validateProfile(p);}

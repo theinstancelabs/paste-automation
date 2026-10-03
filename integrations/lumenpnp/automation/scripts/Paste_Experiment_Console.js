@@ -69,7 +69,7 @@
         }
         list.addListSelectionListener(new (J('javax.swing.event.ListSelectionListener'))({valueChanged:function(){if(api)update();}}));
         heightMode.addActionListener(new (J('java.awt.event.ActionListener'))({actionPerformed:function(){update();}}));
-        api=PasteOperator.create(profile,function(event){Swing.invokeLater(new (J('java.lang.Runnable'))({run:function(){if(event.busy!==undefined)busy=!!event.busy;if(event.armed!==undefined){armed=!!event.armed;if(armed)lastError='';}if(event.error){armed=false;lastError=String(event.error);note('STOPPED: '+event.error);}if(event.message)note(event.message);if(event.record)note('Saved: '+event.record);update();}}));});
+        api=PasteOperator.create(profile,function(event){Swing.invokeLater(new (J('java.lang.Runnable'))({run:function(){if(event.busy!==undefined)busy=!!event.busy;if(event.armed!==undefined){armed=!!event.armed;if(armed)lastError='';}if(event.error){armed=false;lastError=String(event.error);note('STOPPED: '+event.error);}if(event.message)note(event.message);if(event.message==='completed-awaiting-operator-inspection')note('Controller operation completed and verified. Recorded calibration references are shown above.');if(event.record)note('Saved: '+event.record);update();}}));});
         function call(fn){try{fn();}catch(e){note('Not run: '+e);}}
         confirm.addActionListener(new (J('java.awt.event.ActionListener'))({actionPerformed:function(){call(function(){if(!confirm.isSelected()){api.disarm();armed=false;}update();});}}));
         function button(parent,label,fn,motion){var b=new (J('javax.swing.JButton'))(label);b.addActionListener(new (J('java.awt.event.ActionListener'))({actionPerformed:function(){call(fn);}}));parent.add(b);if(motion==='dispense')dispenseButtons.push(b);else if(motion)buttons.push(b);else idleButtons.push(b);return b;}
@@ -82,7 +82,7 @@
         var jog=row('2. Align camera (mm)',jogStep);
         [['X −',-1,0],['X +',1,0],['Y −',0,-1],['Y +',0,1]].forEach(function(a){button(jog,a[0],function(){jogStep.commitEdit();var step=Number(jogStep.getValue());api.jogCamera(a[1]*step,a[2]*step);},true);});
         var align=row('R1 → R15 → R40',new (J('javax.swing.JLabel'))('Center between both copper pads, then:'));
-        button(align,'Record aligned center',function(){api.recordAlignment(selected()[0]);note('Alignment captured for '+selected()[0]);update();},true);
+        button(align,'Record aligned center',function(){api.recordAlignment(selected()[0]);note('Alignment capture requested for '+selected()[0]);update();},true);
         button(align,'Apply 3-point XY',function(){api.applyAlignment();note('Three-point board alignment applied locally. Now check height.');update();},true);
         var checkZ=new (J('javax.swing.JSpinner'))(new (J('javax.swing.SpinnerNumberModel'))(new java.lang.Double(55),new java.lang.Double(55),new java.lang.Double(profile.rawBounds.Z.max),new java.lang.Double(.05)));
         var height=row('3. Inspect needle at raw Z',checkZ);
@@ -102,7 +102,7 @@
         threeTouchButton=button(threeTouch,'Record bare-needle touch at selected reference',function(){
             var answer=J('javax.swing.JOptionPane').showConfirmDialog(frame,'Confirm the bare METAL needle is barely touching '+selected()[0]+' Pad 1 now. This records the current height; it does not move.','Record one of three needle touches',J('javax.swing.JOptionPane').YES_NO_OPTION);
             if(answer!==J('javax.swing.JOptionPane').YES_OPTION)return;
-            api.recordNeedleTouchPoint(selected()[0],'1');note('Needle touch captured for '+selected()[0]+'. Lift before moving to the next reference.');
+            api.recordNeedleTouchPoint(selected()[0],'1');note('Needle-touch capture requested for '+selected()[0]+'. Wait for verified completion and the recorded-reference list to update.');
         },true);
         button(threeTouch,'Apply 3 needle touches',function(){fields.gapMm.commitEdit();api.applyNeedleTouches(Number(fields.gapMm.getValue()));heightMode.setSelectedItem('gap');note('Three confirmed needle touches applied. Gap is commanded above the touch plane; Lift, then dispense.');update();},true);
         controls.add(new (J('javax.swing.JLabel'))('After board reset: align XY, record three bare-needle touches, Apply 3 touches, Lift. No vacuum plane or gauge required.'));

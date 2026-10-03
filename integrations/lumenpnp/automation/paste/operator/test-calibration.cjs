@@ -31,7 +31,7 @@ assert.equal(touched.needleTouchCalibrated,true);assert.equal(touched.heightCali
 assert(Math.abs(touched.pads.R15['1'].touchRawZ-touched.pads.R1['1'].touchRawZ-.04)<1e-9);
 assert.throws(()=>P.fitNeedleTouches(touches.slice(0,2),touchProfile),/three/);
 assert.throws(()=>P.fitNeedleTouches(touches.map(t=>({...t,operatorConfirmedBarelyTouching:false})),touchProfile),/confirmation/);
-assert.throws(()=>P.fitNeedleTouches(touches.map(t=>({...t,rawZ:60.1})),touchProfile),/55..60/);
+assert.throws(()=>P.fitNeedleTouches(touches.map(t=>({...t,rawZ:60.1})),touchProfile),/55..63/);
 const executable={...touched,safeZ:32.25,travelZ:53.45,rodBudget:{maximumAdditionalGrossDegrees:1000}};
 const touchRecipe={padMode:'1',doseDegrees:6,retractPercent:15,dwellMs:0,retractDwellMs:0,bSpeedFraction:.05,workZ:60,heightMode:'gap',gapMm:.2};
 const touchPlan=P.plan(['R1','R15','R40'],touchRecipe,executable,{X:20,Y:20,Z:32.25,A:200,B:-10},0,0);
