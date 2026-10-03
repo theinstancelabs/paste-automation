@@ -93,11 +93,15 @@ function purgePlan(degrees,speed,p,raw,used){
  var stages=[],b=raw.B,left=degrees,gross=0;while(left>0){var dose=Math.min(30,left),target=Math.round((b-dose)*100)/100;if(target<p.rawBounds.B.min||target>p.rawBounds.B.max)fail('Purge B target outside explicit profile bounds');var actual=Math.abs(target-b);stages.push({axis:'B',target:target,speedFraction:speed,grossDegrees:actual});gross+=actual;b=target;left-=dose;}
  if(used+gross>p.rodBudget.maximumAdditionalGrossDegrees)fail('Purge exceeds remaining gross travel budget');return {stages:stages,grossDegrees:gross,endB:b};
 }
+function reliefPlan(degrees,speed,p,raw,used,pending){
+ finite(degrees,'Relief degrees');finite(speed,'Relief speed');finite(pending,'Pending relief');axisObject(raw,'Relief start');finite(used,'Used gross budget');if(degrees<1||degrees>15||Math.abs(degrees-Math.round(degrees))>1e-8||speed<.01||speed>1||pending<0)fail('Pressure relief must be 1..15 whole degrees, speed .01..1');
+ var target=Math.round((raw.B+degrees)*100)/100,gross=target-raw.B;if(pending+gross>15+1e-8)fail('Total pending pressure relief exceeds 15 degrees');if(target<p.rawBounds.B.min||target>p.rawBounds.B.max)fail('Relief B target outside explicit profile bounds');if(used+gross>p.rodBudget.maximumAdditionalGrossDegrees)fail('Relief exceeds remaining gross travel budget');return {stages:[{axis:'B',target:target,speedFraction:speed,grossDegrees:gross}],grossDegrees:gross,endB:target};
+}
 function rodCapacity(budget,evidence){
  if(!budget||!evidence)fail('Gross budget and hash-bound rod evidence required');var degrees=finite(budget.maximumAdditionalGrossDegrees,'Gross-degree ceiling'),remaining=finite(evidence.planningRemainingMm,'Conservative remaining rod travel'),perDegree=finite(evidence.mmPerMotorDegreeNominal,'Nominal travel per motor degree');if(degrees<1||degrees>20000||remaining<0||perDegree<=0||degrees*perDegree>remaining)fail('Gross budget exceeds conservative rod travel capacity');return {grossDegrees:degrees,plannedTravelMm:degrees*perDegree,remainingPlanningMm:remaining};
 }
 function manualHandoff(current,expectedB){
  if(!current)fail('Manual handoff snapshot required');axisObject(current.raw,'Manual raw');axisObject(current.driver,'Manual driver');finite(expectedB,'Retained ledger B');Object.keys(current.raw).forEach(function(k){if(Math.abs(current.raw[k]-current.driver[k])>.005001)fail('Manual raw/driver mismatch '+k);});if(Math.abs(current.raw.B-expectedB)>.005001)fail('Manual B changed: preserve dose budget and reconcile before arming');return current;
 }
-var api={validateProfile:profile,validateRecipe:recipe,select: selected,plan:plan,center:center,fitAlignment:alignment,fitSurface:surface,applyNeedleTouch:needleTouch,validateManualHandoff:manualHandoff,fitNeedleTouches:fitNeedleTouches,validateRodCapacity:rodCapacity,planPurge:purgePlan};root.PasteOperatorPolicy=api;if(typeof module!=='undefined'&&module.exports)module.exports=api;
+var api={validateProfile:profile,validateRecipe:recipe,select: selected,plan:plan,center:center,fitAlignment:alignment,fitSurface:surface,applyNeedleTouch:needleTouch,validateManualHandoff:manualHandoff,fitNeedleTouches:fitNeedleTouches,validateRodCapacity:rodCapacity,planPurge:purgePlan,planRelief:reliefPlan};root.PasteOperatorPolicy=api;if(typeof module!=='undefined'&&module.exports)module.exports=api;
 })(this);

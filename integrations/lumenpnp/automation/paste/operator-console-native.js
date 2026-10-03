@@ -178,6 +178,20 @@ function create(input,onEvent){
   }});
  }
  function purge(degrees,speed){P.planPurge(degrees,speed,profile,snapshot().raw,ledger().usedAdditionalGrossDegrees);return afterManualHandoff(function(){return purgeRun(degrees,speed);},true);}
+ function reliefRun(degrees,speed){
+  if(!acceptedSnapshot)throw Error('Verify controller first');var start=snapshot(),budget=ledger(),plan=P.planRelief(degrees,speed,profile,start.raw,budget.usedAdditionalGrossDegrees,budget.pendingRetractDegrees);purgePose(start.raw,null);
+  return submit('stationary-pressure-relief '+degrees+' degrees',{stationaryOnly:true,recipe:{reliefDegrees:degrees,bSpeedFraction:speed},run:function(){
+   var now=snapshot();P.validateManualHandoff(now,budget.lastVerifiedRaw?budget.lastVerifiedRaw.B:profile.expectedRaw.B);Object.keys(axes).forEach(function(k){close(now.raw[k],start.raw[k],.005001,'relief queued pose '+k);});purgePose(now.raw,null);
+   var b=ledger();if(b.usedAdditionalGrossDegrees!==budget.usedAdditionalGrossDegrees)throw Error('Relief budget changed before reservation');
+   b.usedAdditionalGrossDegrees+=plan.grossDegrees;b.entries.push({id:runRecord.id,plannedGrossDegrees:plan.grossDegrees,status:'charged-before-motion',startedAt:new Date().toISOString(),kind:'stationary-pressure-relief'});writeAtomic(ledgerPath,b);
+   runRecord.reservedGrossDegrees=plan.grossDegrees;runRecord.priorPendingRetractDegrees=budget.pendingRetractDegrees;runRecord.stationaryAnchor=start;saveRecord('relief-gross-budget-reserved-no-refund');
+   stationaryPurgeAnchor=start;var executed=0;try{
+    for(var i=0;i<plan.stages.length;i++){if(stopFlag.get())break;var st=plan.stages[i],beforeB=snapshot().raw.B;var continued=move('B',st.target,speed,'stationary-pressure-relief',0);executed+=Math.abs(snapshot().raw.B-beforeB);if(!continued)break;}
+    var after=snapshot();purgePose(after.raw,start);b=ledger();b.pendingRetractDegrees=Math.min(15,budget.pendingRetractDegrees+executed);b.entries[b.entries.length-1].status=stopFlag.get()?'stopped-charged':'verified';writeAtomic(ledgerPath,b);runRecord.verifiedReliefGrossDegrees=executed;runRecord.pendingRetractDegreesAfter=b.pendingRetractDegrees;runRecord.noXYZMotion=true;
+   }finally{stationaryPurgeAnchor=null;}
+  }});
+ }
+ function relievePressure(degrees,speed){P.planRelief(degrees,speed,profile,snapshot().raw,ledger().usedAdditionalGrossDegrees,ledger().pendingRetractDegrees);return afterManualHandoff(function(){return reliefRun(degrees,speed);},true);}
  function afterManualHandoff(fn,purgeOnly){
   if(handoffRunning||busy||latched)throw Error('Wait for the current operation or resolve its recorded fault');
   handoffRunning=true;handoffCancelled=false;emit({busy:true,message:'Checking current manual pose and unchanged B before requested operation'});
@@ -192,7 +206,7 @@ function create(input,onEvent){
  }
  function initChecks(){checkSources();}
  initChecks();restoreCalibration();if(calibration.vacuumReference)verifyVacuumReference(calibration.vacuumReference);
- return {status:status,arm:arm,disarm:disarm,jump:jumpRun,dispense:dispense,stop:stop,calibrationStatus:calibrationStatus,invalidateCalibration:invalidateCalibration,jogCamera:jogCamera,recordAlignment:recordAlignment,applyAlignment:applyAlignment,approach:function(ref,pad,z){return afterManualHandoff(function(){return approach(ref,pad,z);});},lift:function(){return afterManualHandoff(lift);},recordZ:function(ref,gap){return afterManualHandoff(function(){return recordZ(ref,gap);});},applyZ:applyZ,recordNeedleTouch:function(ref,pad,gap){return afterManualHandoff(function(){return recordNeedleTouch(ref,pad,gap);});},recordNeedleTouchPoint:function(ref,pad){return afterManualHandoff(function(){return recordNeedleTouchPoint(ref,pad);});},applyNeedleTouches:applyNeedleTouches,purge:purge};
+ return {status:status,arm:arm,disarm:disarm,jump:jumpRun,dispense:dispense,stop:stop,calibrationStatus:calibrationStatus,invalidateCalibration:invalidateCalibration,jogCamera:jogCamera,recordAlignment:recordAlignment,applyAlignment:applyAlignment,approach:function(ref,pad,z){return afterManualHandoff(function(){return approach(ref,pad,z);});},lift:function(){return afterManualHandoff(lift);},recordZ:function(ref,gap){return afterManualHandoff(function(){return recordZ(ref,gap);});},applyZ:applyZ,recordNeedleTouch:function(ref,pad,gap){return afterManualHandoff(function(){return recordNeedleTouch(ref,pad,gap);});},recordNeedleTouchPoint:function(ref,pad){return afterManualHandoff(function(){return recordNeedleTouchPoint(ref,pad);});},applyNeedleTouches:applyNeedleTouches,purge:purge,relievePressure:relievePressure};
 }
 root.PasteOperator={create:create};
 })(this);
