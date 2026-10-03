@@ -18,8 +18,8 @@ Example request (replace the profile ID with the current private profile ID):
 }
 ```
 
-`survey` moves the top camera to each resistor center and captures PNGs. It does
-not dispense. Reference order is preserved. `dispense-and-survey` additionally
+`survey` moves the top camera to each registered R or D component center and captures PNGs. It does
+not dispense. Reference order is preserved. R1–R40 and D1–D40 are accepted only when present in the current registered profile. `dispense-and-survey` additionally
 requires a recipe and performs the complete selected group without pausing for
 images between pads. It then photographs the selected resistors.
 
@@ -83,3 +83,14 @@ The runner deliberately retains the controller's current clearance and stage
 verification behavior. Current measurements show approximately 5.3 seconds
 per pad, dominated by repeated full clearance Z travel, not agent decisions.
 Any lower local travel plane requires separate clearance validation for both heads.
+
+Optional `conditioning` contains `references` and its own `recipe`. Those references
+must be distinct from the main group. The runner dispenses this sacrificial group,
+then starts the main group without intervening image inspection. Both groups are
+photographed afterward. Each group retains normal clearance and controller checks.
+
+The CLI supports `--condition-refs R31 --condition-dose .25`. It copies the main
+recipe's push speed and gap but sets conditioning retraction and both waits to zero.
+Its preview includes gross travel for both groups and pending retraction between
+them. No extrusion occurs during preview; `--execute` dispatches the prepared
+request once through the existing reviewed-action mechanism.

@@ -2393,15 +2393,15 @@
       "sourceRoot": "/home/lumen/lumenpnp",
       "sourcePath": "automation/paste/operator-console-policy.cjs",
       "destination": "integrations/lumenpnp/automation/paste/operator-console-policy.cjs",
-      "sha256": "44cd21e399d4cc7817b7542b194fc29c3a9ed35450bd1e81fd9102086e520f4d",
-      "bytes": 19578
+      "sha256": "96ccda14424db67d75ffd226525937bed662c27dd7cc5661371c827554e802ca",
+      "bytes": 19594
     },
     {
       "sourceRoot": "/home/lumen/lumenpnp",
       "sourcePath": "automation/paste/operator/test-policy.cjs",
       "destination": "integrations/lumenpnp/automation/paste/operator/test-policy.cjs",
-      "sha256": "5fc0d9977968154aa63829b0374c2eb67ff87bdef2fd72dcee9e5c2fd8fed9dd",
-      "bytes": 10270
+      "sha256": "d34c42c63ce71c54d562831e9044105507ee72304c9e072445c5c71f7ceed1e1",
+      "bytes": 10557
     },
     {
       "sourceRoot": "/home/lumen/lumenpnp",
@@ -2491,15 +2491,15 @@
       "sourceRoot": "/home/lumen/lumenpnp",
       "sourcePath": "automation/scripts/Run_Paste_Operator_Batch.js",
       "destination": "integrations/lumenpnp/automation/scripts/Run_Paste_Operator_Batch.js",
-      "sha256": "3fa8ca96f7260bf344b44353dcaf89af0e8218eeee378dc257975f27d4557f56",
-      "bytes": 4653
+      "sha256": "a7c759f8b5a4858d42f5b19e25728166a77adef2338b40621c9243610be0752c",
+      "bytes": 5593
     },
     {
       "sourceRoot": "/home/lumen/lumenpnp",
       "sourcePath": "automation/paste/operator/BATCH_RUNNER.md",
       "destination": "integrations/lumenpnp/automation/paste/operator/BATCH_RUNNER.md",
-      "sha256": "4214ca15e3ba8cd41e9e3b4236c811e8922f32836db228d3058edd99d50eef52",
-      "bytes": 3642
+      "sha256": "02129037982c731f4935205ebe01a57f3657254ce59ab200cd3bea6de020d1aa",
+      "bytes": 4469
     },
     {
       "sourceRoot": "/home/lumen/lumenpnp",
@@ -2512,15 +2512,15 @@
       "sourceRoot": "/home/lumen/lumenpnp",
       "sourcePath": "automation/paste/operator/test-batch-runner-guards.cjs",
       "destination": "integrations/lumenpnp/automation/paste/operator/test-batch-runner-guards.cjs",
-      "sha256": "ab4d8445ab6708c0a3772743e171d5a42a25d639f246db993fdb75d8e5f12e20",
-      "bytes": 1444
+      "sha256": "d7ead894c7541d1ed27e5a57ab6061edbc56a1138d38bccea5e110d7f87cd537",
+      "bytes": 1777
     },
     {
       "sourceRoot": "/home/lumen/lumenpnp",
       "sourcePath": "automation/paste/prepare-operator-experiment.py",
       "destination": "integrations/lumenpnp/automation/paste/prepare-operator-experiment.py",
-      "sha256": "768a5939424b1d3a7362531ad38339b6160ead0268a3dbc4db088c8a40c3db28",
-      "bytes": 5029
+      "sha256": "a76011e7936882c0721b4a713a360b22cbd1c28a85fb2a2a0bf4211abb0825cd",
+      "bytes": 6205
     },
     {
       "sourceRoot": "/home/lumen/lumenpnp",

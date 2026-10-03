@@ -9,3 +9,6 @@ assert.throws(()=>vm.runInNewContext(profileGuard,{api:{},profileId:'old',q:{pro
 let token=1;const context={api:{status:()=>({stopGeneration:token})},stopEpoch:1};vm.createContext(context);vm.runInContext(src.slice(src.indexOf('function notStopped(){'),src.indexOf('\n var dir=')),context);context.notStopped();token++;assert.throws(()=>context.notStopped(),/STOP/);
 const noReplay=src.slice(src.indexOf(' var dir='),src.indexOf(' var report='));let mkdirCalls=0;assert.throws(()=>vm.runInNewContext(noReplay,{root:'/synthetic',q,F:function(){this.exists=()=>true;this.mkdirs=()=>{mkdirCalls++;return true;};}}),/no replay/);assert.equal(mkdirCalls,0);
 console.log('Actual batch request/profile/STOP/no-replay guard blocks pass');
+valid({...q,mode:'dispense-and-survey',conditioning:{references:['R3'],recipe:{doseDegrees:.25}}});
+assert.throws(()=>valid({...q,mode:'dispense-and-survey',conditioning:{references:['R1'],recipe:{}}}),/overlapping/);
+assert.throws(()=>valid({...q,mode:'dispense-and-survey',conditioning:{references:['R99'],recipe:{}}}),/Unknown/);
