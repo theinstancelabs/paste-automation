@@ -1,7 +1,7 @@
 'use strict';
 const assert=require('node:assert/strict'),fs=require('node:fs'),vm=require('node:vm');
 const source=fs.readFileSync(require.resolve('../operator-console-native.js'),'utf8');
-const arm=source.slice(source.indexOf(' function arm(){'),source.indexOf(' function disarm()'));
+const arm=source.slice(source.indexOf(' function arm('),source.indexOf(' function disarm()'));
 const P=require('../operator-console-policy.cjs');
 function fixture(){
  const raw={X:10,Y:20,Z:57.75,A:200,B:-10},snap={raw,driver:{...raw},nativePoses:{}};

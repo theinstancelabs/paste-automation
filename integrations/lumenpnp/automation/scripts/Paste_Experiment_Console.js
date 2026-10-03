@@ -11,11 +11,13 @@
     eval(read(root + '/automation/paste/operator-console-policy.cjs'));
     eval(read(root + '/automation/paste/operator-console-native.js'));
     Swing.invokeLater(new (J('java.lang.Runnable'))({run: function () {
+        var retained={};
+        function retainControls(component){var labels={doseDegrees:'Dose per pad',retractPercent:'Retraction between',dwellMs:'Wait after each dose',retractDwellMs:'Wait after retraction',bSpeedFraction:'Extrusion motor speed',workZ:'Raw work Z',gapMm:'Commanded gap'};if(component instanceof J('javax.swing.JPanel')){var cs=component.getComponents();if(cs.length>=2&&cs[0] instanceof J('javax.swing.JLabel')){var label=String(cs[0].getText());Object.keys(labels).forEach(function(k){if(label.indexOf(labels[k])===0&&cs[1] instanceof J('javax.swing.JSpinner'))retained[k]=Number(cs[1].getValue());});if(label.indexOf('Height mode:')===0&&cs[1] instanceof J('javax.swing.JComboBox'))retained.heightMode=String(cs[1].getSelectedItem());}}if(component instanceof J('java.awt.Container'))for each(var child in component.getComponents())retainControls(child);}
         // One console at a time; never replace an active operator task.
         for each(var old in J('java.awt.Window').getWindows()) {
             if(old instanceof J('javax.swing.JFrame') && old.isVisible() && String(old.getTitle()).indexOf('Paste experiments')===0){
                 if(J('org.openpnp.model.Configuration').get().getMachine().isBusy())throw Error('Wait for the active task before reopening the console');
-                old.dispatchEvent(new (J('java.awt.event.WindowEvent'))(old,J('java.awt.event.WindowEvent').WINDOW_CLOSING));
+                retainControls(old.getContentPane());old.dispatchEvent(new (J('java.awt.event.WindowEvent'))(old,J('java.awt.event.WindowEvent').WINDOW_CLOSING));
             }
         }
         var frame = new (J('javax.swing.JFrame'))('Paste experiments — ' + (profile.name || 'registered board'));
@@ -40,14 +42,14 @@
         var log = new (J('javax.swing.JTextArea'))(9,70); log.setEditable(false); log.setLineWrap(true); log.setWrapStyleWord(true);
         function note(s){log.append(String(s)+'\n');log.setCaretPosition(log.getDocument().getLength());}
         function row(label, component){var p=new (J('javax.swing.JPanel'))(new (J('java.awt.FlowLayout'))(J('java.awt.FlowLayout').LEFT));p.add(new (J('javax.swing.JLabel'))(label));p.add(component);controls.add(p);return p;}
-        function number(key,label,value,min,max,step){var spinner=new (J('javax.swing.JSpinner'))(new (J('javax.swing.SpinnerNumberModel'))(new java.lang.Double(value),new java.lang.Double(min),new java.lang.Double(max),new java.lang.Double(step)));fields[key]=spinner;row(label,spinner);}
+        function number(key,label,value,min,max,step){if(typeof retained[key]==='number'&&isFinite(retained[key]))value=Math.max(min,Math.min(max,retained[key]));var spinner=new (J('javax.swing.JSpinner'))(new (J('javax.swing.SpinnerNumberModel'))(new java.lang.Double(value),new java.lang.Double(min),new java.lang.Double(max),new java.lang.Double(step)));fields[key]=spinner;row(label,spinner);}
         number('doseDegrees','Dose per pad (motor degrees)',6,0.25,30,0.25);
         number('retractPercent','Retraction between resistors (%)',15,0,50,5);
         number('dwellMs','Wait after each dose (ms)',2000,0,5000,100);
         number('retractDwellMs','Wait after retraction (ms)',500,0,2000,100);
         number('bSpeedFraction','Extrusion motor speed (fraction)',0.05,0.01,1,0.01);
         number('workZ','Raw work Z — larger = lower (mm)',profile.workZ,55,profile.workZ,0.05);
-        var heightMode=new (J('javax.swing.JComboBox'))(Java.to(['gap','raw'],'java.lang.String[]'));heightMode.setSelectedItem(profile.vacuumReference?'gap':'raw');row('Height mode: gap above touch / raw Z',heightMode);
+        var heightMode=new (J('javax.swing.JComboBox'))(Java.to(['gap','raw'],'java.lang.String[]'));heightMode.setSelectedItem(retained.heightMode|| (profile.vacuumReference?'gap':'raw'));row('Height mode: gap above touch / raw Z',heightMode);
         number('gapMm','Commanded gap above needle touch (mm)',.20,.15,1,.05);
         var touchButton=null,threeTouchButton=null,touchApproachLabel=null,touchLoaded=false;
         controls.add(new (J('javax.swing.JLabel'))('XY/Z travel stays at 100%. No retraction between the two pads.'));
@@ -116,8 +118,13 @@
         button(run,'Both pads',function(){var r=recipe();r.padMode='both';lastPadMode='both';api.dispense(selected(),r);},'dispense');
         button(run,'Pad 1 only',function(){var r=recipe();r.padMode='1';lastPadMode='1';api.dispense(selected(),r);},'dispense');
         button(run,'Pad 2 only',function(){var r=recipe();r.padMode='2';lastPadMode='2';api.dispense(selected(),r);},'dispense');
+        var purgeDegrees=new (J('javax.swing.JSpinner'))(new (J('javax.swing.SpinnerNumberModel'))(new java.lang.Double(300),new java.lang.Double(1),new java.lang.Double(1000),new java.lang.Double(30)));
+        var purgeSpeed=new (J('javax.swing.JSpinner'))(new (J('javax.swing.SpinnerNumberModel'))(new java.lang.Double(.5),new java.lang.Double(.01),new java.lang.Double(1),new java.lang.Double(.05)));
+        var purgeRow=row('Purge at current position — degrees',purgeDegrees);purgeRow.add(new (J('javax.swing.JLabel'))('B speed'));purgeRow.add(purgeSpeed);
+        var purgeConfirm=new (J('javax.swing.JCheckBox'))('Needle is hovering over scrap/waste, outside the PCB, not touching; I am watching.');controls.add(purgeConfirm);
+        button(purgeRow,'PURGE at current position (no XYZ)',function(){if(!confirm.isSelected()||!purgeConfirm.isSelected())throw Error('Confirm supervision and needle hovering over scrap outside the PCB first');purgeDegrees.commitEdit();purgeSpeed.commitEdit();api.purge(Number(purgeDegrees.getValue()),Number(purgeSpeed.getValue()));note('Purge requested: forward B only, 30-degree chunks, no automatic retract or XYZ motion. STOP holds this position.');},false);
         var utility=row('',new (J('javax.swing.JLabel'))(''));
-        var stopButton=button(utility,'STOP after current move',function(){api.stop();note('Stop requested; let the active move finish. Use the machine emergency stop for an immediate stop.');},false);idleButtons.pop();
+        var stopButton=button(utility,'STOP after current move',function(){api.stop();note('Stop requested after current move. Purge holds XYZ; pad dispensing lifts to clearance. Use the machine emergency stop for immediate stop.');},false);idleButtons.pop();
         button(utility,'Save recipe',function(){var folder=new F(root+'/automation/evidence/operator-recipes');folder.mkdirs();var file=new F(folder,'recipe-'+java.lang.System.currentTimeMillis()+'.json');var r={schema:1,recipe:recipe(),padMode:lastPadMode,references:selected(),profileId:profile.id};Files.write(file.toPath(),new java.lang.String(JSON.stringify(r,null,2)+'\n').getBytes(UTF));note('Recipe saved: '+file);},false);
         button(utility,'Load recipe',function(){if(busy)throw Error('Wait for the current run to finish');var chooser=new (J('javax.swing.JFileChooser'))(root+'/automation/evidence/operator-recipes');if(chooser.showOpenDialog(frame)===J('javax.swing.JFileChooser').APPROVE_OPTION){var saved=JSON.parse(read(String(chooser.getSelectedFile())));if(saved.schema!==1||saved.profileId!==profile.id||!saved.recipe||!Array.isArray(saved.references)||saved.references.some(function(r){return refs.indexOf(r)<0;}))throw Error('Recipe schema, profile or resistor selection does not match this session');heightMode.setSelectedItem(saved.recipe.heightMode==='gap'?'gap':'raw');Object.keys(fields).forEach(function(k){if(saved.recipe[k]!==undefined)fields[k].setValue(new java.lang.Double(saved.recipe[k]));});list.setSelectedIndices(Java.to(saved.references.map(function(r){return refs.indexOf(r);}),'int[]'));lastPadMode=saved.padMode||'both';note('Settings and selection loaded. Saved pad mode: '+lastPadMode+'. Choose the matching dispense button; no motion performed.');}},false);
         var scrollControls=new (J('javax.swing.JScrollPane'))(controls);scrollControls.getVerticalScrollBar().setUnitIncrement(24);panel.add(scrollControls,'Center');panel.add(new (J('javax.swing.JScrollPane'))(log),'South');

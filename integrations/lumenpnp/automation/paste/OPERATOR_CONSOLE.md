@@ -35,6 +35,8 @@ Defaults are exploratory: 6° per pad, 15% inter-resistor retraction, 2000ms dos
 
 There is no automatic priming or tip cleaning. Inspect the tip and use a sacrificial pad for operator-controlled priming before comparing deposits. Keep initial pressure and timing consistent.
 
+**PURGE at current position (no XYZ)** is available while idle, including while disarmed. First position the needle above scrap/waste outside the PCB, clear of the surface, then check both the supervision box and the purge-location confirmation. The defaults are **300° at 50% motor speed**. It sends forward B-only chunks of at most 30° at the current XYZ position, charges gross travel to the existing budget, and consumes any prior pending retract relief. **STOP** finishes the current B chunk and holds XYZ; it does not retract or lift.
+
 **STOP after current move** is cooperative: it finishes the active controller operation, then lifts to clearance. Use the physical emergency stop for an immediate stop.
 
 This profile supports the current FTP demo's R1–R40. It is not an arbitrary KiCad importer or a qualified production recipe. Run records and measured calibration stay private under `automation/evidence/operator-paste-runs/`; recipes are in `automation/evidence/operator-recipes/`. Reusable source is exported to the public integration repository; the separate viewer remains private.
