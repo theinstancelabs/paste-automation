@@ -31,7 +31,7 @@ When the operator has already issued a manual jog and its completion is still pe
 
 Select a resistor or Ctrl/Shift-select a group. Groups run in displayed numeric order. Set dose, inter-resistor retraction, dose/retraction dwell, extrusion-axis speed, and work Z. **Both pads**, **Pad 1 only**, and **Pad 2 only** immediately dispense on the selection. Use camera buttons for inspection afterward. **Save recipe** records your settings and selected group; **Load recipe** never moves.
 
-Defaults are exploratory: 6° per pad, 15% inter-resistor retraction, 2000ms dose dwell, 500ms retraction dwell. There is no retraction between the two pads of one resistor. Pending relief is restored immediately before the next dose, including across button presses. Extrusion speed 0.05 means 5% of the configured B-axis speed; XY/Z remain at full speed.
+Defaults are exploratory: 8° per pad, 15% inter-resistor retraction, 2000ms dose dwell, 500ms retraction dwell, 0.16 push speed fraction, 1.0 retraction speed fraction, and a commanded gap of 0.20mm when gap mode is active. There is no retraction between the two pads of one resistor. Pending relief is restored immediately before the next dose, including across button presses. On the reviewed 100 B-degrees/second axis setting, 0.16 means 16 B-degrees/second and 1.0 means 100 B-degrees/second; XY/Z remain at full speed. The console retains entered recipe and gap values when reopened.
 
 There is no automatic priming or tip cleaning. Inspect the tip and use a sacrificial pad for operator-controlled priming before comparing deposits. Keep initial pressure and timing consistent.
 

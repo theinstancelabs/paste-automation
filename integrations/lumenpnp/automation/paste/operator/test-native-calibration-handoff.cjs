@@ -12,3 +12,11 @@ assert.equal(c.calibration.ztouchSamples.length,1);assert.equal(c.calibration.zt
 c.afterManualHandoff(()=>c.approach('R40','1',55));
 assert.deepEqual(zMoves,[32.25,55]);assert.equal(raw.Z,55);assert.equal(raw.B,-10);assert.equal(c.lastApproach.ref,'R40');assert.equal(c.lastApproach.rawZ,55);
 console.log('real arm→R15 manual touch62.4 capture→R40 safe-lift/approach55 flow passed with workZ60/calibration63');
+
+// Actual camera alignment capture adopts a normal manual XY jog through the same handoff.
+vm.runInContext(section(' function recordAlignment(ref){',' function applyAlignment('),c);
+c.baseProfile={pads:{R1:{}}};c.calibration={alignmentApplied:false,alignmentSamples:[]};raw={X:334.85,Y:183.98,Z:32.25,A:200,B:-10};c.acceptedSnapshot={raw:{...raw,X:332.8568515757085}};
+const exportMatch=src.match(/recordAlignment:(function\(ref\)\{return afterManualHandoff\(function\(\)\{return recordAlignment\(ref\);\}\);\}),/);assert(exportMatch,'Export must perform handoff');const capture=vm.runInContext('('+exportMatch[1]+')',c);capture('R1');assert.equal(c.acceptedSnapshot.raw.X,334.85);assert.equal(c.calibration.alignmentSamples[0].cameraXY[0],334.85);assert.equal(raw.B,-10);
+c.calibration.alignmentSamples=[];raw.B=-9;assert.throws(()=>capture('R1'),/B changed/);assert.equal(c.calibration.alignmentSamples.length,0);
+raw.B=-10;raw.Z=33;capture('R1');assert.equal(c.calibration.alignmentSamples.length,0,'Safe Z guard must reject capture away from clearance');
+console.log('Manual XY alignment handoff accepts unchanged B, rejects changed B, retains safe Z guard');

@@ -1,0 +1,24 @@
+// Parent-reviewed request, existing visible console API and existing native owner only.
+// No serial connection, automatic retry, configuration change or calibration overwrite.
+(function(){
+ var J=Java.type,F=J('java.io.File'),Fs=J('java.nio.file.Files'),UTF=J('java.nio.charset.StandardCharsets').UTF_8,S=J('javax.swing.SwingUtilities'),root=String(java.lang.System.getenv('LUMEN_AUTOMATION_ROOT')||java.lang.System.getProperty('user.home')+'/lumenpnp');
+ function read(f){return JSON.parse(String(new java.lang.String(Fs.readAllBytes(f.toPath()),UTF)));}
+ var q=read(new F(root+'/automation/plans/operator-batch-request.json'));
+ if(q.schema!==1||q.enabled!==true||['survey','dispense-and-survey'].indexOf(q.mode)<0||typeof q.id!=='string'||!/^[a-zA-Z0-9_-]{1,100}$/.test(q.id)||!Array.isArray(q.references)||!q.references.length||q.references.length>40)throw Error('Explicit bounded batch request required');
+ var seen={};q.references.forEach(function(r){if(!/^R([1-9]|[1-3][0-9]|40)$/.test(r)||seen[r])throw Error('Invalid/duplicate resistor');seen[r]=true;});
+ var api=null,profileId=null;function find(){for each(var w in J('java.awt.Window').getWindows())if(w.isVisible()&&w instanceof J('javax.swing.JFrame')&&String(w.getTitle()).indexOf('Paste experiments')===0){if(api)throw Error('Multiple consoles');api=w.getRootPane().getClientProperty('pasteOperatorApi');profileId=String(w.getRootPane().getClientProperty('pasteOperatorProfileId'));}}
+ if(S.isEventDispatchThread())find();else S.invokeAndWait(new (J('java.lang.Runnable'))({run:find}));
+ if(!api||profileId!==q.profileId)throw Error('Matching visible console API required; reload updated console');
+ if(api.status().busy||api.status().latched)throw Error('Console busy/faulted');if(q.mode==='dispense-and-survey'&&!api.calibrationStatus().ready)throw Error('Calibration required');
+ var stopEpoch=api.status().stopGeneration;function notStopped(){if(api.status().stopGeneration!==stopEpoch)throw Error('Operator STOP requested; no next action');}
+ var dir=new F(root+'/automation/evidence/operator-batches/'+q.id);if(dir.exists()||!dir.mkdirs())throw Error('Run ID already exists or cannot create evidence; no replay');
+ var report={schema:1,id:q.id,request:q,startedAt:new Date().toISOString(),status:'claimed',records:[]},m=J('org.openpnp.model.Configuration').get().getMachine(),camera=m.getDefaultHead().getDefaultCamera();
+ function save(){var dest=new F(dir,'report.json'),tmp=new F(dir,'report.tmp');Fs.write(tmp.toPath(),new java.lang.String(JSON.stringify(report,null,2)).getBytes(UTF));Fs.move(tmp.toPath(),dest.toPath(),J('java.nio.file.StandardCopyOption').REPLACE_EXISTING);}
+ save();
+ function completed(operation){if(operation&&typeof operation.join==='function')operation.join();else if(operation&&typeof operation.get==='function')operation.get();var s=api.status();if(s.busy||s.latched||!s.armed||s.error)throw Error('Console action failed or stopped: '+JSON.stringify(s));var profile=read(new F(root+'/automation/plans/paste-operator-profile.json'));if(profile.id!==q.profileId)throw Error('Profile changed');var record=read(new F(root+'/automation/evidence/operator-paste-runs/'+profile.sessionId+'/'+s.lastRecord+'/record.json'));if(record.status!=='completed-awaiting-operator-inspection')throw Error('Action did not complete: '+record.status);return {recordId:s.lastRecord,raw:s.raw};}
+ var worker=new (J('java.lang.Thread'))(new (J('java.lang.Runnable'))({run:function(){try{
+  notStopped();if(q.mode==='dispense-and-survey'){report.dispense=completed(api.dispense(q.references,q.recipe));save();}
+  for(var i=0;i<q.references.length;i++){notStopped();var ref=q.references[i],done=completed(api.jump(ref,'center')),before=api.status();if(before.busy||m.isBusy())throw Error('Camera capture requires idle machine');var image=camera.capture(),after=api.status();if(JSON.stringify(before.raw)!==JSON.stringify(after.raw)||after.busy)throw Error('Pose changed during capture');var file=new F(dir,ref+'.png');if(!J('javax.imageio.ImageIO').write(image,'png',file))throw Error('PNG encoder missing');report.records.push({reference:ref,image:String(file),cameraMove:done,width:image.getWidth(),height:image.getHeight(),capturedAt:new Date().toISOString()});save();}
+  report.status='completed-awaiting-image-review';
+ }catch(e){report.status='failed-no-retry';report.error=String(e);}finally{report.finishedAt=new Date().toISOString();save();print('Operator batch '+report.status+' '+new F(dir,'report.json'));}}}),'paste-operator-request-runner');worker.setDaemon(true);worker.start();print('Started reviewed request '+q.id+'; use console STOP to interrupt.');
+})();

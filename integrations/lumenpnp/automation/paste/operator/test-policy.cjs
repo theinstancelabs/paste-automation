@@ -62,7 +62,7 @@ console.log('operator policy checks passed');
  assert.equal(touched.pads.R1['1'].touchRawZ,59.5);assert(Math.abs(touched.pads.R2['1'].touchRawZ-59.4)<1e-9);
  const plan=P.plan(['R1','R2'],r,touched,start,0,0);const doses=plan.stages.filter(s=>s.tag==='dose');assert.equal(doses.length,4);
  const beforeDoses=[];let z=start.Z;for(const st of plan.stages){if(st.axis==='Z')z=st.target;if(st.tag==='dose')beforeDoses.push(z);}assert.deepEqual(beforeDoses,[59.3,59.28,59.2,59.18]);
- assert.throws(()=>P.plan(['R1'],{...r,gapMm:.1},touched,start,0,0),/0.15/);
+ assert.throws(()=>P.plan(['R1'],{...r,gapMm:.09},touched,start,0,0),/0.10/);
  assert.throws(()=>P.plan(['R1'],{...r,heightMode:'raw',workZ:59.5},touched,start,0,0),/gap/);
 }
 {const p=profile();p.heightCalibrationPending=true;Object.values(p.pads).forEach(ps=>Object.values(ps).forEach(t=>t.gapAtWorkZ=null));P.validateProfile(p);assert.throws(()=>P.plan(['R1'],recipe,p,start,0,0),/New height calibration/);}
@@ -72,7 +72,7 @@ console.log('operator policy checks passed');
 
 {const raw={X:359.19686795875464,Y:183.97952903288106,Z:32.25,A:200,B:-4647.48},driver={...raw,X:359.2,Y:183.98};P.validateManualHandoff({raw,driver},raw.B);assert.throws(()=>P.validateManualHandoff({raw,driver:{...driver,X:359.21}},raw.B),/mismatch/);assert.throws(()=>P.validateManualHandoff({raw,driver:{...driver,B:raw.B+.01}},raw.B),/mismatch/);}
 
-{const p=profile();p.rodBudget.maximumAdditionalGrossDegrees=12000;P.validateProfile(p);const evidence={planningRemainingMm:19.6737783,mmPerMotorDegreeNominal:.0008246527777777778};const capacity=P.validateRodCapacity(p.rodBudget,evidence);assert(Math.abs(capacity.plannedTravelMm-9.895833333333334)<1e-9);assert.throws(()=>P.validateRodCapacity(p.rodBudget,{...evidence,planningRemainingMm:9}),/capacity/);p.rodBudget.maximumAdditionalGrossDegrees=20001;assert.throws(()=>P.validateProfile(p),/planning budget/);assert.throws(()=>P.validateRodCapacity(p.rodBudget,evidence),/capacity/);}
+{const p=profile();p.rodBudget.maximumAdditionalGrossDegrees=12000;P.validateProfile(p);const evidence={planningRemainingMm:19.6737783,mmPerMotorDegreeNominal:.0008246527777777778};const capacity=P.validateRodCapacity(p.rodBudget,evidence);assert(Math.abs(capacity.plannedTravelMm-9.895833333333334)<1e-9);assert.throws(()=>P.validateRodCapacity(p.rodBudget,{...evidence,planningRemainingMm:9}),/capacity/);p.rodBudget.maximumAdditionalGrossDegrees=23801;assert.throws(()=>P.validateProfile(p),/planning budget/);assert.throws(()=>P.validateRodCapacity(p.rodBudget,evidence),/capacity/);}
 
 {const raw={X:10,Y:20,Z:32.25,A:200,B:87.97308191775504},driver={...raw,B:87.97};P.validateManualHandoff({raw,driver},87.97);assert.throws(()=>P.validateManualHandoff({raw,driver},88.97),/B changed/);assert.throws(()=>P.validateManualHandoff({raw,driver:{...driver,B:88.97}},87.97),/mismatch/);}
 
@@ -87,3 +87,9 @@ const verifiedB=(from,to,tag,verified=true)=>({axis:'B',startRaw:{B:from},report
 assert.equal(P.pendingFromVerifiedStages(1.2,[]),1.2);
 assert.equal(P.pendingFromVerifiedStages(1.2,[verifiedB(10,8.8,'restore-prior-inter-resistor-retract'),verifiedB(8.8,2.8,'dose'),verifiedB(2.8,3.7,'inter-resistor-retract')]),.9);
 assert.equal(P.pendingFromVerifiedStages(1.2,[verifiedB(10,8.8,'restore-prior-inter-resistor-retract'),verifiedB(8.8,2.8,'dose',false)]),0);
+{const independent=P.plan(['R1'],{...recipe,bSpeedFraction:.04,retractSpeedFraction:.2},p,start,0,1);assert.equal(independent.stages.find(s=>s.tag==='dose').speedFraction,.04);assert.equal(independent.stages.find(s=>s.tag==='restore-prior-inter-resistor-retract').speedFraction,.04);assert.equal(independent.stages.find(s=>s.tag==='inter-resistor-retract').speedFraction,.2);assert.throws(()=>P.validateRecipe({...recipe,retractSpeedFraction:2},p),/Retract speed/);}
+{const ref={rawZ:58.4,operatorConfirmedCoplanar:true,evidence:{path:'/synthetic/report.json',sha256:'a'.repeat(64)}},flat=P.applyCoplanarTouch({...p,calibrationRawZMax:63},ref);assert.equal(flat.pads.R1['1'].touchRawZ,58.4);assert.equal(flat.pads.R2['2'].touchRawZ,58.4);assert(!flat.vacuumReference);assert.throws(()=>P.applyCoplanarTouch(p,{...ref,operatorConfirmedCoplanar:false}),/confirmation/);assert.throws(()=>P.applyCoplanarTouch(p,{...ref,evidence:{}}),/evidence/);}
+
+{const q=profile();q.rawBounds.Z.max=60;q.workZ=60;q.calibrationRawZMax=63;const flat=P.applyCoplanarTouch(q,{rawZ:58.4,operatorConfirmedCoplanar:true,evidence:{path:'/synthetic/touch',sha256:'a'.repeat(64)}});const r={...recipe,workZ:60,heightMode:'gap',gapMm:.10},plan=P.plan(['R1'],r,flat,start,0,0);assert(plan.stages.some(s=>s.axis==='Z'&&s.target===58.3));assert.throws(()=>P.plan(['R1'],{...r,gapMm:.099},flat,start,0,0),/0.10/);}
+
+{const q=profile();q.rodBudget.maximumAdditionalGrossDegrees=23800;P.validateProfile(q);const e={planningRemainingMm:19.6737783,mmPerMotorDegreeNominal:.0008246527777777778};assert(P.validateRodCapacity(q.rodBudget,e).plannedTravelMm<e.planningRemainingMm);assert.throws(()=>P.validateRodCapacity(q.rodBudget,{...e,planningRemainingMm:19}),/capacity/);}

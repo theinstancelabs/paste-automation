@@ -1,0 +1,85 @@
+# Existing-console survey and experiment runner
+
+`automation/scripts/Run_Paste_Operator_Batch.js` reads
+`automation/plans/operator-batch-request.json`. Dispatch it once through the existing
+OpenPnP scripting/automation path, with the updated experiment console visible.
+It calls that console's API; it never creates a second controller or serial connection.
+
+Example request (replace the profile ID with the current private profile ID):
+
+```json
+{
+  "schema": 1,
+  "enabled": true,
+  "id": "unique-baseline-001",
+  "profileId": "CURRENT_PROFILE_ID",
+  "mode": "survey",
+  "references": ["R21", "R22"]
+}
+```
+
+`survey` moves the top camera to each resistor center and captures PNGs. It does
+not dispense. Reference order is preserved. `dispense-and-survey` additionally
+requires a recipe and performs the complete selected group without pausing for
+images between pads. It then photographs the selected resistors.
+
+Use `automation/paste/prepare-operator-experiment.py` to author and validate a
+unique request. A survey preview is:
+
+```sh
+python3 automation/paste/prepare-operator-experiment.py survey --refs R22 R23
+```
+
+For a dispense preview, supply each recipe value explicitly; this command only
+writes a uniquely named request and reports its plan:
+
+```sh
+python3 automation/paste/prepare-operator-experiment.py dispense-and-survey \
+  --refs R22 R23 --dose 20 --push-deg-s 16 --retract-percent 0 \
+  --retract-deg-s 100 --dwell-ms 0 --retract-dwell-ms 0 --gap-mm 0.2
+```
+
+The author checks the current profile, calibration and gross-travel ledger
+against the operator policy. Adding `--execute` is a separate explicit step:
+it acquires a lock, rechecks that evidence, stages the request, and dispatches
+it once through the reviewed action path. Do not use it as a preview flag.
+
+```json
+"recipe": {
+  "doseDegrees": 20,
+  "retractPercent": 0,
+  "dwellMs": 0,
+  "retractDwellMs": 0,
+  "bSpeedFraction": 0.16,
+  "retractSpeedFraction": 1,
+  "workZ": 60,
+  "heightMode": "gap",
+  "gapMm": 0.2,
+  "padMode": "both"
+}
+```
+
+These values illustrate request syntax, not a validated production recipe.
+Dose is motor degrees per pad. Speed fractions use the configured B-axis rate;
+at the reviewed 100 degrees/s setting, 0.16 is 16 degrees/s. Retraction speed
+is independent; restoring pending retraction uses push speed.
+
+Gap mode commands raw Z = touchRawZ − gapMm for each pad. In the current
+counterbalanced geometry, a confirmed N2 native touch Z4.6 maps to raw Z58.4;
+a 0.2 mm commanded gap means raw Z58.2 / native N2 Z4.8. This is a distance
+above the operator's touch reference, not an independent surface measurement.
+An operator-confirmed coplanar scrap reference assumes the PCB shares that
+height; it does not measure PCB tilt. Board movement requires fresh XY alignment.
+
+Each unique ID creates `automation/evidence/operator-batches/<id>/report.json`
+and resistor PNGs. An existing ID is rejected rather than replayed. The report
+contains the request, native action IDs, capture positions and any failure.
+The UI STOP button interrupts the current action using the existing controller
+policy and also prevents subsequent actions, including when pressed between
+camera moves. Failures stop the runner without retries. A software completion
+record means motion was verified; deposit quality still requires image review.
+
+The runner deliberately retains the controller's current clearance and stage
+verification behavior. Current measurements show approximately 5.3 seconds
+per pad, dominated by repeated full clearance Z travel, not agent decisions.
+Any lower local travel plane requires separate clearance validation for both heads.
