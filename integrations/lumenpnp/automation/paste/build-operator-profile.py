@@ -3,10 +3,13 @@
 import argparse
 import hashlib
 import json
+import math
 from pathlib import Path
 
 
-def build(registration, barrier, tip, surface, rod, output, job):
+def build(registration, barrier, tip, surface, rod, output, job, work_z=58.2):
+    if type(work_z) not in (float,int) or not math.isfinite(work_z) or not 55 <= work_z <= 60 or abs(work_z/.05-round(work_z/.05))>1e-8:
+        raise ValueError("Work Z must be finite 55..60 mm on the 0.05 mm grid")
     paths = [Path(p).resolve() for p in (registration, barrier, tip, surface, rod)]
     reg, state, offset, plane_source, travel = [json.loads(p.read_text()) for p in paths]
     if reg.get('scope') != 'offline-fresh-ftp-three-fiducial-affine-with-held-out-pad-checks' or reg.get('acceptance', {}).get('passed') is not True:
@@ -48,14 +51,16 @@ def build(registration, barrier, tip, surface, rod, output, job):
     paths.append(source)
     job_path = Path(job).resolve(strict=True)
     paths.append(job_path)
-    work_z, safe_z, travel_z = 58.2, 32.25, 53.45
+    safe_z, travel_z = 32.25, 53.45
     pads = {}
     points = [[raw['X'], raw['Y']]]
     dx, dy = offset['cameraMinusTipXYMm']
     for target in reg['resistorPadMachineXYTargets']:
         ref, pad = target['padId'].split('.')
         x, y = target['machineXYMm']
-        gap = 6.05 - (plane['a'] * x + plane['b'] * y + plane['c'])
+        gap = 64.25 - work_z - (plane['a'] * x + plane['b'] * y + plane['c'])
+        if gap - .3 < .1 - 1e-9:
+            raise ValueError('Selected work Z violates provisional clearance at '+target['padId'])
         camera, tip_xy = [round(x, 2), round(y, 2)], [round(x-dx, 2), round(y-dy, 2)]
         pads.setdefault(ref, {})[pad] = dict(cameraXY=camera, tipXY=tip_xy, gapAtWorkZ=gap)
         points.extend([camera, tip_xy])
@@ -76,7 +81,7 @@ def build(registration, barrier, tip, surface, rod, output, job):
         h.update(minZ=min(zs)-.001, maxZ=max(zs)+.001)
         head_bounds[head] = h
     evidence = [{'path': str(p), 'sha256': hashlib.sha256(p.read_bytes()).hexdigest()} for p in paths]
-    identity = hashlib.sha256(json.dumps(evidence, sort_keys=True).encode()).hexdigest()
+    identity = hashlib.sha256(json.dumps({'evidence': evidence, 'workZ': work_z}, sort_keys=True).encode()).hexdigest()
     profile = dict(schema=1, id=identity, name='FTP demo resistor pads', pads=pads,
                    jvmStartMs=session['jvmStartMs'], liveConfigurationSha256=session['liveConfigurationSha256'],
                    sessionId=offset['sessionId'], expectedRaw=raw, expectedDriver=snap['driver'],
@@ -101,6 +106,7 @@ if __name__ == '__main__':
     p = argparse.ArgumentParser(description=__doc__)
     for name in ('registration', 'barrier', 'tip', 'surface', 'rod', 'output', 'job'):
         p.add_argument('--'+name, required=True)
+    p.add_argument('--work-z', type=float, default=58.2, help='Explicit measured-profile maximum work Z, 55..60 mm on 0.05 mm grid; does not move hardware')
     a = p.parse_args()
     q = build(**vars(a))
     print(json.dumps({'profile': a.output, 'id': q['id'], 'resistors': len(q['pads']), 'motionDispatched': False}))

@@ -42,11 +42,16 @@ def wait_report(path, good_status, timeout=90):
             except (json.JSONDecodeError, OSError):
                 time.sleep(.15)
                 continue
-            if r.get('error') or str(r.get('status', '')).startswith(('failed', 'executor-quarantined')):
+            status = str(r.get('status', ''))
+            # Controlled probe stops persist an intermediate error while the
+            # native cleanup acknowledges pump OFF and verifies the held pose.
+            # Only terminal failure states are final; keep polling transient
+            # cleanup states until their terminal report or timeout.
+            if status.startswith(('failed', 'enqueue-failed', 'executor-quarantined')):
                 raise RuntimeError(f'{p}: {r.get("status")}: {r.get("error")}')
-            if r.get('status') == good_status:
+            if status == good_status:
                 return r
-            if r.get('status') in ('stopped-policy-vacuum-off-position-verified',
+            if status in ('stopped-policy-vacuum-off-position-verified',
                                    'completed-seal-candidate-held-at-z-awaiting-physical-review'):
                 return r
         time.sleep(.15)
@@ -108,7 +113,7 @@ def prepare(args):
     if not math.isfinite(floor) or floor >= start or start-floor > 2.0+1e-9:
         raise ValueError('--floor must be below current Z by at most 2.00 mm')
     steps = (start-floor)/0.05
-    if abs(steps-round(steps)) > 1e-7 or steps > 40:
+    if abs(steps-round(steps)) > 1e-7 or round(steps) > 40:
         raise ValueError('--floor must be on the 0.05 mm grid and within 40 increments')
     review = load(args.review)
     operator = review.get('operator')
@@ -128,7 +133,8 @@ def prepare(args):
     if not isinstance(record, str) or not record.strip() or not isinstance(interval, dict):
         raise ValueError('--review must provide reviewRecord and jointInterval')
     if (interval.get('reviewedForCurrentPose') is not True
-            or interval.get('minRawZ') != floor or interval.get('maxRawZ') != start
+            or not isinstance(interval.get('minRawZ'), (int,float)) or not isinstance(interval.get('maxRawZ'), (int,float))
+            or abs(interval['minRawZ']-floor)>1e-9 or abs(interval['maxRawZ']-start)>1e-9
             or not isinstance(interval.get('reviewRecord'), str)
             or not interval['reviewRecord'].strip()):
         raise ValueError('--review jointInterval must explicitly cover floor through current Z')

@@ -22,3 +22,4 @@ assert(Math.abs(shallower.pads.R1['1'].gapAtWorkZ-.4)<1e-8);
 assert.throws(()=>P.fitSurface(zs.map(s=>({...s,measuredGap:NaN})),aligned),/finite/);
 assert.throws(()=>P.fitSurface(zs.map(s=>({...s,rawZ:59})),aligned),/outside/);
 console.log('operator calibration transform, offset, clearance, and invalid-input checks passed');
+const pending={...aligned,heightCalibrationPending:true};const calibrated=P.fitSurface(zs,pending).profile;assert.equal(calibrated.heightCalibrationPending,undefined);assert.equal(calibrated.vacuumReference,undefined);

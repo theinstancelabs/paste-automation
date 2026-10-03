@@ -128,3 +128,16 @@ test('probe OFF and ON settling matches current twenty-sample reference recorder
  assert.match(source,/planner\.moveTo\(top,loc,q\.speedFraction,MO\.SpeedOverPrecision\)/);
  assert.match(source,/feedFraction:q\.speedFraction,nominalFeedCeilingMmS:200\*q\.speedFraction/);
 });
+
+test('40-step descent tolerates native coordinate roundoff without expanding descent bounds', () => {
+  const q=request();
+  q.expectedRaw.Z=q.expectedDriver.Z=q.contract.startZmm=6.250000000000007;
+  q.contract.floorZmm=4.25;
+  q.jointInterval.minRawZ=4.25;q.jointInterval.maxRawZ=6.25;
+  assert.equal(n.validate(q,100001,42),q);
+  assert.equal(n.target(q.contract.startZmm,.05,39),4.25);
+  q.contract.floorZmm=4.20;q.jointInterval.minRawZ=4.20;
+  assert.throws(()=>n.validate(q,100001,42),/floor|max descent|40/);
+  q.contract.floorZmm=4.251;q.jointInterval.minRawZ=4.251;
+  assert.throws(()=>n.validate(q,100001,42),/aligned/);
+});

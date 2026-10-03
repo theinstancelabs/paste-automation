@@ -9,7 +9,7 @@ function axisObject(v,n){if(!v||Object.keys(v).sort().join(',')!=='A,B,X,Y,Z')fa
 function profile(p){
  if(!p||p.schema!==1||!/^([a-f0-9]{64}|[a-f0-9-]{36})$/i.test(p.id||'')||!uuid(p.sessionId)||typeof p.name!=='string'||!p.name)fail('Operator profile identity required');
  finite(p.jvmStartMs,'jvmStartMs');if(!/^[a-f0-9]{64}$/.test(p.liveConfigurationSha256||''))fail('Configuration hash required');
- if(p.safeZ!==32.25||p.travelZ!==53.45||typeof p.workZ!=='number'||p.workZ<55||p.workZ>58.2)fail('Reviewed 32.25/53.45/55..58.20 Z profile required');
+ if(p.safeZ!==32.25||p.travelZ!==53.45||typeof p.workZ!=='number'||!isFinite(p.workZ)||p.workZ<55||p.workZ>60)fail('Reviewed 32.25/53.45/55..60 Z profile required');
  finite(p.gapUncertaintyMm,'gapUncertaintyMm');if(p.gapUncertaintyMm<0)fail('Nonnegative surface uncertainty required');
  if(!p.rawBounds||!p.headClearanceBounds||!p.pads||!Array.isArray(p.sourceEvidence)||!p.sourceEvidence.length)fail('Raw/head bounds, job pad table and source hashes required');
  axisObject(p.expectedRaw,'expectedRaw');axisObject(p.expectedDriver,'expectedDriver');
@@ -17,14 +17,17 @@ function profile(p){
  ['N1','N2','top','bottom'].forEach(function(h){['x','y','z','rotation'].forEach(function(k){finite(p.expectedNativePoses[h][k],h+'.'+k);});});
  if(Math.abs(p.expectedRaw.Z-p.safeZ)>0.0001)fail('Profile must be captured at both-head safe Z');
  ['X','Y','Z','A','B'].forEach(function(a){var b=p.rawBounds[a];if(!b||finite(b.min,'rawBounds.'+a+'.min')>finite(b.max,'rawBounds.'+a+'.max'))fail('Ordered raw bounds required: '+a);});
+ if(p.rawBounds.Z.max>60||p.workZ>p.rawBounds.Z.max||p.workZ<p.rawBounds.Z.min)fail('Work Z must remain inside explicit profile raw bounds (maximum 60 mm)');
  ['N1','N2'].forEach(function(h){var b=p.headClearanceBounds[h];if(!b)fail('Both-head bounds missing '+h);['minX','maxX','minY','maxY','minZ','maxZ'].forEach(function(k){finite(b[k],h+'.'+k);});});
  var refs=Object.keys(p.pads);if(!refs.length)fail('Registered resistor pad map required');
- refs.forEach(function(ref){if(!/^R(?:[1-9]|[1-3][0-9]|40)$/.test(ref))fail('Only resistor references R1..R40 accepted');['1','2'].forEach(function(k){var t=p.pads[ref][k];if(!t||!Array.isArray(t.cameraXY)||t.cameraXY.length!==2||!Array.isArray(t.tipXY)||t.tipXY.length!==2)fail('Camera/tip XY arrays required for '+ref+'.'+k);finite(t.cameraXY[0],ref+'.'+k+'.cameraXY.X');finite(t.cameraXY[1],ref+'.'+k+'.cameraXY.Y');finite(t.tipXY[0],ref+'.'+k+'.tipXY.X');finite(t.tipXY[1],ref+'.'+k+'.tipXY.Y');finite(t.gapAtWorkZ,ref+'.'+k+'.gapAtWorkZ');if(t.gapAtWorkZ-p.gapUncertaintyMm<0.1-1e-9)fail('Current work-Z gap lower bound is below 0.10 mm at '+ref+'.'+k);});});
+ refs.forEach(function(ref){if(!/^R(?:[1-9]|[1-3][0-9]|40)$/.test(ref))fail('Only resistor references R1..R40 accepted');['1','2'].forEach(function(k){var t=p.pads[ref][k];if(!t||!Array.isArray(t.cameraXY)||t.cameraXY.length!==2||!Array.isArray(t.tipXY)||t.tipXY.length!==2)fail('Camera/tip XY arrays required for '+ref+'.'+k);finite(t.cameraXY[0],ref+'.'+k+'.cameraXY.X');finite(t.cameraXY[1],ref+'.'+k+'.cameraXY.Y');finite(t.tipXY[0],ref+'.'+k+'.tipXY.X');finite(t.tipXY[1],ref+'.'+k+'.tipXY.Y');if(!((p.vacuumReference||p.heightCalibrationPending===true)&&t.gapAtWorkZ===null))finite(t.gapAtWorkZ,ref+'.'+k+'.gapAtWorkZ');if(!p.vacuumReference&&p.heightCalibrationPending!==true&&t.gapAtWorkZ-p.gapUncertaintyMm<0.1-1e-9)fail('Current work-Z gap lower bound is below 0.10 mm at '+ref+'.'+k);});});
  if(!p.rodBudget||finite(p.rodBudget.baselineGrossDegrees,'rod baseline gross')<0||finite(p.rodBudget.maximumAdditionalGrossDegrees,'rod additional budget')<1||p.rodBudget.maximumAdditionalGrossDegrees>1000||finite(p.rodBudget.baselineB,'rod baseline B')!==p.expectedRaw.B)fail('Hash-bound conservative 41 mm planning budget required');
  return p;
 }
 function recipe(r,p){
  if(!r||['both','1','2'].indexOf(r.padMode)<0)fail('Pad mode must be both, 1 or 2');
+ if(r.heightMode!==undefined&&['raw','gap'].indexOf(r.heightMode)<0)fail('Height mode must be raw or gap');
+ if(r.heightMode==='gap'&&(finite(r.gapMm,'Needle gap')<.15||r.gapMm>1))fail('Needle gap must be 0.15..1 mm');
  if(grid(r.doseDegrees,0.01,'Dose')<0.25||r.doseDegrees>30)fail('Dose must be 0.25..30 degrees on 0.01 grid');
  if(grid(r.retractPercent,5,'Inter-resistor retract')<0||r.retractPercent>50)fail('Inter-resistor retract must be 0..50% in 5% increments');
  if(grid(r.dwellMs,100,'Dose dwell')<0||r.dwellMs>5000)fail('Dose dwell must be 0..5000 ms in 100 ms increments');
@@ -38,12 +41,12 @@ function selected(refs,mode,p){
  return refs;
 }
 function plan(refs,r,p,currentRaw,usedGross,pendingAtStart){
- selected(refs,r.padMode,p);recipe(r,p);axisObject(currentRaw,'currentRaw');finite(usedGross,'used gross B');
+ if(p.heightCalibrationPending===true)fail('New height calibration required');selected(refs,r.padMode,p);recipe(r,p);axisObject(currentRaw,'currentRaw');finite(usedGross,'used gross B');
  var stages=[],gross=0,current={X:currentRaw.X,Y:currentRaw.Y,Z:currentRaw.Z,A:currentRaw.A,B:currentRaw.B},pendingRetract=finite(pendingAtStart||0,'pending inter-resistor retract');
  function add(axis,value,speed,tag,dwell){if(axis==='X'||axis==='Y'){while(Math.abs(value-current[axis])>10.000001){add(axis,Math.round((current[axis]+(value>current[axis]?10:-10))*100)/100,speed,tag,0);}}var delta=value-current[axis];if(Math.abs(delta)<0.0001)return;if(axis==='B'){gross+=Math.abs(delta);}stages.push({axis:axis,target:value,speedFraction:speed,tag:tag||'',dwellMilliseconds:dwell||0});current[axis]=value;}
  function zPath(target){var mids=[];if((current.Z-p.travelZ)*(target-p.travelZ)<0)mids.push(p.travelZ);mids.push(target);mids.forEach(function(dest){while(Math.abs(dest-current.Z)>5){add('Z',current.Z+(dest>current.Z?5:-5),1,'z-transit');}add('Z',dest,1,'z-transit');});}
  refs.forEach(function(ref){var first=r.padMode==='2'?'2':'1',last=r.padMode==='1'?'1':'2',items=first===last?[first]:['1','2'];
-  items.forEach(function(k){var t=p.pads[ref][k],gap=t.gapAtWorkZ+(p.workZ-r.workZ);if(gap-p.gapUncertaintyMm<0.1-1e-9)fail('Requested work Z violates 0.10 mm conservative gap at '+ref+'.'+k);if(current.Z!==p.safeZ){zPath(p.safeZ);}add('X',t.tipXY[0],1,'registered-pad-xy');add('Y',t.tipXY[1],1,'registered-pad-xy');zPath(r.workZ);if(pendingRetract){add('B',Math.round((current.B-pendingRetract)*100)/100,r.bSpeedFraction,'restore-prior-inter-resistor-retract',0);pendingRetract=0;}add('B',Math.round((current.B-r.doseDegrees)*100)/100,r.bSpeedFraction,'dose',r.dwellMs);});
+  items.forEach(function(k){var t=p.pads[ref][k],work=r.workZ;if(p.vacuumReference&&typeof t.touchRawZ!=='number')fail('Explicit operator needle touch zero required');if(r.heightMode==='gap'){finite(t.touchRawZ,'Measured needle touch reference '+ref+'.'+k);work=Math.round((t.touchRawZ-r.gapMm)*100)/100;}if(work<p.rawBounds.Z.min||work>p.rawBounds.Z.max)fail('Pad work Z outside explicit raw bounds');var gap=typeof t.touchRawZ==='number'?t.touchRawZ-work:t.gapAtWorkZ+(p.workZ-work);if(gap-(typeof t.touchRawZ==='number'?0:p.gapUncertaintyMm)<0.1-1e-9)fail('Requested work Z violates 0.10 mm gap at '+ref+'.'+k);if(current.Z!==p.safeZ){zPath(p.safeZ);}add('X',t.tipXY[0],1,'registered-pad-xy');add('Y',t.tipXY[1],1,'registered-pad-xy');zPath(work);if(pendingRetract){add('B',Math.round((current.B-pendingRetract)*100)/100,r.bSpeedFraction,'restore-prior-inter-resistor-retract',0);pendingRetract=0;}add('B',Math.round((current.B-r.doseDegrees)*100)/100,r.bSpeedFraction,'dose',r.dwellMs);});
   var retract=r.doseDegrees*r.retractPercent/100;if(retract){var reliefTarget=Math.round((current.B+retract)*100)/100;pendingRetract=Math.round((reliefTarget-current.B)*100)/100;add('B',reliefTarget,r.bSpeedFraction,'inter-resistor-retract',r.retractDwellMs);}zPath(p.safeZ);
  });
  if(usedGross+gross>p.rodBudget.maximumAdditionalGrossDegrees)fail('Operator-session conservative rod-exposure planning budget exhausted');
@@ -70,7 +73,13 @@ function alignment(samples,p){
 function surface(samples,p){
  captures(samples,p);var pts=samples.map(function(s){if(['1','2'].indexOf(String(s.pad))<0)fail('Z capture requires pad');return p.pads[s.ref][String(s.pad)].tipXY;}),values=samples.map(function(s){finite(s.rawZ,'captured raw Z');finite(s.measuredGap,'measured gap');if(s.rawZ<55||s.rawZ>p.workZ||s.measuredGap<.1||s.measuredGap>3)fail('Z measurement outside 55..workZ or 0.1..3 mm measured gap');return s.measuredGap+s.rawZ-p.workZ;}),c=plane(pts,values);
  if(Math.sqrt(c[0]*c[0]+c[1]*c[1])>.05)fail('Measured board slope exceeds 0.05 mm/mm');
- var out=JSON.parse(JSON.stringify(p));out.gapUncertaintyMm=Math.max(.3,p.gapUncertaintyMm);var minimum=Infinity;Object.keys(out.pads).forEach(function(ref){['1','2'].forEach(function(k){minimum=Math.min(minimum,evaluate(c,out.pads[ref][k].tipXY));});});var lift=Math.max(0,Math.ceil((out.gapUncertaintyMm+.1-minimum-1e-9)/.05)*.05);out.workZ=Math.round((p.workZ-lift)*100)/100;if(out.workZ<55)fail('Measured plane requires workZ below supported 55 mm range');c[2]+=p.workZ-out.workZ;Object.keys(out.pads).forEach(function(ref){['1','2'].forEach(function(k){var q=out.pads[ref][k];q.gapAtWorkZ=evaluate(c,q.tipXY);if(q.gapAtWorkZ-out.gapUncertaintyMm<.1-1e-9||q.gapAtWorkZ>3)fail('Measured plane fails conservative gap bound at '+ref+'.'+k);});});return {profile:out,plane:c};
+ var out=JSON.parse(JSON.stringify(p));delete out.heightCalibrationPending;delete out.vacuumReference;out.gapUncertaintyMm=Math.max(.3,p.gapUncertaintyMm);var minimum=Infinity;Object.keys(out.pads).forEach(function(ref){['1','2'].forEach(function(k){minimum=Math.min(minimum,evaluate(c,out.pads[ref][k].tipXY));});});var lift=Math.max(0,Math.ceil((out.gapUncertaintyMm+.1-minimum-1e-9)/.05)*.05);out.workZ=Math.round((p.workZ-lift)*100)/100;if(out.workZ<55)fail('Measured plane requires workZ below supported 55 mm range');c[2]+=p.workZ-out.workZ;Object.keys(out.pads).forEach(function(ref){['1','2'].forEach(function(k){var q=out.pads[ref][k];q.gapAtWorkZ=evaluate(c,q.tipXY);if(q.gapAtWorkZ-out.gapUncertaintyMm<.1-1e-9||q.gapAtWorkZ>3)fail('Measured plane fails conservative gap bound at '+ref+'.'+k);});});return {profile:out,plane:c};
 }
-var api={validateProfile:profile,validateRecipe:recipe,select: selected,plan:plan,center:center,fitAlignment:alignment,fitSurface:surface};root.PasteOperatorPolicy=api;if(typeof module!=='undefined'&&module.exports)module.exports=api;
+function needleTouch(p,reference,measurement){
+ if(!reference||!reference.plane||!measurement||!p.pads[measurement.ref]||['1','2'].indexOf(String(measurement.pad))<0)fail('Vacuum relative plane and explicit needle touch reference required');
+ var c=reference.plane;['a','b','c'].forEach(function(k){finite(c[k],'Relative onset plane '+k);});finite(measurement.rawZ,'Needle touch raw Z');if(measurement.rawZ<p.rawBounds.Z.min||measurement.rawZ>p.rawBounds.Z.max)fail('Needle touch outside explicit Z bounds');
+ var xy=p.pads[measurement.ref][String(measurement.pad)].cameraXY,onset=c.a*xy[0]+c.b*xy[1]+c.c,out=JSON.parse(JSON.stringify(p));
+ Object.keys(out.pads).forEach(function(ref){['1','2'].forEach(function(k){var t=out.pads[ref][k],o=c.a*t.cameraXY[0]+c.b*t.cameraXY[1]+c.c;t.touchRawZ=measurement.rawZ-(o-onset);t.gapAtWorkZ=t.touchRawZ-out.workZ;});});return out;
+}
+var api={validateProfile:profile,validateRecipe:recipe,select: selected,plan:plan,center:center,fitAlignment:alignment,fitSurface:surface,applyNeedleTouch:needleTouch};root.PasteOperatorPolicy=api;if(typeof module!=='undefined'&&module.exports)module.exports=api;
 })(this);

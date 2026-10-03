@@ -46,23 +46,28 @@
         number('dwellMs','Wait after each dose (ms)',2000,0,5000,100);
         number('retractDwellMs','Wait after retraction (ms)',500,0,2000,100);
         number('bSpeedFraction','Extrusion motor speed (fraction)',0.05,0.01,1,0.01);
-        number('workZ','Needle work Z — larger = lower (mm)',profile.workZ,55,58.2,0.05);
+        number('workZ','Raw work Z — larger = lower (mm)',profile.workZ,55,profile.workZ,0.05);
+        var heightMode=new (J('javax.swing.JComboBox'))(Java.to(['gap','raw'],'java.lang.String[]'));heightMode.setSelectedItem(profile.vacuumReference?'gap':'raw');row('Height mode: gap above touch / raw Z',heightMode);
+        number('gapMm','Commanded gap above needle touch (mm)',.20,.15,1,.05);
+        var touchButton=null,touchLoaded=false;
         controls.add(new (J('javax.swing.JLabel'))('XY/Z travel stays at 100%. No retraction between the two pads.'));
-        controls.add(new (J('javax.swing.JLabel'))('Work Z is checked against the stored surface clearance for each pad.'));
+        controls.add(new (J('javax.swing.JLabel'))('Gap mode follows measured needle touch plus relative board slope; it is not precision gap metrology.'));
         var confirm=new (J('javax.swing.JCheckBox'))('I am watching; board is secured, selected pads usable, and motion area is clear.');
         controls.add(confirm);
         function selected(){var a=[],values=list.getSelectedValuesList();for(var i=0;i<values.size();i++)a.push(String(values.get(i)));if(!a.length)throw Error('Select at least one resistor');return a;}
-        function recipe(){if(busy)throw Error('Wait for the current run to finish');var r={};Object.keys(fields).forEach(function(k){fields[k].commitEdit();r[k]=Number(fields[k].getValue());});return r;}
+        function recipe(){if(busy)throw Error('Wait for the current run to finish');var r={};Object.keys(fields).forEach(function(k){fields[k].commitEdit();r[k]=Number(fields[k].getValue());});r.heightMode=String(heightMode.getSelectedItem());return r;}
         function update(){
             var c=api?api.calibrationStatus():{ready:false};
-            calibrationLabel.setText('XY: '+(c.alignmentReferences||[]).join(', ')+' | Z: '+(c.zReferences||[]).join(', ')+' | '+(c.alignmentApplied?'XY applied':'XY required')+'; '+(c.zApplied?'Z applied':'Z required'));
+            calibrationLabel.setText((c.alignmentApplied?'XY ready':'XY required')+' | '+(c.needleTouchRecorded?'Needle touch recorded — gap is commanded above this zero':c.vacuumReferenceAvailable?'Relative vacuum plane ready — NEEDLE TOUCH REQUIRED':('Measured gap references: '+(c.zReferences||[]).join(', ')+'; '+(c.zApplied?'Z ready':'Z required'))));
+            if(c.needleTouchRecorded&&!touchLoaded){touchLoaded=true;heightMode.setSelectedItem('gap');if(c.commandedGapMm!==undefined&&c.commandedGapMm!==null)fields.gapMm.setValue(new java.lang.Double(c.commandedGapMm));touchLoaded=true;}if(!c.needleTouchRecorded)touchLoaded=false;
             if(c.workZ!==undefined&&fields.workZ){fields.workZ.getModel().setMaximum(new java.lang.Double(c.workZ));if(Number(fields.workZ.getValue())>c.workZ)fields.workZ.setValue(new java.lang.Double(c.workZ));}
             buttons.forEach(function(b){b.setEnabled(armed&&!busy);});
             dispenseButtons.forEach(function(b){b.setEnabled(armed&&!busy&&c.ready===true);});
             idleButtons.forEach(function(b){b.setEnabled(!busy);});
-            Object.keys(fields).forEach(function(k){fields[k].setEnabled(!busy);});list.setEnabled(!busy);confirm.setEnabled(!busy);
+            Object.keys(fields).forEach(function(k){fields[k].setEnabled(!busy);});heightMode.setEnabled(!busy);fields.workZ.setEnabled(!busy&&String(heightMode.getSelectedItem())==='raw');fields.gapMm.setEnabled(!busy&&String(heightMode.getSelectedItem())==='gap');if(touchButton)touchButton.setEnabled(armed&&!busy&&c.vacuumReferenceAvailable===true);list.setEnabled(!busy);confirm.setEnabled(!busy);
             stateLabel.setText(busy?'BUSY — completing controller action':(!armed?'DISARMED — check supervision, then Connect/check controller':(c.ready?'READY — alignment and height recorded':'CALIBRATION REQUIRED — camera controls available; dispense locked')));
         }
+        heightMode.addActionListener(new (J('java.awt.event.ActionListener'))({actionPerformed:function(){update();}}));
         api=PasteOperator.create(profile,function(event){Swing.invokeLater(new (J('java.lang.Runnable'))({run:function(){if(event.busy!==undefined)busy=!!event.busy;if(event.armed!==undefined)armed=!!event.armed;if(event.error){armed=false;note('STOPPED: '+event.error);}if(event.message)note(event.message);if(event.record)note('Saved: '+event.record);update();}}));});
         function call(fn){try{fn();}catch(e){note('Not run: '+e);}}
         confirm.addActionListener(new (J('java.awt.event.ActionListener'))({actionPerformed:function(){call(function(){if(!confirm.isSelected()){api.disarm();armed=false;}update();});}}));
@@ -82,10 +87,19 @@
         var height=row('3. Inspect needle at raw Z',checkZ);
         button(height,'Approach selected Pad 1 (no paste)',function(){checkZ.commitEdit();api.approach(selected()[0],'1',Number(checkZ.getValue()));},true);
         button(height,'Lift both heads to clearance',function(){api.lift();},true);
+        var touchRow=row('Single needle touch-off (after relative vacuum plane)',new (J('javax.swing.JLabel'))(''));
+        touchButton=button(touchRow,'Record needle barely touching Pad 1',function(){
+            var c=api.calibrationStatus();if(!c.vacuumReferenceAvailable)throw Error('Fresh relative vacuum-plane reference required');
+            fields.gapMm.commitEdit();var desired=Number(fields.gapMm.getValue());
+            var answer=J('javax.swing.JOptionPane').showConfirmDialog(frame,'Confirm the METAL needle is barely touching selected '+selected()[0]+' Pad 1 now.\nThis records the current height as zero; it does not lower the needle.\nThen Lift; dispensing uses '+desired+' mm commanded above this zero.','Record physical needle touch',J('javax.swing.JOptionPane').YES_NO_OPTION);
+            if(answer!==J('javax.swing.JOptionPane').YES_OPTION)return;
+            api.recordNeedleTouch(selected()[0],'1',desired);heightMode.setSelectedItem('gap');note('Operator needle-touch capture requested. Lift to clearance before dispensing.');
+        },true);
+        controls.add(new (J('javax.swing.JLabel'))('Vacuum provides relative board slope only. The explicit metal-needle touch establishes the working zero.'));
         var gap=new (J('javax.swing.JTextField'))(6);gap.setToolTipText('Enter a physically measured gap from 0.1 to 3 mm; no assumed default.');
         var zrecord=row('Measured needle-to-board gap (mm)',gap);
         button(zrecord,'Record measured gap',function(){var entered=String(gap.getText()).trim();if(!entered)throw Error('Enter the gap you physically measured at this position');api.recordZ(selected()[0],Number(entered));gap.setText('');note('Measured gap capture requested for '+selected()[0]);update();},true);
-        button(zrecord,'Apply 3-point Z',function(){api.applyZ();note('Height model applied. Lift to clearance before dispensing.');update();},true);
+        button(zrecord,'Apply 3-point Z',function(){api.applyZ();heightMode.setSelectedItem('raw');note('Height model applied. Lift to clearance before dispensing.');update();},true);
         controls.add(new (J('javax.swing.JLabel'))('Repeat height measurements at R1, R15, R40. Gap must be physically measured; this is not auto-probing.'));
         controls.add(new (J('javax.swing.JLabel'))('Start high (raw Z 55); larger Z lowers the needle. Inspect before every lower approach.'));
         var run=row('4. Dispense',new (J('javax.swing.JLabel'))('Selected group:'));
@@ -95,12 +109,13 @@
         var utility=row('',new (J('javax.swing.JLabel'))(''));
         var stopButton=button(utility,'STOP after current move',function(){api.stop();note('Stop requested; let the active move finish. Use the machine emergency stop for an immediate stop.');},false);idleButtons.pop();
         button(utility,'Save recipe',function(){var folder=new F(root+'/automation/evidence/operator-recipes');folder.mkdirs();var file=new F(folder,'recipe-'+java.lang.System.currentTimeMillis()+'.json');var r={schema:1,recipe:recipe(),padMode:lastPadMode,references:selected(),profileId:profile.id};Files.write(file.toPath(),new java.lang.String(JSON.stringify(r,null,2)+'\n').getBytes(UTF));note('Recipe saved: '+file);},false);
-        button(utility,'Load recipe',function(){if(busy)throw Error('Wait for the current run to finish');var chooser=new (J('javax.swing.JFileChooser'))(root+'/automation/evidence/operator-recipes');if(chooser.showOpenDialog(frame)===J('javax.swing.JFileChooser').APPROVE_OPTION){var saved=JSON.parse(read(String(chooser.getSelectedFile())));if(saved.schema!==1||saved.profileId!==profile.id||!saved.recipe||!Array.isArray(saved.references)||saved.references.some(function(r){return refs.indexOf(r)<0;}))throw Error('Recipe schema, profile or resistor selection does not match this session');Object.keys(fields).forEach(function(k){if(saved.recipe[k]!==undefined)fields[k].setValue(new java.lang.Double(saved.recipe[k]));});list.setSelectedIndices(Java.to(saved.references.map(function(r){return refs.indexOf(r);}),'int[]'));lastPadMode=saved.padMode||'both';note('Settings and selection loaded. Saved pad mode: '+lastPadMode+'. Choose the matching dispense button; no motion performed.');}},false);
+        button(utility,'Load recipe',function(){if(busy)throw Error('Wait for the current run to finish');var chooser=new (J('javax.swing.JFileChooser'))(root+'/automation/evidence/operator-recipes');if(chooser.showOpenDialog(frame)===J('javax.swing.JFileChooser').APPROVE_OPTION){var saved=JSON.parse(read(String(chooser.getSelectedFile())));if(saved.schema!==1||saved.profileId!==profile.id||!saved.recipe||!Array.isArray(saved.references)||saved.references.some(function(r){return refs.indexOf(r)<0;}))throw Error('Recipe schema, profile or resistor selection does not match this session');heightMode.setSelectedItem(saved.recipe.heightMode==='gap'?'gap':'raw');Object.keys(fields).forEach(function(k){if(saved.recipe[k]!==undefined)fields[k].setValue(new java.lang.Double(saved.recipe[k]));});list.setSelectedIndices(Java.to(saved.references.map(function(r){return refs.indexOf(r);}),'int[]'));lastPadMode=saved.padMode||'both';note('Settings and selection loaded. Saved pad mode: '+lastPadMode+'. Choose the matching dispense button; no motion performed.');}},false);
         var scrollControls=new (J('javax.swing.JScrollPane'))(controls);scrollControls.getVerticalScrollBar().setUnitIncrement(24);panel.add(scrollControls,'Center');panel.add(new (J('javax.swing.JScrollPane'))(log),'South');
         frame.setContentPane(panel);frame.setDefaultCloseOperation(J('javax.swing.WindowConstants').DO_NOTHING_ON_CLOSE);
         frame.addWindowListener(new (Java.extend(J('java.awt.event.WindowAdapter')))({windowClosing:function(){api.stop();api.disarm();frame.dispose();}}));
         note('Check supervision, then Connect/check controller to enable camera and calibration controls. Opening does not move.');
-        note('Replacement board: center R1/R15/R40 using camera jog, record each, Apply XY. Measure needle gap at those three, Apply Z, Lift.');
+        note('If fresh XY and a relative vacuum plane are imported: Approach Pad 1 while watching; record explicit needle barely touching, then Lift. Gap mode defaults to 0.20 mm above that zero.');
+        note('Manual alternative: align R1/R15/R40, Apply XY, physically measure three needle gaps, Apply Z, then use raw height mode. Board replaced/reset invalidates all height references.');
         note('Profile: '+profile.id+'. Provisional height/offset; recipes are experiments, not volume calibration.');
         note('Run records: '+root+'/automation/evidence/operator-paste-runs');
         update();frame.pack();var screen=J('java.awt.Toolkit').getDefaultToolkit().getScreenSize();frame.setSize(Math.min(frame.getWidth(),screen.width-40),Math.min(frame.getHeight(),screen.height-80));frame.setLocation(Math.max(0,screen.width-frame.getWidth()-20),40);frame.setVisible(true);print('Paste console opened with explicit controller check and XY/Z calibration; motion not dispatched.');

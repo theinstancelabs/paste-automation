@@ -18,7 +18,7 @@ function profile() {
     expectedRaw: { X: 0, Y: 0, Z: 32.25, A: 200, B: -10 },
     expectedDriver: { X: 0, Y: 0, Z: 32.25, A: 200, B: -10 },
     expectedNativePoses: Object.fromEntries(['N1', 'N2', 'top', 'bottom'].map(k => [k, { x: 0, y: 0, z: 32.25, rotation: 0 }])),
-    rawBounds: Object.fromEntries(['X', 'Y', 'Z', 'A', 'B'].map(k => [k, { min: -100, max: 100 }])),
+    rawBounds: Object.fromEntries(['X', 'Y', 'Z', 'A', 'B'].map(k => [k, { min: -100, max: k === 'Z' ? 58.2 : 100 }])),
     headClearanceBounds: Object.fromEntries(['N1', 'N2'].map(k => [k, { minX: -100, maxX: 100, minY: -100, maxY: 100, minZ: 0, maxZ: 100 }])),
     sourceEvidence: [{ path: '/test', sha256: 'c'.repeat(64) }],
     rodBudget: { baselineGrossDegrees: 1, baselineB: -10, maximumAdditionalGrossDegrees: 100 },
@@ -51,3 +51,18 @@ assert.equal(next.pendingRetractDegrees, first.pendingRetractDegrees);
 assert.throws(() => P.plan(['R1'], recipe, p, start, 99, 0), /budget exhausted/);
 let previous={...start};for(const step of first.stages){if(['X','Y'].includes(step.axis))assert(Math.abs(step.target-previous[step.axis])<=10.000001);if(step.axis==='Z')assert(Math.abs(step.target-previous.Z)<=5.000001);previous[step.axis]=step.target;}assert.equal(previous.X,p.pads.R1['2'].tipXY[0]);assert.equal(previous.Y,p.pads.R1['2'].tipXY[1]);
 console.log('operator policy checks passed');
+
+// Extended work Z requires an explicitly rebuilt bounded profile.
+{const p=profile();p.workZ=59.1;assert.throws(()=>P.validateProfile(p),/raw bounds/);p.rawBounds.Z.max=59.1;assert.equal(P.validateProfile(p).workZ,59.1);p.rawBounds.Z.max=60.01;assert.throws(()=>P.validateProfile(p),/maximum 60/);p.workZ=60.01;assert.throws(()=>P.validateProfile(p),/55..60/);}
+
+// Vacuum onset provides relative slope only; an explicit needle zero is required.
+{const p=profile();p.workZ=60;p.rawBounds.Z.max=60;p.vacuumReference={plane:{a:.01,b:0,c:4.5}};Object.values(p.pads).forEach(pads=>Object.values(pads).forEach(t=>t.gapAtWorkZ=null));P.validateProfile(p);
+ const r={...recipe,workZ:60,heightMode:'gap',gapMm:.2};assert.throws(()=>P.plan(['R1'],r,p,start,0,0),/needle touch/);
+ const touched=P.applyNeedleTouch(p,p.vacuumReference,{ref:'R1',pad:'1',rawZ:59.5});
+ assert.equal(touched.pads.R1['1'].touchRawZ,59.5);assert(Math.abs(touched.pads.R2['1'].touchRawZ-59.4)<1e-9);
+ const plan=P.plan(['R1','R2'],r,touched,start,0,0);const doses=plan.stages.filter(s=>s.tag==='dose');assert.equal(doses.length,4);
+ const beforeDoses=[];let z=start.Z;for(const st of plan.stages){if(st.axis==='Z')z=st.target;if(st.tag==='dose')beforeDoses.push(z);}assert.deepEqual(beforeDoses,[59.3,59.28,59.2,59.18]);
+ assert.throws(()=>P.plan(['R1'],{...r,gapMm:.1},touched,start,0,0),/0.15/);
+ assert.throws(()=>P.plan(['R1'],{...r,heightMode:'raw',workZ:59.5},touched,start,0,0),/gap/);
+}
+{const p=profile();p.heightCalibrationPending=true;Object.values(p.pads).forEach(ps=>Object.values(ps).forEach(t=>t.gapAtWorkZ=null));P.validateProfile(p);assert.throws(()=>P.plan(['R1'],recipe,p,start,0,0),/New height calibration/);}
