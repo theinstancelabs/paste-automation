@@ -1,0 +1,8 @@
+'use strict';
+const assert=require('node:assert/strict'),fs=require('node:fs'),vm=require('node:vm');
+const src=fs.readFileSync(require.resolve('../operator-console-native.js'),'utf8');
+let raw={X:248.45,Y:338.98,Z:42.25,A:200,B:-4668.83};const stages=[];
+const c={snapshot:()=>({raw:{...raw}}),purgePose:()=>{},profile:{safeZ:32.25,rawBounds:{X:{min:255,max:400},Y:{min:100,max:340}}},boundRaw:r=>{assert(r.X>=255);assert.equal(r.Z,32.25);assert.equal(r.B,-4668.83);},submit:(_n,b)=>{assert(b.stationaryOnly);b.run();},returnAnchor:null,runRecord:{},zPath:z=>{assert(c.returnAnchor);assert.equal(raw.X,248.45);stages.push('lift');raw.Z=z;return true;},xy:(x,y)=>{assert.equal(raw.Z,32.25);assert(c.returnAnchor);stages.push('travel');raw.X=x;raw.Y=y;return true;}};
+vm.createContext(c);vm.runInContext(src.slice(src.indexOf(' function returnRun('),src.indexOf(' function prepareThen(')),c);c.returnRun();assert.deepEqual(stages,['lift','travel']);assert.equal(raw.X,255);assert.equal(raw.B,-4668.83);assert.equal(c.returnAnchor,null);
+let budget={pendingRetractDegrees:112,usedAdditionalGrossDegrees:10130.25,entries:[{id:'kept'}]};c.afterManualHandoff=fn=>fn();c.ledger=()=>JSON.parse(JSON.stringify(budget));c.writeAtomic=(_p,b)=>{budget=b;};c.ledgerPath='mock';vm.runInContext(src.slice(src.indexOf(' function discardRelief('),src.indexOf(' function afterManualHandoff(')),c);c.discardRelief();assert.equal(budget.pendingRetractDegrees,0);assert.equal(budget.usedAdditionalGrossDegrees,10130.25);assert.equal(budget.entries.length,1);assert.equal(budget.reliefDecisions[0].discardedPendingDegrees,112);assert.equal(raw.B,-4668.83);
+console.log('Actual return lifts scrap Z42.25 to32.25 before XY entry, no B; explicit relief decision preserves gross and motion');

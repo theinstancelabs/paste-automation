@@ -39,6 +39,8 @@ There is no automatic priming or tip cleaning. Inspect the tip and use a sacrifi
 
 **RELIEVE pressure (positive B, no XYZ)** uses the same confirmed scrap position and B-speed setting. It defaults to **15°** per request and accepts **1–300°** in whole-degree increments, split into positive-B chunks of at most 15°. Verified positive B travel is charged to the same gross budget and tracked as pending. A pending amount above 15° blocks pad dispensing; use PURGE over scrap to re-prime and consume the pending relief before dispensing. **STOP** finishes the current B move and holds XYZ.
 
+**Return from scrap (lift then travel)** raises Z to the reviewed clearance while holding XY, then moves in bounded XY stages to the nearest point inside the operator profile envelope. It does not move A or B. **Use current relieved pressure for next test** is a separate explicit, no-motion choice: it records and clears pending B restoration without changing gross usage or the B position. Choose it only when you intend to continue from the pressure state already present; otherwise PURGE over scrap to re-prime. Neither action resets the gross budget.
+
 **STOP after current move** is cooperative: it finishes the active controller operation, then lifts to clearance. Use the physical emergency stop for an immediate stop.
 
 This profile supports the current FTP demo's R1–R40. It is not an arbitrary KiCad importer or a qualified production recipe. Run records and measured calibration stay private under `automation/evidence/operator-paste-runs/`; recipes are in `automation/evidence/operator-recipes/`. Reusable source is exported to the public integration repository; the separate viewer remains private.
