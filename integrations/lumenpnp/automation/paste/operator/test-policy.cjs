@@ -66,3 +66,5 @@ console.log('operator policy checks passed');
  assert.throws(()=>P.plan(['R1'],{...r,heightMode:'raw',workZ:59.5},touched,start,0,0),/gap/);
 }
 {const p=profile();p.heightCalibrationPending=true;Object.values(p.pads).forEach(ps=>Object.values(ps).forEach(t=>t.gapAtWorkZ=null));P.validateProfile(p);assert.throws(()=>P.plan(['R1'],recipe,p,start,0,0),/New height calibration/);}
+
+{const p=profile(),v={plane:{a:.01,b:0,c:4.5}},m={cameraXY:[15,20],rawZ:57.75,operatorConfirmedBarelyTouching:true};const result=P.applyNeedleTouch(p,v,m);assert.equal(result.pads.R1['1'].touchRawZ,57.8);assert.equal(result.pads.R2['1'].touchRawZ,57.7);assert.throws(()=>P.applyNeedleTouch(p,v,{...m,operatorConfirmedBarelyTouching:false}),/explicit operator/);assert.throws(()=>P.applyNeedleTouch(p,v,{...m,cameraXY:[NaN,20]}),/finite/);}

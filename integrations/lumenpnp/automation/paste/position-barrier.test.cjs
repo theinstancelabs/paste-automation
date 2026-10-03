@@ -12,3 +12,11 @@ test('user-acknowledged manual home may use a fresh same-JVM pure-model snapshot
 
 function calibrationXml(centerX='0') { return '<configuration><entry><string>N1</string><runout-compensation class="org.openpnp.machine.reference.ReferenceNozzleTipCalibration$ModelBasedRunoutCameraOffsetCompensation" units="Millimeters" center-x="'+centerX+'" center-y="0" peak-error="0.1" phase-shift="0.2" radius="1" rms-error="0.05"/></entry><entry><string>N2</string><value>unchanged</value></entry></configuration>'; }
 test('calibration lineage permits numeric N1 runout updates only',()=>{assert.equal(p.calibrationXml(calibrationXml('0'),calibrationXml('1.25')),true);assert.throws(()=>p.calibrationXml(calibrationXml(),calibrationXml().replace('unchanged','changed')));assert.throws(()=>p.calibrationXml(calibrationXml(),'<configuration><entry><string>N2</string><value>unchanged</value></entry></configuration>'));});
+
+test('explicit manual-jog acknowledgement permits only pending flag with idle empty queues',()=>{
+ const q=request(),r=model();r.drivers[0].motionPending=true;
+ assert.throws(()=>p.installer(r,q));q.manualJogCompletionAcknowledgement=true;
+ p.validate(q,100,1);p.installer(r,q);
+ for(const edit of [x=>x.motionQueue=1,x=>x.executor.queued=1,x=>x.busy=true,x=>x.drivers[0].error='fault']){const bad=JSON.parse(JSON.stringify(r));edit(bad);assert.throws(()=>p.installer(bad,q));}
+ assert.throws(()=>p.validate({...q,manualJogCompletionAcknowledgement:'yes'},100,1));
+});

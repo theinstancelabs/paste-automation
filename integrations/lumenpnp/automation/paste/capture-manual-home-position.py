@@ -18,6 +18,7 @@ ROOT = Path(__file__).resolve().parents[2]
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--operator-home-confirmed', action='store_true', required=True)
+    parser.add_argument('--manual-jog-completion-confirmed', action='store_true', help='Explicitly wait for an already-issued manual jog using native M400 only before querying position; no new move')
     args = parser.parse_args()
     started = time.time_ns()
     subprocess.run(['python3', str(ROOT/'automation/scripts/run_reviewed_action.py'),
@@ -37,6 +38,7 @@ def main():
                    createdMs=time.time_ns()//1_000_000, jvmStartMs=model['jvmStartMs'],
                    operator='Root: operator confirmed manual home; verify position without motion',
                    manualHomeAcknowledgement=True, reviewedReadOnlyQuery=True,
+                   manualJogCompletionAcknowledgement=args.manual_jog_completion_confirmed,
                    liveConfigurationSha256=model['liveConfigurationSha256'],
                    installerEvidence={'path':str(source.resolve()),'sha256':hashlib.sha256(source.read_bytes()).hexdigest()},
                    expectedRaw={a['letter']:a['raw'] for a in model['axes']},

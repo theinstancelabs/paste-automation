@@ -1,4 +1,4 @@
-// Read-only native M114 barrier; no generic completion, motion, actuation or connection.
+// Native M114 barrier; optional explicitly acknowledged M400 completion of prior manual jog only. No new motion, actuation or connection.
 (function(){
  var C=Java.type('org.openpnp.model.Configuration'),F=Java.type('java.io.File'),Fs=Java.type('java.nio.file.Files'),UTF=Java.type('java.nio.charset.StandardCharsets').UTF_8,
  MD=Java.type('java.security.MessageDigest'),MM=Java.type('org.openpnp.model.LengthUnit').Millimeters,AL=Java.type('org.openpnp.model.AxesLocation'),
@@ -41,10 +41,10 @@
  if(Object.keys(axes).sort().join(',')!=='A,B,X,Y,Z')throw Error('Missing raw axis');
  function snapshot(){var s={raw:{},driver:{},nativePoses:poses()};Object.keys(axes).forEach(function(k){s.raw[k]=Number(axes[k].getCoordinate());s.driver[k]=Number(axes[k].getDriverCoordinate());});return s;}
  var originalReader=privateValue('org.openpnp.machine.reference.driver.GcodeDriver','readerThread',d),originalCommands=d.commands;
- function stateGate(){
+ function stateGate(allowPriorManualPending){
   if(d.commands!==originalCommands||originalReader==null||!originalReader.isAlive()||privateValue('org.openpnp.machine.reference.driver.GcodeDriver','readerThread',d)!==originalReader||privateValue('org.openpnp.machine.reference.driver.GcodeDriver','errorResponse',d)!=null)throw Error('Reader/commands changed or prior native error');
   if((m.isBusy()&&!m.isTask(java.lang.Thread.currentThread()))||String(state.get(panel))!=='Stopped')throw Error('Need idle machine, stopped job');
-  if(String(privateValue('org.openpnp.machine.reference.driver.GcodeDriver','connected',d))!=='true'||d.isMotionPending())throw Error('Driver disconnected or prior motion pending');
+  if(String(privateValue('org.openpnp.machine.reference.driver.GcodeDriver','connected',d))!=='true'||(d.isMotionPending()&&!(allowPriorManualPending===true&&q.manualJogCompletionAcknowledgement===true)))throw Error('Driver disconnected or prior motion pending');
   if(privateValue('org.openpnp.machine.reference.driver.AbstractMotionPlanner','motionCommands',planner).size()!==0)throw Error('Prior native motion queued');
   for each(var h in m.getHeads())for each(var n in h.getNozzles())if(n.getPart()!=null||n.getPartsFeeder()!=null)throw Error('Held/associated part');
   if(right.getNozzleTip()!=null||right.getCompatibleNozzleTips().size()!==0||right.getRotationModeOffset()!=null||right.isChangerEnabled()||right.getManualNozzleTipChangeLocation().isInitialized()||m.getPnpJobProcessor().isPreRotateAllNozzles())throw Error('N2 quarantine changed');
@@ -64,7 +64,7 @@
   if(['M114','M114 ; get position'].indexOf(String(d.getCommand(null,CT.GET_POSITION_COMMAND)).trim())<0)throw Error('Position query command changed');
   if(JSON.stringify(PasteConnectionPolicy.tokens(d.getCommand(top,CT.MOVE_TO_COMPLETE_COMMAND)))!==JSON.stringify(['M400']))throw Error('Motion completion command changed');
  }
- stateGate();if(configHash()!==q.liveConfigurationSha256)throw Error('Live configuration changed');
+ stateGate(q.manualJogCompletionAcknowledgement===true);if(configHash()!==q.liveConfigurationSha256)throw Error('Live configuration changed');
  var executor=privateValue('org.openpnp.spi.base.AbstractMachine','executor',m);
  if(executor==null||executor.isShutdown()||executor.isTerminated()||executor.getCorePoolSize()!==1||executor.getMaximumPoolSize()!==1||executor.getActiveCount()!==0||!executor.getQueue().isEmpty())throw Error('Existing native single-worker executor must be idle; no second executor is created');
  var taskSetter=Java.type('org.openpnp.spi.base.AbstractMachine').class.getDeclaredMethod('setTaskThread',Java.type('java.lang.Thread').class);taskSetter.setAccessible(true);
@@ -103,9 +103,23 @@
  try{
   if(m.isBusy()||!executor.getQueue().isEmpty())throw Error('Native task ownership changed before position query');
   taskOwner(java.lang.Thread.currentThread());ownedTask=true;m.fireMachineBusy(true);
-  PastePositionBarrier.validate(q,Number(java.lang.System.currentTimeMillis()),jvm);stateGate();
+  PastePositionBarrier.validate(q,Number(java.lang.System.currentTimeMillis()),jvm);stateGate(q.manualJogCompletionAcknowledgement===true);
   if(configHash()!==q.liveConfigurationSha256)throw Error('Configuration changed before native task');
   var taskStart=snapshot();PasteSurveyRequest.compareExact(taskStart.raw,initial.raw,'queued raw');PasteSurveyRequest.compareExact(taskStart.driver,initial.driver,'queued driver');comparePoses(taskStart.nativePoses,initial.nativePoses);
+  if(q.manualJogCompletionAcknowledgement===true&&d.isMotionPending()){
+   // Direct driver completion invokes only the already-validated M400 template;
+   // never flush planner motion or clear pending flags by reflection.
+   var completion={priorResponses:[],responses:[]};r.manualJogCompletion=completion;
+   append(d.receiveResponses(),completion.priorResponses);checkedLines(completion.priorResponses);
+   r.transportUncertain=true;r.completionOnlySubmitted=true;save('manual-jog-native-M400-submitted');
+   d.waitForCompletion(top,Java.type('org.openpnp.spi.MotionPlanner$CompletionType').WaitForStillstand);
+   append(d.receiveResponses(),completion.responses);checkedLines(completion.responses);
+   if(!completion.responses.some(function(line){return /^ok/.test(line);}))collect('^ok.*',completion);
+   if(d.isMotionPending())throw Error('Prior manual jog completion remained pending');
+   var completedPose=snapshot();PasteSurveyRequest.compareExact(completedPose.raw,initial.raw,'completion unchanged raw');PasteSurveyRequest.compareExact(completedPose.driver,initial.driver,'completion unchanged driver');comparePoses(completedPose.nativePoses,initial.nativePoses);
+   r.transportUncertain=false;r.manualJogCompletionVerified=true;save('manual-jog-native-M400-acknowledged');
+  }
+  stateGate();
   query(taskStart,'position');
   var after=snapshot();PasteSurveyRequest.compareExact(after.raw,initial.raw,'unchanged raw after position query');comparePoses(after.nativePoses,initial.nativePoses);PasteSurveyRequest.compareReported(r.position.reported,after.raw,after.driver);
   stateGate();if(!executor.getQueue().isEmpty()||configHash()!==q.liveConfigurationSha256)throw Error('State/configuration changed during position barrier');
@@ -115,7 +129,7 @@
   r.noMotionCommandSubmitted=true;r.uncertainCompletion=false;r.finishedAt=new Date().toISOString();save('completed-read-only-position-barrier');
  }catch(e){
   r.error=String(e);r.uncertainCompletion=(r.motionSubmitted&&!r.controllerPositionVerified)||r.transportUncertain===true;r.auditIncomplete=true;r.finishedAt=new Date().toISOString();
-  if(r.controllerQuerySubmitted){
+  if(r.controllerQuerySubmitted||r.completionOnlySubmitted){
    keepBusy=true;r.queuedTasksCancelled=0;var pending;
    while((pending=executor.getQueue().poll())!=null){if(pending instanceof Java.type('java.util.concurrent.Future'))pending.cancel(false);r.queuedTasksCancelled++;}
    executor.shutdown();r.executorQuarantined=true;
