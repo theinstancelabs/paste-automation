@@ -10,7 +10,7 @@ Opening replaces an idle older console and performs no motion. It uses OpenPnP's
 
 ## Enable camera controls
 
-Check **I am watching…**, then click **Connect/check controller**. This verifies the existing controller without moving. The status line explains whether controls are disarmed, busy, ready, or awaiting calibration. Camera/calibration buttons become available after the check; dispensing additionally requires XY and height calibration. Errors appear in the log. An uncertain controller response quarantines the session without retry.
+Check **I am watching…**, then click **Connect/check controller**. This verifies the existing controller without homing or issuing a new move. It rebinds only a healthy, idle executor owned by OpenPnP. If an operator-issued manual jog is still pending, it waits for that jog with the configured M400, obtains fresh position with M114, verifies B against the existing dose ledger, and adopts the stationary pose without resetting the budget. The status line explains whether controls are disarmed, busy, ready, or awaiting calibration. Camera/calibration buttons become available after the check; dispensing additionally requires XY and height calibration. Errors appear in the log. An uncertain controller response quarantines the session without retry.
 
 ## Replaced or moved board
 

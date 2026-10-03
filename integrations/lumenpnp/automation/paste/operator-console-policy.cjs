@@ -82,5 +82,8 @@ function needleTouch(p,reference,measurement){
  var onset=c.a*xy[0]+c.b*xy[1]+c.c,out=JSON.parse(JSON.stringify(p));
  Object.keys(out.pads).forEach(function(ref){['1','2'].forEach(function(k){var t=out.pads[ref][k],o=c.a*t.cameraXY[0]+c.b*t.cameraXY[1]+c.c;t.touchRawZ=measurement.rawZ-(o-onset);t.gapAtWorkZ=t.touchRawZ-out.workZ;});});return out;
 }
-var api={validateProfile:profile,validateRecipe:recipe,select: selected,plan:plan,center:center,fitAlignment:alignment,fitSurface:surface,applyNeedleTouch:needleTouch};root.PasteOperatorPolicy=api;if(typeof module!=='undefined'&&module.exports)module.exports=api;
+function manualHandoff(current,expectedB){
+ if(!current)fail('Manual handoff snapshot required');axisObject(current.raw,'Manual raw');axisObject(current.driver,'Manual driver');finite(expectedB,'Retained ledger B');Object.keys(current.raw).forEach(function(k){if(Math.abs(current.raw[k]-current.driver[k])>.0001)fail('Manual raw/driver mismatch '+k);});if(Math.abs(current.raw.B-expectedB)>.0001)fail('Manual B changed: preserve dose budget and reconcile before arming');return current;
+}
+var api={validateProfile:profile,validateRecipe:recipe,select: selected,plan:plan,center:center,fitAlignment:alignment,fitSurface:surface,applyNeedleTouch:needleTouch,validateManualHandoff:manualHandoff};root.PasteOperatorPolicy=api;if(typeof module!=='undefined'&&module.exports)module.exports=api;
 })(this);
