@@ -29,7 +29,7 @@ function recipe(r,p){
  if(!r||['both','1','2'].indexOf(r.padMode)<0)fail('Pad mode must be both, 1 or 2');
  if(r.heightMode!==undefined&&['raw','gap'].indexOf(r.heightMode)<0)fail('Height mode must be raw or gap');
  if(r.heightMode==='gap'&&(finite(r.gapMm,'Needle gap')<.10||r.gapMm>1))fail('Needle gap must be 0.10..1 mm');
- if(grid(r.doseDegrees,0.01,'Dose')<0.25||r.doseDegrees>30)fail('Dose must be 0.25..30 degrees on 0.01 grid');
+ if(grid(r.doseDegrees,0.01,'Dose')<0.25||r.doseDegrees>120)fail('Dose must be 0.25..120 degrees on 0.01 grid');
  if(grid(r.retractPercent,5,'Inter-resistor retract')<0||r.retractPercent>50)fail('Inter-resistor retract must be 0..50% in 5% increments');
  if(grid(r.dwellMs,100,'Dose dwell')<0||r.dwellMs>5000)fail('Dose dwell must be 0..5000 ms in 100 ms increments');
  if(grid(r.retractDwellMs,100,'Retract dwell')<0||r.retractDwellMs>2000)fail('Retract dwell must be 0..2000 ms in 100 ms increments');

@@ -43,7 +43,7 @@
         function note(s){log.append(String(s)+'\n');log.setCaretPosition(log.getDocument().getLength());}
         function row(label, component){var p=new (J('javax.swing.JPanel'))(new (J('java.awt.FlowLayout'))(J('java.awt.FlowLayout').LEFT));p.add(new (J('javax.swing.JLabel'))(label));p.add(component);controls.add(p);return p;}
         function number(key,label,value,min,max,step){if(typeof retained[key]==='number'&&isFinite(retained[key]))value=Math.max(min,Math.min(max,retained[key]));var spinner=new (J('javax.swing.JSpinner'))(new (J('javax.swing.SpinnerNumberModel'))(new java.lang.Double(value),new java.lang.Double(min),new java.lang.Double(max),new java.lang.Double(step)));fields[key]=spinner;row(label,spinner);}
-        number('doseDegrees','Dose per pad (motor degrees)',8,0.25,30,0.25);
+        number('doseDegrees','Dose per pad (motor degrees)',8,0.25,120,0.25);
         number('retractPercent','Retraction between resistors (%)',15,0,50,5);
         number('dwellMs','Wait after each dose (ms)',2000,0,5000,100);
         number('retractDwellMs','Wait after retraction (ms)',500,0,2000,100);
