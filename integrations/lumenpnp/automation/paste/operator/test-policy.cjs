@@ -69,3 +69,5 @@ console.log('operator policy checks passed');
 
 {const p=profile(),v={plane:{a:.01,b:0,c:4.5}},m={cameraXY:[15,20],rawZ:57.75,operatorConfirmedBarelyTouching:true};const result=P.applyNeedleTouch(p,v,m);assert.equal(result.pads.R1['1'].touchRawZ,57.8);assert.equal(result.pads.R2['1'].touchRawZ,57.7);assert.throws(()=>P.applyNeedleTouch(p,v,{...m,operatorConfirmedBarelyTouching:false}),/explicit operator/);assert.throws(()=>P.applyNeedleTouch(p,v,{...m,cameraXY:[NaN,20]}),/finite/);}
 {const current={raw:{X:1,Y:2,Z:57.75,A:200,B:-10},driver:{X:1,Y:2,Z:57.75,A:200,B:-10}};P.validateManualHandoff(current,-10);assert.throws(()=>P.validateManualHandoff(current,-11),/B changed/);assert.throws(()=>P.validateManualHandoff({...current,driver:{...current.driver,Z:57.7}},-10),/raw\/driver/);}
+
+{const raw={X:359.19686795875464,Y:183.97952903288106,Z:32.25,A:200,B:-4647.48},driver={...raw,X:359.2,Y:183.98};P.validateManualHandoff({raw,driver},raw.B);assert.throws(()=>P.validateManualHandoff({raw,driver:{...driver,X:359.21}},raw.B),/mismatch/);assert.throws(()=>P.validateManualHandoff({raw,driver:{...driver,B:raw.B+.001}},raw.B),/mismatch/);}

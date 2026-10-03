@@ -2365,8 +2365,8 @@
       "sourceRoot": "/home/lumen/lumenpnp",
       "sourcePath": "automation/scripts/Paste_Experiment_Console.js",
       "destination": "integrations/lumenpnp/automation/scripts/Paste_Experiment_Console.js",
-      "sha256": "f619815ef814153a6c4d91c7bba09fb027cc329acf7c7cfce315c9dc524ad047",
-      "bytes": 16939
+      "sha256": "568eb70ff71baa1e5a301eb00611eeac1a771a3a6c4103bfba739c07f4206ae3",
+      "bytes": 17042
     },
     {
       "sourceRoot": "/home/lumen/lumenpnp",
@@ -2386,29 +2386,29 @@
       "sourceRoot": "/home/lumen/lumenpnp",
       "sourcePath": "automation/paste/operator-console-native.js",
       "destination": "integrations/lumenpnp/automation/paste/operator-console-native.js",
-      "sha256": "64933bca8262c6224cdf62c383b3966b415581855ef23ae4c205f77bacd8680a",
-      "bytes": 41203
+      "sha256": "c6308b1baf724aae9cd84a21e42c9bfa5e9f8980642c70b0d8f87e8963df67e0",
+      "bytes": 41765
     },
     {
       "sourceRoot": "/home/lumen/lumenpnp",
       "sourcePath": "automation/paste/operator-console-policy.cjs",
       "destination": "integrations/lumenpnp/automation/paste/operator-console-policy.cjs",
-      "sha256": "414b71f5835eef97d4cfc8aca78d6f35648b9cd621c49f32e38fe0459ba1c971",
-      "bytes": 13966
+      "sha256": "0c0f63c2ca6fc152a580afeeb33226f4b0ca66f244244840ee1f390b31e1eb5e",
+      "bytes": 14004
     },
     {
       "sourceRoot": "/home/lumen/lumenpnp",
       "sourcePath": "automation/paste/operator/test-policy.cjs",
       "destination": "integrations/lumenpnp/automation/paste/operator/test-policy.cjs",
-      "sha256": "2365033c67b8263c0e541f620ef1935e61849de9db9129435b36ee3bddfc7446",
-      "bytes": 5737
+      "sha256": "228e7fac3681641f9375180a489fd9a1c4a2c2cc8e2e7f0c42c0e8b26b1c649b",
+      "bytes": 6091
     },
     {
       "sourceRoot": "/home/lumen/lumenpnp",
       "sourcePath": "automation/paste/operator/test-native-xy.cjs",
       "destination": "integrations/lumenpnp/automation/paste/operator/test-native-xy.cjs",
-      "sha256": "b1f497aecc00bc673865f678fa021578f9903714c5a3d4679fdc86e1cc305161",
-      "bytes": 1139
+      "sha256": "295d731ab7a005376fa75d5ccdb4b19b18fe9f8130d1d5dcc51758a6582912f9",
+      "bytes": 1251
     },
     {
       "sourceRoot": "/home/lumen/lumenpnp",
@@ -2435,8 +2435,15 @@
       "sourceRoot": "/home/lumen/lumenpnp",
       "sourcePath": "automation/paste/operator/test-native-handoff.cjs",
       "destination": "integrations/lumenpnp/automation/paste/operator/test-native-handoff.cjs",
-      "sha256": "9bee6666f3635611b35934005fd9ad10c83c67501a0cb2dd5942537840c3eb6b",
-      "bytes": 2351
+      "sha256": "b3740c16c7eff7b502f690c7284d79e004e3322f6f8e7c3f47a37ab330610680",
+      "bytes": 3430
+    },
+    {
+      "sourceRoot": "/home/lumen/lumenpnp",
+      "sourcePath": "automation/paste/operator/test-native-move-rounding.cjs",
+      "destination": "integrations/lumenpnp/automation/paste/operator/test-native-move-rounding.cjs",
+      "sha256": "c6af688958afd32168ad2ef5f9e1355814fc8ff102e619a1ed1e7897f5579296",
+      "bytes": 1910
     }
   ],
   "manifestSelfHash": "Excluded to avoid a recursive digest; this manifest enumerates every other exported/generated file.",

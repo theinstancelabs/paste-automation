@@ -33,7 +33,7 @@
         panel.add(left, 'West');
         var controls = new (J('javax.swing.JPanel'))();
         controls.setLayout(new (J('javax.swing.BoxLayout'))(controls, J('javax.swing.BoxLayout').Y_AXIS));
-        var fields = {}, buttons = [], dispenseButtons = [], idleButtons = [], armed = false, busy = false, lastPadMode = 'both', api=null;
+        var fields = {}, buttons = [], dispenseButtons = [], idleButtons = [], armed = false, busy = false, lastPadMode = 'both', api=null, lastError='';
         var stateLabel = new (J('javax.swing.JLabel'))('DISARMED — check supervision, then Connect/check controller');
         controls.add(stateLabel);
         var calibrationLabel=new (J('javax.swing.JLabel'))('XY: none | Z: none');controls.add(calibrationLabel);
@@ -65,10 +65,10 @@
             dispenseButtons.forEach(function(b){b.setEnabled(armed&&!busy&&c.ready===true);});
             idleButtons.forEach(function(b){b.setEnabled(!busy);});
             Object.keys(fields).forEach(function(k){fields[k].setEnabled(!busy);});heightMode.setEnabled(!busy);fields.workZ.setEnabled(!busy&&String(heightMode.getSelectedItem())==='raw');fields.gapMm.setEnabled(!busy&&String(heightMode.getSelectedItem())==='gap');if(touchButton)touchButton.setEnabled(armed&&!busy&&c.vacuumReferenceAvailable===true);list.setEnabled(!busy);confirm.setEnabled(!busy);
-            stateLabel.setText(busy?'BUSY — completing controller action':(!armed?'DISARMED — check supervision, then Connect/check controller':(c.ready?'READY — alignment and height recorded':'CALIBRATION REQUIRED — camera controls available; dispense locked')));
+            stateLabel.setText(lastError?'ERROR — '+lastError:(busy?'BUSY — completing controller action':(!armed?'DISARMED — check supervision, then Connect/check controller':(c.ready?'READY — alignment and height recorded':'CALIBRATION REQUIRED — camera controls available; dispense locked'))));
         }
         heightMode.addActionListener(new (J('java.awt.event.ActionListener'))({actionPerformed:function(){update();}}));
-        api=PasteOperator.create(profile,function(event){Swing.invokeLater(new (J('java.lang.Runnable'))({run:function(){if(event.busy!==undefined)busy=!!event.busy;if(event.armed!==undefined)armed=!!event.armed;if(event.error){armed=false;note('STOPPED: '+event.error);}if(event.message)note(event.message);if(event.record)note('Saved: '+event.record);update();}}));});
+        api=PasteOperator.create(profile,function(event){Swing.invokeLater(new (J('java.lang.Runnable'))({run:function(){if(event.busy!==undefined)busy=!!event.busy;if(event.armed!==undefined){armed=!!event.armed;if(armed)lastError='';}if(event.error){armed=false;lastError=String(event.error);note('STOPPED: '+event.error);}if(event.message)note(event.message);if(event.record)note('Saved: '+event.record);update();}}));});
         function call(fn){try{fn();}catch(e){note('Not run: '+e);}}
         confirm.addActionListener(new (J('java.awt.event.ActionListener'))({actionPerformed:function(){call(function(){if(!confirm.isSelected()){api.disarm();armed=false;}update();});}}));
         function button(parent,label,fn,motion){var b=new (J('javax.swing.JButton'))(label);b.addActionListener(new (J('java.awt.event.ActionListener'))({actionPerformed:function(){call(fn);}}));parent.add(b);if(motion==='dispense')dispenseButtons.push(b);else if(motion)buttons.push(b);else idleButtons.push(b);return b;}

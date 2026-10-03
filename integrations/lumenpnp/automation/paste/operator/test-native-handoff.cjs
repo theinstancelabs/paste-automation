@@ -14,3 +14,7 @@ function fixture(){
 {const {c}=fixture();c.ledger=()=>({entries:[],lastVerifiedRaw:{B:-11}});assert.throws(()=>c.arm(),/B changed/);assert.equal(c.acceptedSnapshot,null);}
 {const {c,healthy}=fixture();healthy.getActiveCount=()=>1;assert.throws(()=>c.arm(),/healthy and idle/);}
 console.log('native console idle-owner handoff/M400/manual-pose/B-continuity checks passed');
+// Manual jog fractional model coordinates survive M114's two-decimal drivers.
+{const {c}=fixture();const raw={X:359.19686795875464,Y:183.97952903288106,Z:32.25,A:200,B:-10};c.snapshot=()=>({raw,driver:{...raw,X:359.2,Y:183.98},nativePoses:{}});assert.equal(c.arm(),'completed');assert.equal(c.acceptedSnapshot.raw.X,raw.X);assert.equal(c.acceptedSnapshot.driver.X,359.2);}
+// verify must retain the AFTER-query driver snapshot, not its pre-query copy.
+{const verify=source.slice(source.indexOf(' function verify(expected){'),source.indexOf(' var recordDir='));const expected={X:359.19686795875464,Y:183.97952903288106,Z:32.25,A:200,B:-10};let queried=false;const c={axes:{X:1,Y:1,Z:1,A:1,B:1},snapshot:()=>({raw:{...expected},driver:queried?{...expected,X:359.2,Y:183.98}:{...expected},nativePoses:{}}),close:(a,b,t)=>assert(Math.abs(a-b)<=t),reported:()=>{queried=true;},lastSnapshot:null,acceptedSnapshot:null};vm.createContext(c);vm.runInContext(verify,c);c.verify(expected);assert.equal(c.acceptedSnapshot.driver.X,359.2);assert.equal(c.acceptedSnapshot.raw.X,expected.X);}
