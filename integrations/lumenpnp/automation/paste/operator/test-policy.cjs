@@ -77,3 +77,5 @@ console.log('operator policy checks passed');
 {const raw={X:10,Y:20,Z:32.25,A:200,B:87.97308191775504},driver={...raw,B:87.97};P.validateManualHandoff({raw,driver},87.97);assert.throws(()=>P.validateManualHandoff({raw,driver},88.97),/B changed/);assert.throws(()=>P.validateManualHandoff({raw,driver:{...driver,B:88.97}},87.97),/mismatch/);}
 
 {const p=profile();p.workZ=61.4;assert.throws(()=>P.validateProfile(p),/raw bounds/);p.rawBounds.Z.max=61.4;P.validateProfile(p);}
+
+{const p=profile();p.workZ=60;p.rawBounds.Z.max=63;p.calibrationRawZMax=63;P.validateProfile(p);p.calibrationRawZMax=63.1;assert.throws(()=>P.validateProfile(p),/Calibration Z/);p.calibrationRawZMax=63;p.rawBounds.Z.max=62;assert.throws(()=>P.validateProfile(p),/Calibration Z/);}

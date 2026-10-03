@@ -84,8 +84,8 @@
         var align=row('R1 → R15 → R40',new (J('javax.swing.JLabel'))('Center between both copper pads, then:'));
         button(align,'Record aligned center',function(){api.recordAlignment(selected()[0]);note('Alignment capture requested for '+selected()[0]);update();},true);
         button(align,'Apply 3-point XY',function(){api.applyAlignment();note('Three-point board alignment applied locally. Now check height.');update();},true);
-        var checkZ=new (J('javax.swing.JSpinner'))(new (J('javax.swing.SpinnerNumberModel'))(new java.lang.Double(55),new java.lang.Double(55),new java.lang.Double(profile.rawBounds.Z.max),new java.lang.Double(.05)));
-        var height=row('3. Inspect needle at raw Z',checkZ);
+        var checkZ=new (J('javax.swing.JSpinner'))(new (J('javax.swing.SpinnerNumberModel'))(new java.lang.Double(55),new java.lang.Double(55),new java.lang.Double(profile.calibrationRawZMax===undefined?profile.workZ:profile.calibrationRawZMax),new java.lang.Double(.05)));
+        var height=row('3. Needle calibration raw Z (starts high at 55)',checkZ);
         button(height,'NEEDLE: approach selected Pad 1 (no paste)',function(){checkZ.commitEdit();api.approach(selected()[0],'1',Number(checkZ.getValue()));},true);
         button(height,'Lift both heads to clearance',function(){api.lift();},true);
         touchApproachLabel=new (J('javax.swing.JLabel'))('Use NEEDLE Approach before recording touch.');controls.add(touchApproachLabel);
