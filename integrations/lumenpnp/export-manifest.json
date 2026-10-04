@@ -2395,8 +2395,8 @@
       "sourceRoot": "/home/lumen/lumenpnp",
       "sourcePath": "automation/paste/operator-console-policy.cjs",
       "destination": "integrations/lumenpnp/automation/paste/operator-console-policy.cjs",
-      "sha256": "35790af53df50dc4a5e722e6213dd34f1cdf165e6f7acbe539bca3cdc7ef4b9e",
-      "bytes": 25150
+      "sha256": "9accaae964ae4fb9aa4d7c21fc124f337733634bbd71028c657b857a0469af9f",
+      "bytes": 25254
     },
     {
       "sourceRoot": "/home/lumen/lumenpnp",
@@ -2577,8 +2577,8 @@
       "sourceRoot": "/home/lumen/lumenpnp",
       "sourcePath": "automation/paste/operator/test-measured-renewal.cjs",
       "destination": "integrations/lumenpnp/automation/paste/operator/test-measured-renewal.cjs",
-      "sha256": "72f0fbb13f07f003ffbb72b361bc0a4d8da30df58f26edf8a90dc731fa2409af",
-      "bytes": 6113
+      "sha256": "bfd000e79a41f1f729059e72c715f45be91fc7dc3cef9478a8ce03f0b6492635",
+      "bytes": 7967
     },
     {
       "sourceRoot": "/home/lumen/lumenpnp",
@@ -2635,6 +2635,13 @@
       "destination": "integrations/lumenpnp/automation/paste/test_run_repeat_with_idle_relief.py",
       "sha256": "e60430c0e1ef1f2f9beac95c0ad70abf51a667270430c1a3acb15ed165044293",
       "bytes": 1713
+    },
+    {
+      "sourceRoot": "/home/lumen/lumenpnp",
+      "sourcePath": "automation/scripts/renew_measured_rod.py",
+      "destination": "integrations/lumenpnp/automation/scripts/renew_measured_rod.py",
+      "sha256": "2330e6e6ff0c11845a6a19d87c12df07c708376acb2551c744940341621f6434",
+      "bytes": 4426
     }
   ],
   "manifestSelfHash": "Excluded to avoid a recursive digest; this manifest enumerates every other exported/generated file.",

@@ -2,7 +2,7 @@ const assert=require('node:assert/strict'),P=require('../operator-console-policy
 const old={sessionId:'s',status:'verified',baselineB:1,baselineGrossDegrees:2,usedAdditionalGrossDegrees:24176.45,lastVerifiedRaw:{B:-11100},entries:[{id:'old',status:'verified',plannedGrossDegrees:24176.45}]};
 const e={scope:'operator-measured-rod-renewal',operatorConfirmed:true,sessionId:'s',reportedExposureMm:34.85,nearBottomExposureMm:11.3262217,engineeringAllowanceMm:10,mmPerMotorDegreeNominal:.0008246527777777778,grossUsedAtMeasurement:24176.45,verifiedBAtMeasurement:-11100,additionalAllowanceDegrees:1000};
 const b={baselineB:1,baselineGrossDegrees:2,maximumAdditionalGrossDegrees:25176.45};const copy=x=>JSON.parse(JSON.stringify(x));const run=(a=e,p=old,c=old,z=b)=>P.validateMeasuredRenewal(z,a,p,c,'s');assert.equal(run().prospectiveGrossDegrees,1000);assert.ok(run().availableDegrees>16000);
-for(const key of ['engineeringAllowanceMm','grossUsedAtMeasurement','verifiedBAtMeasurement','additionalAllowanceDegrees']){const q=copy(e);q[key]++;assert.throws(()=>run(q));}let c=copy(old);c.entries[0].plannedGrossDegrees--;assert.throws(()=>run(e,old,c));c=copy(old);c.usedAdditionalGrossDegrees=0;assert.throws(()=>run(e,old,c));assert.throws(()=>run(e,old,old,{...b,maximumAdditionalGrossDegrees:b.maximumAdditionalGrossDegrees+1}));c=copy(old);c.entries.push({id:'new',status:'verified',plannedGrossDegrees:10});c.usedAdditionalGrossDegrees+=10;assert.equal(run(e,old,c).prospectiveGrossDegrees,1000);console.log('Measured renewal preserves charged history and bounds prospective allowance to1000 degrees');
+for(const key of ['engineeringAllowanceMm','grossUsedAtMeasurement','verifiedBAtMeasurement']){const q=copy(e);q[key]++;assert.throws(()=>run(q));}assert.throws(()=>run({...e,additionalAllowanceDegrees:3001}));assert.throws(()=>run({...e,additionalAllowanceDegrees:0}));let c=copy(old);c.entries[0].plannedGrossDegrees--;assert.throws(()=>run(e,old,c));c=copy(old);c.usedAdditionalGrossDegrees=0;assert.throws(()=>run(e,old,c));assert.throws(()=>run(e,old,old,{...b,maximumAdditionalGrossDegrees:b.maximumAdditionalGrossDegrees+1}));c=copy(old);c.entries.push({id:'new',status:'verified',plannedGrossDegrees:10});c.usedAdditionalGrossDegrees+=10;assert.equal(run(e,old,c).prospectiveGrossDegrees,1000);console.log('Measured renewal preserves charged history and bounds prospective allowance to1000 degrees');
 
 assert.throws(()=>run({...e,reportedExposureMm:21.4}));assert.throws(()=>run({...e,reportedExposureMm:NaN}));assert.equal(run({...e,reportedExposureMm:35}).prospectiveGrossDegrees,1000);
 const extension={scope:'measured-rod-cumulative-extension',sessionId:'s',grossUsedAtMeasurement:e.grossUsedAtMeasurement,cumulativeAllowanceDegrees:3000,newPhysicalMeasurement:false};const expanded={...b,maximumAdditionalGrossDegrees:e.grossUsedAtMeasurement+3000};
@@ -39,3 +39,18 @@ assert.throws(()=>P.validateMeasuredRenewal({...cap15,maximumAdditionalGrossDegr
 assert.throws(()=>P.validateMeasuredRenewal(cap15,e,old,old,'s',{...ext15,cumulativeAllowanceDegrees:15001}));
 assert.throws(()=>P.validateMeasuredRenewal(cap15,{...e,reportedExposureMm:33},old,old,'s',ext15));
 spent=copy(old);spent.usedAdditionalGrossDegrees+=12000;spent.entries.push({id:'after-measurement',status:'verified',plannedGrossDegrees:12000});assert.ok(Math.abs(P.validateMeasuredRenewal(cap15,e,old,spent,'s',ext15).prospectiveGrossDegrees-15000)<1e-8);
+
+// Fresh operator measurement at 27.89 mm is bounded by both its remaining physical travel and a 3000-degree renewal.
+const fresh={...e,reportedExposureMm:28.1,grossUsedAtMeasurement:39500,verifiedBAtMeasurement:-20000,additionalAllowanceDegrees:3000};
+const freshLedger={...old,usedAdditionalGrossDegrees:fresh.grossUsedAtMeasurement,lastVerifiedRaw:{B:fresh.verifiedBAtMeasurement},entries:[{id:'old',status:'verified',plannedGrossDegrees:24176.45},{id:'later',status:'verified',plannedGrossDegrees:15323.55}]};
+const freshCap={...b,maximumAdditionalGrossDegrees:fresh.grossUsedAtMeasurement+3000};
+const freshResult=P.validateMeasuredRenewal(freshCap,fresh,freshLedger,freshLedger,'s');
+assert.equal(freshResult.prospectiveGrossDegrees,3000);assert.ok(freshResult.availableDegrees>3000);assert.ok(freshCap.maximumAdditionalGrossDegrees>39200);
+assert.throws(()=>P.validateMeasuredRenewal({...freshCap,maximumAdditionalGrossDegrees:freshCap.maximumAdditionalGrossDegrees+1},fresh,freshLedger,freshLedger,'s'));
+assert.throws(()=>P.validateMeasuredRenewal(freshCap,{...fresh,reportedExposureMm:21.4},freshLedger,freshLedger,'s'));
+assert.throws(()=>P.validateMeasuredRenewal(freshCap,{...fresh,reportedExposureMm:NaN},freshLedger,freshLedger,'s'));
+assert.throws(()=>P.validateMeasuredRenewal(freshCap,{...fresh,additionalAllowanceDegrees:3001},freshLedger,freshLedger,'s'));
+assert.throws(()=>P.validateMeasuredRenewal(freshCap,fresh,{...freshLedger,usedAdditionalGrossDegrees:0},freshLedger,'s'));
+const concurrent=copy(freshLedger);concurrent.entries[0].plannedGrossDegrees++;
+assert.throws(()=>P.validateMeasuredRenewal(freshCap,fresh,freshLedger,concurrent,'s'));
+assert.throws(()=>P.validateMeasuredRenewal(freshCap,null,freshLedger,freshLedger,'s'));
