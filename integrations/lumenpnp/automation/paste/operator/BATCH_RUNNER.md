@@ -131,6 +131,6 @@ worked, while a later startup left a large strand on the first component before
 subsequent deposits separated. This is not repeated qualification or an automatic
 needle-cleaning guarantee. Survey images are saved after the complete batch.
 
-The conditioned preset also accepts `--dose 40` for an explicit 40° experiment;
+The conditioned preset also accepts an explicit `--dose` from 0.25° through 120° (for example `--dose 60`);
 the default remains 30°. All other settings and conditioning behavior are unchanged.
-Neither dose is a general component-volume calibration.
+A requested dose is not a general component-volume calibration; the existing planner still validates its grid and gross budget.

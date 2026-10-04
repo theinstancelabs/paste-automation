@@ -2498,8 +2498,8 @@
       "sourceRoot": "/home/lumen/lumenpnp",
       "sourcePath": "automation/paste/operator/BATCH_RUNNER.md",
       "destination": "integrations/lumenpnp/automation/paste/operator/BATCH_RUNNER.md",
-      "sha256": "8d805c0d62b8eed773fabfe71c8aef306c5f249cb79f3f560972f4df643d2f68",
-      "bytes": 6793
+      "sha256": "12e1248aa1c0ef82ee8e7160f3e657ea16ca1660298fcfbf7d1cba16d65c49ae",
+      "bytes": 6894
     },
     {
       "sourceRoot": "/home/lumen/lumenpnp",
@@ -2582,14 +2582,14 @@
       "sourceRoot": "/home/lumen/lumenpnp",
       "sourcePath": "automation/paste/conditioned-30deg.py",
       "destination": "integrations/lumenpnp/automation/paste/conditioned-30deg.py",
-      "sha256": "8b821e27703d653b56707c08bf187dc8ccca289fa005a7f756a6f97dad512c7e",
-      "bytes": 1317
+      "sha256": "37744990cf9e9483db2138011cb3dd211acb988b8c8b725f319db969105314b5",
+      "bytes": 1430
     },
     {
       "sourceRoot": "/home/lumen/lumenpnp",
       "sourcePath": "automation/paste/test_conditioned_30deg.py",
       "destination": "integrations/lumenpnp/automation/paste/test_conditioned_30deg.py",
-      "sha256": "12b8aa2f15e29ee6333f213741b5cd54955948cf279e2c2d87f0e53e87fb54cf",
+      "sha256": "94a8513aaf680f715008e1d9889dc63201e93f3423af487bbd3434b0d19cde8d",
       "bytes": 1635
     }
   ],

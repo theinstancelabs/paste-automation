@@ -12,8 +12,8 @@ class PresetTests(unittest.TestCase):
             self.assertTrue(run.call_args.kwargs['check'])
     def test_execute_forwarded_once(self):
         with patch.object(m.subprocess,'run') as run:
-            m.main(['--refs','D2','--condition-refs','D1','--execute','--dose','40','--root','/tmp/example'])
-            self.assertEqual(run.call_args.args[0][run.call_args.args[0].index('--dose')+1],'40');self.assertEqual(run.call_count,1);self.assertEqual(run.call_args.args[0].count('--execute'),1)
+            m.main(['--refs','D2','--condition-refs','D1','--execute','--dose','60','--root','/tmp/example'])
+            self.assertEqual(run.call_args.args[0][run.call_args.args[0].index('--dose')+1],'60');self.assertEqual(run.call_count,1);self.assertEqual(run.call_args.args[0].count('--execute'),1)
     def test_conditioning_required_distinct(self):
         with patch.object(m.subprocess,'run') as run:
             with self.assertRaises(SystemExit):m.main(['--refs','R1'])
