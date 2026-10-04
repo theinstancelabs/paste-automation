@@ -5,3 +5,9 @@ const b={baselineB:1,baselineGrossDegrees:2,maximumAdditionalGrossDegrees:25176.
 for(const key of ['engineeringAllowanceMm','grossUsedAtMeasurement','verifiedBAtMeasurement','additionalAllowanceDegrees']){const q=copy(e);q[key]++;assert.throws(()=>run(q));}let c=copy(old);c.entries[0].plannedGrossDegrees--;assert.throws(()=>run(e,old,c));c=copy(old);c.usedAdditionalGrossDegrees=0;assert.throws(()=>run(e,old,c));assert.throws(()=>run(e,old,old,{...b,maximumAdditionalGrossDegrees:b.maximumAdditionalGrossDegrees+1}));c=copy(old);c.entries.push({id:'new',status:'verified',plannedGrossDegrees:10});c.usedAdditionalGrossDegrees+=10;assert.equal(run(e,old,c).prospectiveGrossDegrees,1000);console.log('Measured renewal preserves charged history and bounds prospective allowance to1000 degrees');
 
 assert.throws(()=>run({...e,reportedExposureMm:21.4}));assert.throws(()=>run({...e,reportedExposureMm:NaN}));assert.equal(run({...e,reportedExposureMm:35}).prospectiveGrossDegrees,1000);
+const extension={scope:'measured-rod-cumulative-extension',sessionId:'s',grossUsedAtMeasurement:e.grossUsedAtMeasurement,cumulativeAllowanceDegrees:3000,newPhysicalMeasurement:false};const expanded={...b,maximumAdditionalGrossDegrees:e.grossUsedAtMeasurement+3000};
+assert.equal(P.validateMeasuredRenewal(expanded,e,old,old,'s',extension).prospectiveGrossDegrees,3000);
+assert.throws(()=>P.validateMeasuredRenewal(expanded,e,old,old,'s'));
+assert.throws(()=>P.validateMeasuredRenewal({...expanded,maximumAdditionalGrossDegrees:expanded.maximumAdditionalGrossDegrees+1},e,old,old,'s',extension));
+assert.throws(()=>P.validateMeasuredRenewal(expanded,e,old,old,'s',{...extension,grossUsedAtMeasurement:0}));
+assert.throws(()=>P.validateMeasuredRenewal(expanded,{...e,reportedExposureMm:22},old,old,'s',extension));

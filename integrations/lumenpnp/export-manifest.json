@@ -2386,15 +2386,15 @@
       "sourceRoot": "/home/lumen/lumenpnp",
       "sourcePath": "automation/paste/operator-console-native.js",
       "destination": "integrations/lumenpnp/automation/paste/operator-console-native.js",
-      "sha256": "98f94794e3e4a7b3a4a6f5952dd4de49c360bc36f0d9202c1400cebb2c0f30f9",
-      "bytes": 61182
+      "sha256": "f0760914574089167f5747d8ecfd42a4314bdc7fb2fe4aedab6553c4d024b939",
+      "bytes": 61680
     },
     {
       "sourceRoot": "/home/lumen/lumenpnp",
       "sourcePath": "automation/paste/operator-console-policy.cjs",
       "destination": "integrations/lumenpnp/automation/paste/operator-console-policy.cjs",
-      "sha256": "8290d245175b5145db421ddf9497065aae8623772f7af50780b2835e857a741c",
-      "bytes": 24501
+      "sha256": "be7792fe62db56831d8400d05ad4507ea56eaf908571a8aeed64a167cc6ea54f",
+      "bytes": 24888
     },
     {
       "sourceRoot": "/home/lumen/lumenpnp",
@@ -2498,8 +2498,8 @@
       "sourceRoot": "/home/lumen/lumenpnp",
       "sourcePath": "automation/paste/operator/BATCH_RUNNER.md",
       "destination": "integrations/lumenpnp/automation/paste/operator/BATCH_RUNNER.md",
-      "sha256": "8b182bd4dfa72db5a9fc9deebca1d128c5592c0f75e5bd0720f6cfb69f766b4c",
-      "bytes": 6569
+      "sha256": "8d805c0d62b8eed773fabfe71c8aef306c5f249cb79f3f560972f4df643d2f68",
+      "bytes": 6793
     },
     {
       "sourceRoot": "/home/lumen/lumenpnp",
@@ -2575,22 +2575,22 @@
       "sourceRoot": "/home/lumen/lumenpnp",
       "sourcePath": "automation/paste/operator/test-measured-renewal.cjs",
       "destination": "integrations/lumenpnp/automation/paste/operator/test-measured-renewal.cjs",
-      "sha256": "ef4fbedf360d23c68f512dfb0c4068e81089f160fbf888a5f270054890da52f9",
-      "bytes": 1800
+      "sha256": "f63382198b0b42bac6511a87869d3c2c4bfe678c699918d9ff5e00cd52fbaee5",
+      "bytes": 2613
     },
     {
       "sourceRoot": "/home/lumen/lumenpnp",
       "sourcePath": "automation/paste/conditioned-30deg.py",
       "destination": "integrations/lumenpnp/automation/paste/conditioned-30deg.py",
-      "sha256": "2b2d05e51b4ebccb0eb8ba983867ec73cbef24ad9303bdaba2f019188b01ba4b",
-      "bytes": 1245
+      "sha256": "8b821e27703d653b56707c08bf187dc8ccca289fa005a7f756a6f97dad512c7e",
+      "bytes": 1317
     },
     {
       "sourceRoot": "/home/lumen/lumenpnp",
       "sourcePath": "automation/paste/test_conditioned_30deg.py",
       "destination": "integrations/lumenpnp/automation/paste/test_conditioned_30deg.py",
-      "sha256": "d91883cbabec0b9ba5211aa27c1a5413840a2c345df178c1f8106196b7fe7921",
-      "bytes": 1535
+      "sha256": "12b8aa2f15e29ee6333f213741b5cd54955948cf279e2c2d87f0e53e87fb54cf",
+      "bytes": 1635
     }
   ],
   "manifestSelfHash": "Excluded to avoid a recursive digest; this manifest enumerates every other exported/generated file.",
