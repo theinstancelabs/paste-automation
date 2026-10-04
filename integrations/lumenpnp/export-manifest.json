@@ -2563,6 +2563,13 @@
       "destination": "integrations/lumenpnp/automation/paste/operator/test-native-firmware.cjs",
       "sha256": "4aa77326174dab59c4604fdd9927d764ebe0a0690142f4de54295101235e132e",
       "bytes": 2260
+    },
+    {
+      "sourceRoot": "/home/lumen/lumenpnp",
+      "sourcePath": "automation/scripts/Run_Operator_Pressure_Relief.js",
+      "destination": "integrations/lumenpnp/automation/scripts/Run_Operator_Pressure_Relief.js",
+      "sha256": "4d75bf5816a68978ebafda9abf3a72ea97e2b3905fe24b2afa49216bdbe81335",
+      "bytes": 968
     }
   ],
   "manifestSelfHash": "Excluded to avoid a recursive digest; this manifest enumerates every other exported/generated file.",
