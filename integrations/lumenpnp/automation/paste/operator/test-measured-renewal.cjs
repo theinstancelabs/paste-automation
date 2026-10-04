@@ -22,3 +22,11 @@ assert.throws(()=>P.validateMeasuredRenewal({...cap8,maximumAdditionalGrossDegre
 assert.throws(()=>P.validateMeasuredRenewal(cap8,e,old,old,'s',{...ext8,cumulativeAllowanceDegrees:8001}));
 assert.throws(()=>P.validateMeasuredRenewal(cap8,{...e,reportedExposureMm:27},old,old,'s',ext8));
 assert.throws(()=>P.validateMeasuredRenewal(cap8,e,old,{...old,usedAdditionalGrossDegrees:0},'s',ext8));
+// Explicit reviewed cumulative12000: all prior charges remain in original measurement basis.
+const ext12={...extension,cumulativeAllowanceDegrees:12000};const cap12={...b,maximumAdditionalGrossDegrees:e.grossUsedAtMeasurement+12000};
+assert.ok(Math.abs(P.validateMeasuredRenewal(cap12,e,old,old,'s',ext12).prospectiveGrossDegrees-12000)<1e-8);
+assert.ok(12000*e.mmPerMotorDegreeNominal<e.reportedExposureMm-e.nearBottomExposureMm-e.engineeringAllowanceMm);
+assert.throws(()=>P.validateMeasuredRenewal({...cap12,maximumAdditionalGrossDegrees:cap12.maximumAdditionalGrossDegrees+1},e,old,old,'s',ext12));
+assert.throws(()=>P.validateMeasuredRenewal(cap12,e,old,old,'s',{...ext12,cumulativeAllowanceDegrees:12001}));
+assert.throws(()=>P.validateMeasuredRenewal(cap12,{...e,reportedExposureMm:30},old,old,'s',ext12));
+let spent=copy(old);spent.usedAdditionalGrossDegrees+=9000;spent.entries.push({id:'after-measurement',status:'verified',plannedGrossDegrees:9000});assert.ok(Math.abs(P.validateMeasuredRenewal(cap12,e,old,spent,'s',ext12).prospectiveGrossDegrees-12000)<1e-8);
