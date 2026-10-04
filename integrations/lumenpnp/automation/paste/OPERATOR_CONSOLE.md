@@ -44,3 +44,23 @@ There is no automatic priming or tip cleaning. Inspect the tip and use a sacrifi
 **STOP after current move** is cooperative: it finishes the active controller operation, then lifts to clearance. A clean verified stop records the terminal pose, keeps the full reserved gross charge, and accounts pending retract only from completed B stages; the console remains available for a fresh action. A post-motion communication or verification fault remains quarantined and cannot be retried in-session. Use the physical emergency stop for an immediate stop.
 
 This profile supports the current FTP demo's R1–R40. It is not an arbitrary KiCad importer or a qualified production recipe. Run records and measured calibration stay private under `automation/evidence/operator-paste-runs/`; recipes are in `automation/evidence/operator-recipes/`. Reusable source is exported to the public integration repository; the separate viewer remains private.
+
+### Check motor current after power cycles
+
+Use `Run_Operator_Firmware_Check.js` with the visible, idle console to read fresh
+`M503` settings through the existing machine owner. The record includes raw
+responses, parsed `M906` currents, and stationary `M114` checks before and after.
+It does not change current, write EEPROM, flash firmware, or move an axis.
+Recheck after a power cycle: an earlier runtime setting is not a current readback.
+
+During commissioning, a fresh read reported B200 mA despite an earlier runtime
+B400 mA adjustment. A subsequent separately reviewed stationary adjustment
+verified B400 mA. Earlier trials must not be described as validated 400 mA trials.
+Changing current does not establish reliable paste volume; controller position
+and step counts do not prove physical shaft rotation. The check never adjusts
+current automatically.
+
+`Run_Operator_Pressure_Relief.js` requests +5 B degrees at 100 B degrees/second
+through the console API. It holds XYZ stationary, charges the existing gross
+budget, and adds verified relief to pending restoration. STOP remains stationary.
+Relief does not establish that a hanging strand detached or the needle is clean.
