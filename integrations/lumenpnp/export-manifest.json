@@ -2365,8 +2365,8 @@
       "sourceRoot": "/home/lumen/lumenpnp",
       "sourcePath": "automation/scripts/Paste_Experiment_Console.js",
       "destination": "integrations/lumenpnp/automation/scripts/Paste_Experiment_Console.js",
-      "sha256": "6bc884aeff7656da23675a8639e129deba5c162224705f7acf0dfa41710d37b1",
-      "bytes": 26077
+      "sha256": "70a4ec669d67fcd08c4bcfe8dcca75ef1de7f8230be54930f5fc2e660eb489f1",
+      "bytes": 26520
     },
     {
       "sourceRoot": "/home/lumen/lumenpnp",
@@ -2542,6 +2542,13 @@
       "destination": "integrations/lumenpnp/automation/paste/test_measure_trial14_pair.py",
       "sha256": "466087981b227a5dfe02c5d6d3f5ac8f87e88dff6eb63436b154d5064f3dd4eb",
       "bytes": 2833
+    },
+    {
+      "sourceRoot": "/home/lumen/lumenpnp",
+      "sourcePath": "automation/paste/operator/test-ui-per-pad-retract.cjs",
+      "destination": "integrations/lumenpnp/automation/paste/operator/test-ui-per-pad-retract.cjs",
+      "sha256": "960ca81bcfa5944e13c7280e2b4724136994c2b7392fb1811aba0caf3161c52c",
+      "bytes": 1041
     }
   ],
   "manifestSelfHash": "Excluded to avoid a recursive digest; this manifest enumerates every other exported/generated file.",
