@@ -2498,8 +2498,8 @@
       "sourceRoot": "/home/lumen/lumenpnp",
       "sourcePath": "automation/paste/operator/BATCH_RUNNER.md",
       "destination": "integrations/lumenpnp/automation/paste/operator/BATCH_RUNNER.md",
-      "sha256": "d3d71bc114d18f688c9e500cd399d98efdde5ea1ffd48a3880df4d18b45df667",
-      "bytes": 5339
+      "sha256": "8b182bd4dfa72db5a9fc9deebca1d128c5592c0f75e5bd0720f6cfb69f766b4c",
+      "bytes": 6569
     },
     {
       "sourceRoot": "/home/lumen/lumenpnp",
@@ -2577,6 +2577,20 @@
       "destination": "integrations/lumenpnp/automation/paste/operator/test-measured-renewal.cjs",
       "sha256": "ef4fbedf360d23c68f512dfb0c4068e81089f160fbf888a5f270054890da52f9",
       "bytes": 1800
+    },
+    {
+      "sourceRoot": "/home/lumen/lumenpnp",
+      "sourcePath": "automation/paste/conditioned-30deg.py",
+      "destination": "integrations/lumenpnp/automation/paste/conditioned-30deg.py",
+      "sha256": "2b2d05e51b4ebccb0eb8ba983867ec73cbef24ad9303bdaba2f019188b01ba4b",
+      "bytes": 1245
+    },
+    {
+      "sourceRoot": "/home/lumen/lumenpnp",
+      "sourcePath": "automation/paste/test_conditioned_30deg.py",
+      "destination": "integrations/lumenpnp/automation/paste/test_conditioned_30deg.py",
+      "sha256": "d91883cbabec0b9ba5211aa27c1a5413840a2c345df178c1f8106196b7fe7921",
+      "bytes": 1535
     }
   ],
   "manifestSelfHash": "Excluded to avoid a recursive digest; this manifest enumerates every other exported/generated file.",

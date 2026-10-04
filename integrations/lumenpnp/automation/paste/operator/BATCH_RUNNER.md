@@ -107,3 +107,26 @@ Camera inspection waits 150 ms after a verified jump, checks the machine remains
 idle at the same pose, discards one captured frame, then saves the next frame.
 STOP and unchanged-pose checks surround this capture sequence. This settling is
 only for the survey after dispensing; it never inserts a pause between doses.
+
+### Experimental conditioned 30° preset
+
+Preview with explicit sacrificial conditioning and main references:
+
+```sh
+python3 automation/paste/conditioned-30deg.py --condition-refs R1 --refs R2 R3
+```
+
+Choose appropriate registered, available pads; the references above are examples,
+not a claim that those pads are clean. Add `--execute` to dispatch once through
+the existing operator runner. Preview performs no motion. Main settings are 30°
+per pad, 50°/s push, 10% retraction after each pad at 100°/s, 1 s dose dwell,
+zero retraction dwell, and 0.1 mm commanded gap above the confirmed touch reference.
+Conditioning uses 0.25° per pad with zero waits/retraction. It **also restores any
+tracked pending retraction**, so the first conditioning action can advance more
+than 0.25°. The gross preview includes this restoration.
+
+Conditioning and the main group execute consecutively without agent inspection
+between them. Startup conditioning remains experimental: one conditioned group
+worked, while a later startup left a large strand on the first component before
+subsequent deposits separated. This is not repeated qualification or an automatic
+needle-cleaning guarantee. Survey images are saved after the complete batch.
