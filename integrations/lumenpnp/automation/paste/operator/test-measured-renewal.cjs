@@ -30,3 +30,12 @@ assert.throws(()=>P.validateMeasuredRenewal({...cap12,maximumAdditionalGrossDegr
 assert.throws(()=>P.validateMeasuredRenewal(cap12,e,old,old,'s',{...ext12,cumulativeAllowanceDegrees:12001}));
 assert.throws(()=>P.validateMeasuredRenewal(cap12,{...e,reportedExposureMm:30},old,old,'s',ext12));
 let spent=copy(old);spent.usedAdditionalGrossDegrees+=9000;spent.entries.push({id:'after-measurement',status:'verified',plannedGrossDegrees:9000});assert.ok(Math.abs(P.validateMeasuredRenewal(cap12,e,old,spent,'s',ext12).prospectiveGrossDegrees-12000)<1e-8);
+// Explicit reviewed cumulative15000 uses the same 34.85 mm measurement and retains the 10 mm reserve.
+const ext15={...extension,cumulativeAllowanceDegrees:15000};const cap15={...b,maximumAdditionalGrossDegrees:e.grossUsedAtMeasurement+15000};
+assert.ok(Math.abs(P.validateMeasuredRenewal(cap15,e,old,old,'s',ext15).prospectiveGrossDegrees-15000)<1e-8);
+assert.ok(Math.abs(15000*e.mmPerMotorDegreeNominal-12.369791666666666)<1e-9);
+assert.ok(e.reportedExposureMm-e.nearBottomExposureMm-15000*e.mmPerMotorDegreeNominal>e.engineeringAllowanceMm);
+assert.throws(()=>P.validateMeasuredRenewal({...cap15,maximumAdditionalGrossDegrees:cap15.maximumAdditionalGrossDegrees+1},e,old,old,'s',ext15));
+assert.throws(()=>P.validateMeasuredRenewal(cap15,e,old,old,'s',{...ext15,cumulativeAllowanceDegrees:15001}));
+assert.throws(()=>P.validateMeasuredRenewal(cap15,{...e,reportedExposureMm:33},old,old,'s',ext15));
+spent=copy(old);spent.usedAdditionalGrossDegrees+=12000;spent.entries.push({id:'after-measurement',status:'verified',plannedGrossDegrees:12000});assert.ok(Math.abs(P.validateMeasuredRenewal(cap15,e,old,spent,'s',ext15).prospectiveGrossDegrees-15000)<1e-8);
