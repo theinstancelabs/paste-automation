@@ -2393,15 +2393,15 @@
       "sourceRoot": "/home/lumen/lumenpnp",
       "sourcePath": "automation/paste/operator-console-policy.cjs",
       "destination": "integrations/lumenpnp/automation/paste/operator-console-policy.cjs",
-      "sha256": "be7792fe62db56831d8400d05ad4507ea56eaf908571a8aeed64a167cc6ea54f",
-      "bytes": 24888
+      "sha256": "a530191e0e735dcdc02d529c86efb33c8704a9b13d1367d0b3a8f9e92c5faae4",
+      "bytes": 25085
     },
     {
       "sourceRoot": "/home/lumen/lumenpnp",
       "sourcePath": "automation/paste/operator/test-policy.cjs",
       "destination": "integrations/lumenpnp/automation/paste/operator/test-policy.cjs",
-      "sha256": "10c3a07cff4fecaaa4e28d4c9a91f5cb7278e4da4643334dc6351fdee1995758",
-      "bytes": 13695
+      "sha256": "19360689b2b04a08509b7a7f2fe5d22f16c49a19916b541dc0fb935fa7daf5b9",
+      "bytes": 14831
     },
     {
       "sourceRoot": "/home/lumen/lumenpnp",
@@ -2519,8 +2519,8 @@
       "sourceRoot": "/home/lumen/lumenpnp",
       "sourcePath": "automation/paste/prepare-operator-experiment.py",
       "destination": "integrations/lumenpnp/automation/paste/prepare-operator-experiment.py",
-      "sha256": "2380616fb7eeee7ab569d5c4bbc30bb6ea6adbbb692612d3c2aa960952e01720",
-      "bytes": 6484
+      "sha256": "a707cca6be4dd3a01f5af8057e4e605f1f29cf57400da196532869a395dada00",
+      "bytes": 6723
     },
     {
       "sourceRoot": "/home/lumen/lumenpnp",
