@@ -2365,8 +2365,8 @@
       "sourceRoot": "/home/lumen/lumenpnp",
       "sourcePath": "automation/scripts/Paste_Experiment_Console.js",
       "destination": "integrations/lumenpnp/automation/scripts/Paste_Experiment_Console.js",
-      "sha256": "70a4ec669d67fcd08c4bcfe8dcca75ef1de7f8230be54930f5fc2e660eb489f1",
-      "bytes": 26520
+      "sha256": "37f7ce539b77f517c00ad7d9125d180cb05a72c0efe801b45cea64fa86a93bcf",
+      "bytes": 26578
     },
     {
       "sourceRoot": "/home/lumen/lumenpnp",
@@ -2386,8 +2386,8 @@
       "sourceRoot": "/home/lumen/lumenpnp",
       "sourcePath": "automation/paste/operator-console-native.js",
       "destination": "integrations/lumenpnp/automation/paste/operator-console-native.js",
-      "sha256": "fd039309f363be22d27d553a4b4999cd2e887ec42533faebdab9ef10d00e19d3",
-      "bytes": 58814
+      "sha256": "d0267627a44bae05c446896d77964fdc6dd41842c8dfa83094fdd4f8319bc993",
+      "bytes": 60523
     },
     {
       "sourceRoot": "/home/lumen/lumenpnp",
@@ -2549,6 +2549,20 @@
       "destination": "integrations/lumenpnp/automation/paste/operator/test-ui-per-pad-retract.cjs",
       "sha256": "960ca81bcfa5944e13c7280e2b4724136994c2b7392fb1811aba0caf3161c52c",
       "bytes": 1041
+    },
+    {
+      "sourceRoot": "/home/lumen/lumenpnp",
+      "sourcePath": "automation/scripts/Run_Operator_Firmware_Check.js",
+      "destination": "integrations/lumenpnp/automation/scripts/Run_Operator_Firmware_Check.js",
+      "sha256": "2b8289646ce53a7038b4343933f7dd287404a5665c084f8efa5ba3fe71303769",
+      "bytes": 955
+    },
+    {
+      "sourceRoot": "/home/lumen/lumenpnp",
+      "sourcePath": "automation/paste/operator/test-native-firmware.cjs",
+      "destination": "integrations/lumenpnp/automation/paste/operator/test-native-firmware.cjs",
+      "sha256": "4aa77326174dab59c4604fdd9927d764ebe0a0690142f4de54295101235e132e",
+      "bytes": 2260
     }
   ],
   "manifestSelfHash": "Excluded to avoid a recursive digest; this manifest enumerates every other exported/generated file.",
