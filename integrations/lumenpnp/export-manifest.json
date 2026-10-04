@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "exportDate": "2026-10-03",
+  "exportDate": "2026-10-04",
   "baseCommit": "c497bfbef2f7347538966c129bf7ac7bdc2c1a0f",
   "canonicalSourceRoot": "/home/lumen/lumenpnp",
   "purpose": "Source-only reviewable mirror; no deployment, machine operation, or private machine evidence included.",
@@ -1612,11 +1612,12 @@
       "bytes": 8876
     },
     {
-      "sourceRoot": "/home/lumen/lumenpnp",
-      "sourcePath": "automation/scripts/Automation_Reviewed_Command.js",
+      "sourceRoot": null,
+      "sourcePath": null,
       "destination": "integrations/lumenpnp/automation/scripts/Automation_Reviewed_Command.js",
-      "sha256": "69ae3e8ddf35ff5c97018f94ec6cc4051ed3d26c281e4b56c9a5c8134b97338a",
-      "bytes": 7841
+      "sha256": "b3d177aa9c28a0488d3e93a997d13487956535dc194425c4b1d5bafccade8df9",
+      "bytes": 7968,
+      "generated": "Mirror-only one-action dispatcher route patch; existing mirrored routes retained."
     },
     {
       "sourceRoot": "/home/lumen/lumenpnp",
@@ -1948,11 +1949,12 @@
       "bytes": 2621
     },
     {
-      "sourceRoot": "/home/lumen/lumenpnp",
-      "sourcePath": "automation/scripts/run_reviewed_action.py",
+      "sourceRoot": null,
+      "sourcePath": null,
       "destination": "integrations/lumenpnp/automation/scripts/run_reviewed_action.py",
-      "sha256": "d04afd5b144ecb26c7edf386d55a59a2b1ea3c0ce5368b40372630d6b855bf06",
-      "bytes": 20918
+      "sha256": "6f095083054390da37916f68ff2a79da0a8984634e7ad75bd3f3276a3323fcb3",
+      "bytes": 20978,
+      "generated": "Mirror-only one-action dispatcher route patch; existing mirrored routes retained."
     },
     {
       "sourceRoot": "/home/lumen/lumenpnp",
@@ -2612,6 +2614,13 @@
       "destination": "integrations/lumenpnp/automation/paste/paired-pad-occlusion-research.md",
       "sha256": "a6a615eb9592d0cd7e02e41bfb1c1d97c949ec9481828830805c5074559e140f",
       "bytes": 3204
+    },
+    {
+      "sourceRoot": "/home/lumen/lumenpnp",
+      "sourcePath": "automation/scripts/Run_Operator_Accept_Idle_Relief.js",
+      "destination": "integrations/lumenpnp/automation/scripts/Run_Operator_Accept_Idle_Relief.js",
+      "sha256": "dfdcb5cd9973dd90406275228c03d61a5df88d11b3b32e1eb012e72d0ce21ec6",
+      "bytes": 1211
     }
   ],
   "manifestSelfHash": "Excluded to avoid a recursive digest; this manifest enumerates every other exported/generated file.",
