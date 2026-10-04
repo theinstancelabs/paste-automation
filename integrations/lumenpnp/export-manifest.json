@@ -2528,6 +2528,20 @@
       "destination": "integrations/lumenpnp/automation/paste/test_prepare_operator_experiment.py",
       "sha256": "25d8e06670294f4829d48efdf9c568916dd61ef9cb769e61c0e6243bf40d86b8",
       "bytes": 2203
+    },
+    {
+      "sourceRoot": "/home/lumen/lumenpnp",
+      "sourcePath": "automation/paste/measure_trial14_pair.py",
+      "destination": "integrations/lumenpnp/automation/paste/measure_trial14_pair.py",
+      "sha256": "6f449dd2c8cf680859d935a41385f654c17d5b0a1e73b1a1b3ad8233826dbcba",
+      "bytes": 8480
+    },
+    {
+      "sourceRoot": "/home/lumen/lumenpnp",
+      "sourcePath": "automation/paste/test_measure_trial14_pair.py",
+      "destination": "integrations/lumenpnp/automation/paste/test_measure_trial14_pair.py",
+      "sha256": "466087981b227a5dfe02c5d6d3f5ac8f87e88dff6eb63436b154d5064f3dd4eb",
+      "bytes": 2833
     }
   ],
   "manifestSelfHash": "Excluded to avoid a recursive digest; this manifest enumerates every other exported/generated file.",
