@@ -2591,6 +2591,13 @@
       "destination": "integrations/lumenpnp/automation/paste/test_conditioned_30deg.py",
       "sha256": "94a8513aaf680f715008e1d9889dc63201e93f3423af487bbd3434b0d19cde8d",
       "bytes": 1635
+    },
+    {
+      "sourceRoot": "/home/lumen/lumenpnp",
+      "sourcePath": "automation/paste/run-startup-conditioning-abba.py",
+      "destination": "integrations/lumenpnp/automation/paste/run-startup-conditioning-abba.py",
+      "sha256": "d4999f8c25b52b5a85b78561f5307439b45bc2e48b71b12b5fe97d8c003fbfd1",
+      "bytes": 16112
     }
   ],
   "manifestSelfHash": "Excluded to avoid a recursive digest; this manifest enumerates every other exported/generated file.",
