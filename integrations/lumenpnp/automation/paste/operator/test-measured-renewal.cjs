@@ -11,3 +11,8 @@ assert.throws(()=>P.validateMeasuredRenewal(expanded,e,old,old,'s'));
 assert.throws(()=>P.validateMeasuredRenewal({...expanded,maximumAdditionalGrossDegrees:expanded.maximumAdditionalGrossDegrees+1},e,old,old,'s',extension));
 assert.throws(()=>P.validateMeasuredRenewal(expanded,e,old,old,'s',{...extension,grossUsedAtMeasurement:0}));
 assert.throws(()=>P.validateMeasuredRenewal(expanded,{...e,reportedExposureMm:22},old,old,'s',extension));
+const ext5={...extension,cumulativeAllowanceDegrees:5000};const cap5={...b,maximumAdditionalGrossDegrees:e.grossUsedAtMeasurement+5000};
+assert.equal(P.validateMeasuredRenewal(cap5,e,old,old,'s',ext5).prospectiveGrossDegrees,5000);
+assert.throws(()=>P.validateMeasuredRenewal({...cap5,maximumAdditionalGrossDegrees:cap5.maximumAdditionalGrossDegrees+1},e,old,old,'s',ext5));
+assert.throws(()=>P.validateMeasuredRenewal(cap5,e,old,old,'s',{...ext5,cumulativeAllowanceDegrees:5001}));
+assert.throws(()=>P.validateMeasuredRenewal(cap5,{...e,reportedExposureMm:24},old,old,'s',ext5));
