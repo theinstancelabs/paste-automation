@@ -27,6 +27,8 @@ numbers.
 | Startup-conditioning ABBA, final two main groups | 0.98–1.00, with visible overspread/stringing |
 | 40-degree dose, fixed 9-degree retract, 1-second dwell, four resistor pads | 0.93–0.99, with visible tails |
 | 40-degree dose, fixed 9-degree retract, zero dwell, eight different diode pads | 0.49–0.70; a connecting strand remained |
+| 40-degree dose, fixed 15-degree retract, zero dwell, four diode pads without new conditioning | 0.81–0.96; first pair had a long carried loop, second pair looked more separate |
+| Same main command after four 0.25-degree sacrificial doses, four other diode pads | 0.77–0.87; main pads looked separate without long tails, while a sacrificial pair caught a large loop |
 
 Three untouched neighboring-pad controls in the paired images measured
 0.18–0.77% newly dark. Varying the red-channel difference threshold from
@@ -37,8 +39,10 @@ pad coverage cannot quantify additional outside-pad spread. Blue board
 traces, glare, and dark paste also confound automatic bridge detection.
 
 The ABBA order, accumulated pressure, time, and target positions were not
-independently randomized. The zero-dwell comparison used different pad
-geometry and a later pressure state. These observations do not establish a
-causal conditioner or dwell setting, deposited volume, electrical
-clearance, reflow outcome, or a production recipe. Review the actual
-before/after images for every candidate.
+independently randomized. The zero-dwell and 15-degree-retract comparisons
+used different positions and later pressure states. The apparent improvement
+after tiny sacrificial doses covered only four main pads; those sacrificial
+doses themselves produced a large strand. These observations do not
+establish a causal conditioner, dwell, or retraction setting, deposited
+volume, electrical clearance, reflow outcome, or a production recipe.
+Review the actual before/after images for every candidate.
