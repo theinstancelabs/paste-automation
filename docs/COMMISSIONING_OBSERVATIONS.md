@@ -1,5 +1,22 @@
 # Motor-driven paste dispensing: commissioning observations
 
+## Later 20-pad validation failed consistency
+
+A subsequent uninterrupted 20-pad run with the same candidate recipe failed the
+consistency check. The first four resistor pairs showed thin, upright or string-like
+deposits; the later four pairs were fuller, and one middle pair had an apparent
+connecting strand. Completing all commanded deposits, or seeing paste on every
+pad, is **not** a pass. This larger run supersedes any impression that the earlier
+eight-pad repeats established reliable production dosing. The candidate remains
+unqualified; no volume or reflow acceptance has been established.
+
+The later run followed roughly an hour of idle time, versus a few minutes between
+some earlier trials. Idle/pressure history is a possible confound, alongside
+needle height, transfer behavior, and board region. These observations do not
+establish which factor caused the difference. Startup waste conditioning helped
+earlier short runs but did not establish consistency for this longer validation.
+The earlier results below remain historical observations, not a current pass.
+
 ## Commissioning update — 2026-10-04
 
 Later trials supersede the early trial context below. Four eight-pad resistor
