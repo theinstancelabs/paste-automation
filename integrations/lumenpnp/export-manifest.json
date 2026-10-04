@@ -2621,6 +2621,20 @@
       "destination": "integrations/lumenpnp/automation/scripts/Run_Operator_Accept_Idle_Relief.js",
       "sha256": "dfdcb5cd9973dd90406275228c03d61a5df88d11b3b32e1eb012e72d0ce21ec6",
       "bytes": 1211
+    },
+    {
+      "sourceRoot": "/home/lumen/lumenpnp",
+      "sourcePath": "automation/paste/run-repeat-with-idle-relief.py",
+      "destination": "integrations/lumenpnp/automation/paste/run-repeat-with-idle-relief.py",
+      "sha256": "c0f9fa68d25ea98d1353a5828237c10c7df86b73e8a369524d4f1ad44848c66d",
+      "bytes": 13628
+    },
+    {
+      "sourceRoot": "/home/lumen/lumenpnp",
+      "sourcePath": "automation/paste/test_run_repeat_with_idle_relief.py",
+      "destination": "integrations/lumenpnp/automation/paste/test_run_repeat_with_idle_relief.py",
+      "sha256": "e60430c0e1ef1f2f9beac95c0ad70abf51a667270430c1a3acb15ed165044293",
+      "bytes": 1713
     }
   ],
   "manifestSelfHash": "Excluded to avoid a recursive digest; this manifest enumerates every other exported/generated file.",
