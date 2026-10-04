@@ -2598,6 +2598,20 @@
       "destination": "integrations/lumenpnp/automation/paste/run-startup-conditioning-abba.py",
       "sha256": "d4999f8c25b52b5a85b78561f5307439b45bc2e48b71b12b5fe97d8c003fbfd1",
       "bytes": 16112
+    },
+    {
+      "sourceRoot": "/home/lumen/lumenpnp",
+      "sourcePath": "automation/paste/compare-operator-pad-occlusion.py",
+      "destination": "integrations/lumenpnp/automation/paste/compare-operator-pad-occlusion.py",
+      "sha256": "cbc1421adf47e1656a440d2b03958bb7d9ccf403d2a3e8d56ed3a96e2c77e3ea",
+      "bytes": 4727
+    },
+    {
+      "sourceRoot": "/home/lumen/lumenpnp",
+      "sourcePath": "automation/paste/paired-pad-occlusion-research.md",
+      "destination": "integrations/lumenpnp/automation/paste/paired-pad-occlusion-research.md",
+      "sha256": "7c21b45a41a229becdeb19a44ee710ac49236849d0f7e353dd59cf0e7f15649a",
+      "bytes": 2655
     }
   ],
   "manifestSelfHash": "Excluded to avoid a recursive digest; this manifest enumerates every other exported/generated file.",
