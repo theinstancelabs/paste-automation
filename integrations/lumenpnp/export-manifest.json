@@ -2386,15 +2386,15 @@
       "sourceRoot": "/home/lumen/lumenpnp",
       "sourcePath": "automation/paste/operator-console-native.js",
       "destination": "integrations/lumenpnp/automation/paste/operator-console-native.js",
-      "sha256": "d0267627a44bae05c446896d77964fdc6dd41842c8dfa83094fdd4f8319bc993",
-      "bytes": 60523
+      "sha256": "98f94794e3e4a7b3a4a6f5952dd4de49c360bc36f0d9202c1400cebb2c0f30f9",
+      "bytes": 61182
     },
     {
       "sourceRoot": "/home/lumen/lumenpnp",
       "sourcePath": "automation/paste/operator-console-policy.cjs",
       "destination": "integrations/lumenpnp/automation/paste/operator-console-policy.cjs",
-      "sha256": "edcdb41827558a2159f2bf801860a63f66bf5f8ea59dbc895f79b97683810de7",
-      "bytes": 22531
+      "sha256": "8290d245175b5145db421ddf9497065aae8623772f7af50780b2835e857a741c",
+      "bytes": 24501
     },
     {
       "sourceRoot": "/home/lumen/lumenpnp",
@@ -2570,6 +2570,13 @@
       "destination": "integrations/lumenpnp/automation/scripts/Run_Operator_Pressure_Relief.js",
       "sha256": "4d75bf5816a68978ebafda9abf3a72ea97e2b3905fe24b2afa49216bdbe81335",
       "bytes": 968
+    },
+    {
+      "sourceRoot": "/home/lumen/lumenpnp",
+      "sourcePath": "automation/paste/operator/test-measured-renewal.cjs",
+      "destination": "integrations/lumenpnp/automation/paste/operator/test-measured-renewal.cjs",
+      "sha256": "ef4fbedf360d23c68f512dfb0c4068e81089f160fbf888a5f270054890da52f9",
+      "bytes": 1800
     }
   ],
   "manifestSelfHash": "Excluded to avoid a recursive digest; this manifest enumerates every other exported/generated file.",
