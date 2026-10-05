@@ -104,7 +104,7 @@ def build(source_path, image_path, mode, target_z, clearance_z, dwell_ms, review
     target_z=float(target_z); clearance_z=float(clearance_z)
     if not all(math.isfinite(v) for v in (start_z,target_z,clearance_z)):
         raise ValueError('Start, target and clearance raw Z must be finite')
-    if not clearance_z <= start_z < target_z:
+    if clearance_z > start_z or start_z >= target_z:
         raise ValueError('Require clearance Z <= already-centered start Z < reviewed dip/blot target Z')
     down=deltas(start_z,target_z); up=deltas(target_z,clearance_z)
     step_count=len(down)+len(up)

@@ -29,6 +29,11 @@ class CycleTests(unittest.TestCase):
   return cycle.build(self.source,self.image,**opts)
  def test_preview_has_explicit_vertical_steps_only_and_fixed_b(self):
   p=self.build();self.assertFalse(p['dispatchPerformed']);self.assertEqual(p['descentSteps'],[.5]);self.assertEqual(p['liftSteps'],[-.5]);self.assertEqual(p['fixedAxes']['B'],720.0)
+ def test_clearance_equal_to_start_is_valid_and_returns_to_same_plane(self):
+  self.raw['Z']=45.25
+  self.source.write_text(json.dumps({**json.loads(self.source.read_text()),'reported':self.raw,'afterQuerySnapshot':{'raw':self.raw,'driver':self.raw,'nativePoses':self.poses}}))
+  p=self.build(target_z=50.25,clearance_z=45.25)
+  self.assertEqual(p['startZ'],p['clearanceZ']);self.assertEqual(p['descentSteps'],[5]);self.assertEqual(p['liftSteps'],[-5])
  def test_unreviewable_bounds_and_increments_reject(self):
   for kw in ({'target_z':20.0},{'clearance_z':20.6},{'target_z':20.13},{'target_z':22.0},{'dwell_ms':-1},{'dwell_ms':10001}):
    with self.assertRaises(ValueError):self.build(**kw)
