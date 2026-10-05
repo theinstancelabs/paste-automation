@@ -84,7 +84,7 @@
         confirm.addActionListener(new (J('java.awt.event.ActionListener'))({actionPerformed:function(){call(function(){if(!confirm.isSelected()){api.disarm();armed=false;}update();});}}));
         function button(parent,label,fn,motion){var b=new (J('javax.swing.JButton'))(label);b.addActionListener(new (J('java.awt.event.ActionListener'))({actionPerformed:function(){call(fn);}}));parent.add(b);if(motion==='dispense')dispenseButtons.push(b);else if(motion)buttons.push(b);else idleButtons.push(b);return b;}
         var connection=row('1. Controller',new (J('javax.swing.JLabel'))(''));
-        button(connection,'Connect/check controller',function(){if(!confirm.isSelected())throw Error('First check the supervision / clear-area checkbox');api.arm();note('Checking existing OpenPnP connection; no motion…');},false);
+        button(connection,'Connect/check controller',function(){if(!confirm.isSelected())throw Error('First check the supervision / clear-area checkbox');api.arm(true);note('Checking existing OpenPnP connection; no motion…');},false);
         button(connection,'Board replaced / Reset calibration',function(){api.invalidateCalibration();note('Previous alignment and height invalidated. Recheck R1, R15 and R40.');update();},false);
         var nav=row('CAMERA ONLY — does not position the needle',new (J('javax.swing.JLabel'))('Selected resistor:'));
         ['1','2','center'].forEach(function(p){button(nav,p==='center'?'Center':'Pad '+p,function(){api.jump(selected()[0],p);},true);});
