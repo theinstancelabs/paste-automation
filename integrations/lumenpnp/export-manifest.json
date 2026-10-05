@@ -1,7 +1,7 @@
 {
   "schema": 1,
   "exportDate": "2026-10-04",
-  "baseCommit": "89e5818ee359a8429fb0d66cf96dc44b1815f7f7",
+  "baseCommit": "2221c626f895161b8fdd47803bf09a9a831748dc",
   "canonicalSourceRoot": "/home/lumen/lumenpnp",
   "purpose": "Source-only reviewable mirror; no deployment, machine operation, or private machine evidence included.",
   "excluded": [
@@ -1613,14 +1613,6 @@
     },
     {
       "sourceRoot": "/home/lumen/lumenpnp",
-      "sourcePath": "automation/scripts/Automation_Reviewed_Command.js",
-      "destination": "integrations/lumenpnp/automation/scripts/Automation_Reviewed_Command.js",
-      "sha256": "60180681656948c901120fa5f4060d98e242c6ead612919a477991267703a9b6",
-      "bytes": 10229,
-      "generated": "Mirror-only one-action dispatcher route patch; existing mirrored routes retained."
-    },
-    {
-      "sourceRoot": "/home/lumen/lumenpnp",
       "sourcePath": "automation/scripts/Capture_Paste_Bottom_Exposure.js",
       "destination": "integrations/lumenpnp/automation/scripts/Capture_Paste_Bottom_Exposure.js",
       "sha256": "bb9cf7341ebbefe1312c584b4c2d89020989f85e90e09215342547fa4960c8b7",
@@ -1947,14 +1939,6 @@
       "destination": "integrations/lumenpnp/automation/scripts/paste_serial_preflight.py",
       "sha256": "bed09ac73df00f78fa1be054679ecd7302fff770010150d774963f0c971a5ce0",
       "bytes": 2621
-    },
-    {
-      "sourceRoot": "/home/lumen/lumenpnp",
-      "sourcePath": "automation/scripts/run_reviewed_action.py",
-      "destination": "integrations/lumenpnp/automation/scripts/run_reviewed_action.py",
-      "sha256": "338a6a6f45ccb13f7c43c3d6fef26ad345d7d1034ad7ce90d527d7833962d688",
-      "bytes": 22070,
-      "generated": "Mirror-only one-action dispatcher route patch; existing mirrored routes retained."
     },
     {
       "sourceRoot": "/home/lumen/lumenpnp",
@@ -2740,6 +2724,34 @@
       "destination": "integrations/lumenpnp/automation/tests/test_run_prime_relief_cycle.py",
       "sha256": "7224d68676494f34abc4e8f59687e04f23994af9c0f88d881861d4468e1a59e6",
       "bytes": 11476
+    },
+    {
+      "sourceRoot": "/home/lumen/lumenpnp",
+      "sourcePath": "automation/scripts/Run_Operator_Fine_Pressure_Relief.js",
+      "destination": "integrations/lumenpnp/automation/scripts/Run_Operator_Fine_Pressure_Relief.js",
+      "sha256": "5436967d486b0cc19c1c517888446b79f9a2131270a0dbef622354af95fa80f3",
+      "bytes": 968
+    },
+    {
+      "sourceRoot": "/home/lumen/lumenpnp",
+      "sourcePath": "automation/scripts/Automation_Reviewed_Command.js",
+      "destination": "integrations/lumenpnp/automation/scripts/Automation_Reviewed_Command.js",
+      "sha256": "93c7002dd19d66be3adfb523927feb00a9d7c29c2536dd759975edb9ec318a29",
+      "bytes": 10364
+    },
+    {
+      "sourceRoot": "/home/lumen/lumenpnp",
+      "sourcePath": "automation/scripts/run_reviewed_action.py",
+      "destination": "integrations/lumenpnp/automation/scripts/run_reviewed_action.py",
+      "sha256": "b27a27cb23df505d21bbb20922f4183942c12386fbbf42b2bb96151a444f2a14",
+      "bytes": 22134
+    },
+    {
+      "sourceRoot": "/home/lumen/lumenpnp",
+      "sourcePath": "automation/tests/test_operator_fine_relief_dispatch.py",
+      "destination": "integrations/lumenpnp/automation/tests/test_operator_fine_relief_dispatch.py",
+      "sha256": "20f747239c8c511c12738637c5c9d988380c6aca3a5383e49f2a2391b4169b6e",
+      "bytes": 2556
     }
   ],
   "manifestSelfHash": "Excluded to avoid a recursive digest; this manifest enumerates every other exported/generated file.",
