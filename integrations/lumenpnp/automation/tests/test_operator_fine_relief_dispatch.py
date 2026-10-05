@@ -34,9 +34,16 @@ class FinePressureReliefDispatchTests(unittest.TestCase):
 
     def test_adapter_is_fixed_one_degree_and_native_path_keeps_xyz_stationary(self):
         action_script = (ROOT / 'scripts/Run_Operator_Fine_Pressure_Relief.js').read_text()
+        existing_five = (ROOT / 'scripts/Run_Operator_Pressure_Relief.js').read_text()
         self.assertIn("api.relievePressure(1,1)", action_script)
         self.assertIn('s.busy||s.latched||s.error', action_script)
         self.assertNotIn('api.relievePressure(5,1)', action_script)
+        # Nashorn's `for each` syntax takes `in`; guard against accidentally
+        # emitting JavaScript's invalid `for each (... of ...)` form.
+        loop = "for each(var w in J('java.awt.Window').getWindows())"
+        self.assertIn(loop, existing_five)
+        self.assertIn(loop, action_script)
+        self.assertNotIn('for each(var w of ', action_script)
         # The native relief-path test executes reliefRun(1) against a fake B-only
         # motion adapter and asserts the XYZ anchor remains fixed.
         result = subprocess.run(['node', str(ROOT / 'paste/operator/test-native-relief.cjs')],

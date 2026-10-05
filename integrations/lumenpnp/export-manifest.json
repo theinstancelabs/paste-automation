@@ -1,7 +1,7 @@
 {
   "schema": 1,
   "exportDate": "2026-10-04",
-  "baseCommit": "2221c626f895161b8fdd47803bf09a9a831748dc",
+  "baseCommit": "734ae45cfa9b705c0ba132636da054bc05216827",
   "canonicalSourceRoot": "/home/lumen/lumenpnp",
   "purpose": "Source-only reviewable mirror; no deployment, machine operation, or private machine evidence included.",
   "excluded": [
@@ -2729,7 +2729,7 @@
       "sourceRoot": "/home/lumen/lumenpnp",
       "sourcePath": "automation/scripts/Run_Operator_Fine_Pressure_Relief.js",
       "destination": "integrations/lumenpnp/automation/scripts/Run_Operator_Fine_Pressure_Relief.js",
-      "sha256": "5436967d486b0cc19c1c517888446b79f9a2131270a0dbef622354af95fa80f3",
+      "sha256": "a900af1eba6da11a38d0ccfc5036997f2a804dddd7f723d7942fbb1b00f78af4",
       "bytes": 968
     },
     {
@@ -2750,8 +2750,8 @@
       "sourceRoot": "/home/lumen/lumenpnp",
       "sourcePath": "automation/tests/test_operator_fine_relief_dispatch.py",
       "destination": "integrations/lumenpnp/automation/tests/test_operator_fine_relief_dispatch.py",
-      "sha256": "20f747239c8c511c12738637c5c9d988380c6aca3a5383e49f2a2391b4169b6e",
-      "bytes": 2556
+      "sha256": "f250357a32421253e79749f6593c28fbd1f0aef15e67cfa745c9bf13793f7bbd",
+      "bytes": 3008
     }
   ],
   "manifestSelfHash": "Excluded to avoid a recursive digest; this manifest enumerates every other exported/generated file.",
