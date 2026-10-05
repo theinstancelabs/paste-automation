@@ -32,7 +32,8 @@ class CalibrationInvalidationDispatchTests(unittest.TestCase):
         self.assertEqual(match.group(1),'Run_Operator_Prime_Segment.js')
         script=(ROOT/'scripts'/match.group(1)).read_text()
         self.assertIn('api.primeSegment(q)',script)
-        self.assertIn('q.degrees<1||q.degrees>10',script)
+        self.assertIn('q.degrees<1||q.degrees>30',script)
+        self.assertIn('q.speedDegreesPerSecond<5||q.speedDegreesPerSecond>20',script)
         self.assertIn(action,module.ACTION_ALLOWLIST)
         self.assertIn(action,module.PASTE_INSTALLATION_ACTIONS)
         installation_gate=dispatcher.split("if(['operator-prime-segment'",1)[1].split("].indexOf(q.action)<0)",1)[0]

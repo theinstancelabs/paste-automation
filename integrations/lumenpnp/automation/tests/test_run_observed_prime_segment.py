@@ -23,6 +23,26 @@ class ObservedPrimeTests(unittest.TestCase):
             with self.assertRaisesRegex(RuntimeError,'malformed'):
                 runner.verified_initial_capture(out,Mock(return_value=subprocess.CompletedProcess([],0,'' ,'')))
 
+    def test_requested_rate_contract_defaults_to_five_and_accepts_5_to_20(self):
+        profile={'id':'a'*64,'sessionId':'s'}
+        ledger_path=Path('/tmp/operator-prime-test-ledger.json')
+        ledger={'lastVerifiedRaw':{'B':-100},'profileId':profile['id'],'entries':[{'id':'old','status':'verified'}], 'status':'verified'}
+        for speed in ('default','5','10','20'):
+            args=[] if speed=='default' else ['--speed',speed]
+            if speed=='default':args+=['--degrees','30','--observe-seconds','8']
+            output=io.StringIO()
+            with patch.object(runner,'state',return_value=(profile,ledger_path,ledger)), contextlib.redirect_stdout(output):
+                self.assertEqual(runner.main(args),0)
+            request=json.loads(output.getvalue())['request']
+            self.assertEqual(request['speedDegreesPerSecond'],5 if speed=='default' else float(speed))
+            self.assertEqual(json.loads(output.getvalue())['observeSeconds'],8 if speed=='default' else 18)
+        for speed in ('1.5','4.99','20.01'):
+            with contextlib.redirect_stderr(io.StringIO()), self.assertRaises(SystemExit):
+                runner.main(['--speed',speed])
+        for args in (['--degrees','31'],['--degrees','30','--observe-seconds','7'],['--observe-seconds','61'],['--degrees','30','--speed','5','--observe-seconds','7']):
+            with contextlib.redirect_stderr(io.StringIO()), self.assertRaises(SystemExit):
+                runner.main(args)
+
     def test_failed_camera_preflight_never_creates_or_dispatches_prime_request(self):
         with tempfile.TemporaryDirectory() as temp:
             root=Path(temp);(root/'automation/plans').mkdir(parents=True);(root/'automation/evidence/operator-paste-runs/s').mkdir(parents=True)

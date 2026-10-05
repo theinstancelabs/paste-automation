@@ -63,6 +63,19 @@ assert.throws(()=>P.validateMeasuredRenewal({...freshCap75,maximumAdditionalGros
 const shortFresh={...fresh,reportedExposureMm:27.8};const freshExt8={...freshExt75,cumulativeAllowanceDegrees:8000};
 assert.throws(()=>P.validateMeasuredRenewal({...b,maximumAdditionalGrossDegrees:shortFresh.grossUsedAtMeasurement+8000},shortFresh,freshLedger,freshLedger,'s',freshExt8));
 
+// A cumulative extension reuses the 41.44 mm datum and charges every verified degree since it.
+const datum41={...fresh,reportedExposureMm:41.44,grossUsedAtMeasurement:46484.95,verifiedBAtMeasurement:-27806,additionalAllowanceDegrees:120};
+const datumLedger={...freshLedger,usedAdditionalGrossDegrees:46484.95,lastVerifiedRaw:{B:-27806},entries:[{id:'measurement-origin',status:'verified',plannedGrossDegrees:46484.95}]};
+const after112={...datumLedger,usedAdditionalGrossDegrees:46596.95,lastVerifiedRaw:{B:-27898},entries:[...datumLedger.entries,{id:'verified-since-measurement',status:'verified',plannedGrossDegrees:112}]};
+const ext3={scope:'measured-rod-cumulative-extension',sessionId:'s',grossUsedAtMeasurement:46484.95,cumulativeAllowanceDegrees:3000,newPhysicalMeasurement:false};
+const cap3={...b,maximumAdditionalGrossDegrees:49484.95};
+const plan3=P.validateMeasuredRenewal(cap3,datum41,datumLedger,after112,'s',ext3);
+assert.equal(plan3.prospectiveGrossDegrees,3000);assert.ok(plan3.availableDegrees>3000);
+assert.throws(()=>P.validateMeasuredRenewal({...cap3,maximumAdditionalGrossDegrees:49485.95},datum41,datumLedger,after112,'s',ext3));
+assert.throws(()=>P.validateMeasuredRenewal(cap3,datum41,datumLedger,{...after112,usedAdditionalGrossDegrees:49500},'s',ext3));
+assert.throws(()=>P.validateMeasuredRenewal(cap3,datum41,datumLedger,{...after112,entries:[...after112.entries,{id:'unverified',status:'pending',plannedGrossDegrees:1}],usedAdditionalGrossDegrees:46597.95},'s',ext3));
+assert.throws(()=>P.validateMeasuredRenewal(cap3,datum41,datumLedger,{...after112,entries:[...after112.entries,{id:'unreconciled',status:'verified',plannedGrossDegrees:1}]},'s',ext3));
+
 // A syringe replacement is an explicit, no-motion lineage event; it may discard only the exact pending pressure at unchanged verified B.
 const rp={sessionId:'s',id:'old-profile',syringeId:'old-syringe'},rl={profileId:'old-profile',pendingRetractDegrees:30,lastVerifiedRaw:{B:-20000}},rc={profileId:'old-profile',alignmentApplied:false,zApplied:false};
 const re={schema:1,scope:'operator-confirmed-syringe-replacement',operatorConfirmed:true,physicalReplacementConfirmed:true,pendingPressureDiscarded:true,noBMotionDuringReplacement:true,sessionId:'s',priorProfileId:'old-profile',priorLedgerProfileId:'old-profile',priorCalibrationProfileId:'old-profile',priorSyringeId:'old-syringe',newSyringeId:'new-syringe',discardedPendingDegrees:30,retainedRawB:-20000};
@@ -76,7 +89,9 @@ assert.throws(()=>P.validateSyringeReplacement(re,rp,rl,{...rc,alignmentApplied:
 assert.throws(()=>P.validateSyringeReplacement(re,rp,rl,{...rc,zApplied:true}));
 assert.equal(P.validateMeasuredRenewal({...b,maximumAdditionalGrossDegrees:fresh.grossUsedAtMeasurement+60},{...fresh,additionalAllowanceDegrees:60},freshLedger,freshLedger,'s').prospectiveGrossDegrees,60);
 assert.throws(()=>P.validateMeasuredRenewal({...b,maximumAdditionalGrossDegrees:fresh.grossUsedAtMeasurement+61},{...fresh,additionalAllowanceDegrees:60},freshLedger,freshLedger,'s'));
-const prime={schema:1,scope:'operator-prime-segment',profileId:'current-profile',nonce:'12345678-1234-1234-1234-123456789abc',currentB:-20000,createdAt:100000,degrees:10,speedDegreesPerSecond:1};
-assert.deepEqual(P.validatePrimeSegmentRequest(prime,'current-profile',-20000,159999),{degrees:10,speedDegreesPerSecond:1});
-for(const patch of [{profileId:'stale-profile'},{currentB:-19999},{createdAt:99999},{createdAt:160001},{degrees:0},{degrees:11},{degrees:1.5},{speedDegreesPerSecond:.99},{speedDegreesPerSecond:2.01}])assert.throws(()=>P.validatePrimeSegmentRequest({...prime,...patch},'current-profile',-20000,160000));
+const prime={schema:1,scope:'operator-prime-segment',profileId:'current-profile',nonce:'12345678-1234-1234-1234-123456789abc',currentB:-20000,createdAt:100000,degrees:10,speedDegreesPerSecond:5};
+assert.deepEqual(P.validatePrimeSegmentRequest(prime,'current-profile',-20000,159999),{degrees:10,speedDegreesPerSecond:5});
+assert.deepEqual(P.validatePrimeSegmentRequest({...prime,degrees:30},'current-profile',-20000,159999),{degrees:30,speedDegreesPerSecond:5});
+for(const speed of [5,10,20])assert.deepEqual(P.validatePrimeSegmentRequest({...prime,speedDegreesPerSecond:speed},'current-profile',-20000,159999),{degrees:10,speedDegreesPerSecond:speed});
+for(const patch of [{profileId:'stale-profile'},{currentB:-19999},{createdAt:99999},{createdAt:160001},{degrees:0},{degrees:31},{degrees:1.5},{speedDegreesPerSecond:1.5},{speedDegreesPerSecond:4.99},{speedDegreesPerSecond:20.01}])assert.throws(()=>P.validatePrimeSegmentRequest({...prime,...patch},'current-profile',-20000,160000));
 console.log('Syringe replacement lineage and measured 60-degree starter renewal validated');

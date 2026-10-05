@@ -31,11 +31,12 @@ def state():
     return profile,ledger_path,ledger
 
 def main(argv=None,dispatch=subprocess.run,capture_runner=subprocess.run):
-    parser=argparse.ArgumentParser(description=__doc__);parser.add_argument('--degrees',type=int,default=10);parser.add_argument('--speed',type=float,default=1.5);parser.add_argument('--execute',action='store_true');a=parser.parse_args(argv)
-    if not 1<=a.degrees<=10 or not 1<=a.speed<=2:parser.error('Initial observed priming: 1..10 degrees, 1..2 degrees/s')
+    parser=argparse.ArgumentParser(description=__doc__);parser.add_argument('--degrees',type=int,default=10);parser.add_argument('--speed',type=float,default=5);parser.add_argument('--observe-seconds',type=int,default=18);parser.add_argument('--execute',action='store_true');a=parser.parse_args(argv)
+    if not 1<=a.degrees<=30 or not 5<=a.speed<=20:parser.error('Observed priming: 1..30 degrees, 5..20 nominal requested B degrees/s')
+    if not 8<=a.observe_seconds<=60 or a.observe_seconds<a.degrees/a.speed+2:parser.error('Observation duration must be 8..60 seconds and at least stroke nominal time plus 2 seconds')
     profile,lp,before=state()
     q={'schema':1,'scope':'operator-prime-segment','profileId':profile['id'],'nonce':str(uuid.uuid4()),'currentB':before['lastVerifiedRaw']['B'],'createdAt':int(time.time()*1000),'degrees':a.degrees,'speedDegreesPerSecond':a.speed}
-    print(json.dumps({'request':q,'execute':a.execute}),flush=True)
+    print(json.dumps({'request':q,'execute':a.execute,'observeSeconds':a.observe_seconds}),flush=True)
     if not a.execute:return 0
     out=R/'automation/evidence/new-syringe-20261004'/('segment-'+q['nonce']);out.mkdir()
     try:
@@ -47,7 +48,7 @@ def main(argv=None,dispatch=subprocess.run,capture_runner=subprocess.run):
         (out/'request.json').write_text(json.dumps(q,indent=2))
         req=R/'automation/plans/operator-prime-segment-request.json'
         with req.open('x') as f:json.dump(q,f)
-        cap=subprocess.Popen([sys.executable,str(CAPTURE),'--output',str(out/'camera-series'),'--seconds','18'])
+        cap=subprocess.Popen([sys.executable,str(CAPTURE),'--output',str(out/'camera-series'),'--seconds',str(a.observe_seconds+1)])
         r=dispatch([sys.executable,str(R/'automation/scripts/run_reviewed_action.py'),'operator-prime-segment','--confirmed'],capture_output=True,text=True,cwd=R);(out/'dispatch.txt').write_text(r.stdout+r.stderr)
         result={'dispatchReturnCode':r.returncode,'status':'unverified-no-replay','motionReviewRequired':True}
         try:

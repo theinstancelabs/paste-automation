@@ -9,21 +9,27 @@ class FastCameraPolicyTests(unittest.TestCase):
  def test_builder_derives_centered_fid_offset_and_pad2_from_bound_measurements(self):
   with tempfile.TemporaryDirectory() as td:
    root=Path(td);now=1790927000000;stamp=datetime.datetime.fromtimestamp(now/1000,datetime.timezone.utc).isoformat().replace('+00:00','Z');jvm=123;config='a'*64
+   board=root/'pnp/pcb/ftp/ftp.kicad_pcb';board.parent.mkdir(parents=True);board.write_text('synthetic board fixture')
+   job=root/'inspection.job.xml'
+   job_board=root/'inspection-board.xml';job_board.write_text('<board><placements><placement enabled="false"/></placements></board>')
+   job.write_text(f'<job><object class="org.openpnp.model.BoardLocation" file-name="{job_board}"/></job>')
+   original_builder_root=builder.ROOT;builder.ROOT=root
    raw={'X':100.0,'Y':100.0,'Z':32.25,'A':200.0,'B':-4316.05};poses={k:{'x':1.0,'y':2.0,'z':3.0,'rotation':0.0} for k in ('N1','N2','top','bottom')}
    source={'id':'12345678-1234-1234-1234-123456789abc','status':'completed-camera-survey-awaiting-image-review','motionSubmitted':True,'controllerPositionVerified':True,'uncertainCompletion':False,'request':{'id':'12345678-1234-1234-1234-123456789abc','jvmStartMs':jvm,'liveConfigurationSha256':config},'afterQuerySnapshot':{'raw':raw,'driver':dict(raw),'nativePoses':poses}}
    sp=root/'source.json';sp.write_text(json.dumps(source))
-   board=builder.ROOT/'pnp/pcb/ftp/ftp.kicad_pcb';reg={'scope':'offline-native-fresh-ftp-two-fiducial-transform-with-third-point-check','acceptance':{'passed':True},'machineConfigurationChanged':False,'jobChanged':False,'board':{'sha256':hashlib.sha256(board.read_bytes()).hexdigest()},'measurements':{'FID2':{'measuredTopCameraXYMm':[100.0,100.0]}},'resistorPadMachineXYTargets':[{'padId':'R1.1','machineXYMm':[110.0,111.0]},{'padId':'R1.2','machineXYMm':[112.0,113.0]}]};rp=root/'registration.json';rp.write_text(json.dumps(reg))
+   reg={'scope':'offline-native-fresh-ftp-two-fiducial-transform-with-third-point-check','acceptance':{'passed':True},'machineConfigurationChanged':False,'jobChanged':False,'board':{'sha256':hashlib.sha256(board.read_bytes()).hexdigest()},'measurements':{'FID2':{'measuredTopCameraXYMm':[100.0,100.0]}},'resistorPadMachineXYTargets':[{'padId':'R1.1','machineXYMm':[110.0,111.0]},{'padId':'R1.2','machineXYMm':[112.0,113.0]}]};rp=root/'registration.json';rp.write_text(json.dumps(reg))
    image=root/'top-raw.png';image.write_bytes(b'\x89PNG\r\n\x1a\ntest');ih=hashlib.sha256(image.read_bytes()).hexdigest()
    detection={'reference':'FID2','detectedMachineXYMm':[100.1,100.05]};axes={k:{'model':v,'driver':v} for k,v in raw.items()};center={'schema':1,'scope':'native-current-pose-fiducial-vision','status':'completed-native-fiducial-detection-awaiting-review','requestId':'22345678-1234-1234-1234-123456789abc','finishedAt':stamp,'jvmStartMs':jvm,'liveConfigurationBeforeSha256':config,'liveConfigurationAfterSha256':config,'reference':'FID2','nativeFiducialDetection':detection,'nativePose':{'rawAxes':axes},'camera':{'locationMm':{'x':100.0,'y':100.0}},'images':{'raw':{'path':image.name,'sha256':ih}},'physicalRegistrationEstablished':False,'noMotion':True,'noActuation':True,'noVacuum':True,'jobSaved':False,'configurationSaved':False,'modelPoseUnchanged':True,'configurationRestored':True};cp=root/'center.json';cp.write_text(json.dumps(center))
-   fid=builder.build(sp,rp,builder.JOB,['FID2'],'Root','Reviewed synthetic bounded FID2 sample',None,'midpoint',now,fiducial_sample='xplus',fiducial_centering_report=cp)
+   fid=builder.build(sp,rp,job,['FID2'],'Root','Reviewed synthetic bounded FID2 sample',None,'midpoint',now,fiducial_sample='xplus',fiducial_centering_report=cp)
    self.assertEqual(fid['targets'][0]['sample'],'xplus');self.assertEqual(fid['targets'][0]['offsetXYMm'],[1.0,0.0]);self.assertAlmostEqual(fid['targets'][0]['x'],101.1);self.assertAlmostEqual(fid['targets'][0]['y'],100.05);self.assertEqual(fid['fiducialCenteringReport']['sha256'],hashlib.sha256(cp.read_bytes()).hexdigest())
-   pad=builder.build(sp,rp,builder.JOB,['R1'],'Root','Reviewed synthetic R1 pad2 target',None,'pad2',now)
+   pad=builder.build(sp,rp,job,['R1'],'Root','Reviewed synthetic R1 pad2 target',None,'pad2',now)
    self.assertEqual((pad['targets'][0]['x'],pad['targets'][0]['y']),(112.0,113.0))
    affine=dict(reg);affine['scope']='offline-fresh-ftp-three-fiducial-affine-with-held-out-pad-checks';afp=root/'accepted-affine-registration.json';afp.write_text(json.dumps(affine))
-   affine_pad=builder.build(sp,afp,builder.JOB,['R1'],'Root','Reviewed synthetic affine pad2 target',None,'pad2',now)
+   affine_pad=builder.build(sp,afp,job,['R1'],'Root','Reviewed synthetic affine pad2 target',None,'pad2',now)
    self.assertEqual((affine_pad['targets'][0]['x'],affine_pad['targets'][0]['y']),(112.0,113.0))
    with self.assertRaisesRegex(ValueError,'Fiducial sampling requires'):
-    builder.build(sp,afp,builder.JOB,['FID2'],'Root','No FID offsets from affine source',None,'midpoint',now)
+    builder.build(sp,afp,job,['FID2'],'Root','No FID offsets from affine source',None,'midpoint',now)
+   builder.ROOT=original_builder_root
  def test_python_dispatch_requires_dedicated_policy_and_preserves_locked_state(self):
   with tempfile.TemporaryDirectory() as td:
    root=Path(td);d=root/'automation/paste';d.mkdir(parents=True)
