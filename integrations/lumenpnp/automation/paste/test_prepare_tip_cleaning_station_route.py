@@ -72,4 +72,44 @@ class StationRouteTests(unittest.TestCase):
   with self.assertRaisesRegex(ValueError,'halfspan'):
    planner.preview(self.source,self.image,self.recipe,'cloth-wiggle','review',NOW)
 
+ def test_cloth_stroke_is_one_signed_xy_step_without_return_or_z_b_motion(self):
+  value=json.loads(self.source.read_text());raw=value['afterQuerySnapshot']['raw'];raw.update(X=100.0,Y=90.0,Z=43.5)
+  value['reported']=dict(raw);value['afterQuerySnapshot']['driver']=dict(raw);self.source.write_text(json.dumps(value))
+  recipe=json.loads(self.recipe.read_text());recipe.update(strokeAxis='Y',strokeMm=2.0,strokeRawZ=43.5);self.recipe.write_text(json.dumps(recipe))
+  p=planner.preview(self.source,self.image,self.recipe,'cloth-stroke','Reviewed full cloth corridor',NOW)
+  self.assertFalse(p['dispatchPerformed']);self.assertFalse(p['physicalAcceptanceEstablished'])
+  self.assertEqual(p['routeSpec']['waypoints'],[{'axis':'Y','targetMm':92.0}])
+  self.assertEqual(len(p['route']['steps']),1)
+  self.assertEqual(p['route']['steps'][0]['axis'],'Y')
+  self.assertEqual(p['route']['steps'][0]['after'],{'X':100.0,'Y':92.0,'Z':43.5,'A':200.0,'B':720.0})
+  self.assertEqual(p['target'],{'X':100.0,'Y':92.0,'Z':43.5})
+  self.assertEqual(p['fixedAxes'],['X','Z','A','B'])
+  self.assertEqual(p['stroke'],{'axis':'Y','distanceMm':2.0,'returnsToStart':False})
+  self.assertIsNone(p['verticalProfile'])
+  self.assertIn('no return across the cloth track',p['nextStage'])
+
+ def test_cloth_stroke_can_select_x_and_signed_direction(self):
+  value=json.loads(self.source.read_text());raw=value['afterQuerySnapshot']['raw'];raw.update(X=100.0,Y=90.0,Z=43.5)
+  value['reported']=dict(raw);value['afterQuerySnapshot']['driver']=dict(raw);self.source.write_text(json.dumps(value))
+  recipe=json.loads(self.recipe.read_text());recipe.update(strokeAxis='X',strokeMm=-1.5,strokeRawZ=43.5);self.recipe.write_text(json.dumps(recipe))
+  p=planner.preview(self.source,self.image,self.recipe,'cloth-stroke','review',NOW)
+  self.assertEqual(p['routeSpec']['waypoints'],[{'axis':'X','targetMm':98.5}])
+  self.assertEqual(p['route']['steps'][0]['after'],{'X':98.5,'Y':90.0,'Z':43.5,'A':200.0,'B':720.0})
+  self.assertEqual(p['fixedAxes'],['Y','Z','A','B'])
+  self.assertEqual(len(p['route']['steps']),1)
+
+ def test_cloth_stroke_requires_exact_registered_start_and_bounded_recipe(self):
+  value=json.loads(self.source.read_text());raw=value['afterQuerySnapshot']['raw'];raw.update(X=100.0,Y=90.0,Z=43.5)
+  value['reported']=dict(raw);value['afterQuerySnapshot']['driver']=dict(raw);self.source.write_text(json.dumps(value))
+  recipe=json.loads(self.recipe.read_text());recipe.update(strokeAxis='Y',strokeMm=1.0,strokeRawZ=43.5);self.recipe.write_text(json.dumps(recipe))
+  for field,bad in (('X',100.001),('Y',90.001),('Z',43.501)):
+   altered=json.loads(self.source.read_text());snapshot=altered['afterQuerySnapshot']['raw'];snapshot[field]=bad
+   altered['reported']=dict(snapshot);altered['afterQuerySnapshot']['driver']=dict(snapshot);self.source.write_text(json.dumps(altered))
+   with self.assertRaisesRegex(ValueError,'exactly match registered cloth'):
+    planner.preview(self.source,self.image,self.recipe,'cloth-stroke','review',NOW)
+   snapshot[field]=raw[field];altered['reported']=dict(snapshot);altered['afterQuerySnapshot']['driver']=dict(snapshot);self.source.write_text(json.dumps(altered))
+  for axis,distance in (('B',1.0),('Y',0),('X',2.01),('Y',-2.01)):
+   invalid=json.loads(self.recipe.read_text());invalid.update(strokeAxis=axis,strokeMm=distance,strokeRawZ=43.5);self.recipe.write_text(json.dumps(invalid))
+   with self.assertRaises(ValueError): planner.preview(self.source,self.image,self.recipe,'cloth-stroke','review',NOW)
+
 if __name__=='__main__':unittest.main()

@@ -31,8 +31,8 @@ def load_recipe(path):
 
 def preview(source_path,image_path,recipe_path,destination,review,now_ms=None):
     now_ms=time.time_ns()//1_000_000 if now_ms is None else now_ms
-    if destination not in ('cup','cloth','cloth-wiggle'):
-        raise ValueError('Destination must be cup, cloth, or cloth-wiggle')
+    if destination not in ('cup','cloth','cloth-wiggle','cloth-stroke'):
+        raise ValueError('Destination must be cup, cloth, cloth-wiggle, or cloth-stroke')
     if not isinstance(review,str) or not review.strip():
         raise ValueError('Explicit full-corridor review text required')
     recipe=load_recipe(recipe_path)
@@ -42,11 +42,23 @@ def preview(source_path,image_path,recipe_path,destination,review,now_ms=None):
         raise ValueError('Certain, verified terminal source required')
     if abs(raw['X']-recipe['fixedX'])>.02:
         raise ValueError('Source X is outside registered station tolerance; this route will not move X')
-    if destination!='cloth-wiggle' and abs(raw['Z']-recipe['transitZ'])>.02:
+    wiggle=destination=='cloth-wiggle';stroke=destination=='cloth-stroke'
+    if not wiggle and not stroke and abs(raw['Z']-recipe['transitZ'])>.02:
         raise ValueError('Source Z must equal the recipe transit height before XY motion')
-    wiggle=destination=='cloth-wiggle'
-    station='cloth' if wiggle else destination
+    station='cloth' if wiggle or stroke else destination
     target_y=recipe['stations'][station]['y']
+    fixed_axes=['Y','Z','A','B'] if wiggle else ['X','Z','A','B']
+    if stroke:
+        axis=recipe.get('strokeAxis');distance=recipe.get('strokeMm');z=recipe.get('strokeRawZ')
+        if axis not in ('X','Y'):
+            raise ValueError('Recipe cloth stroke axis must be X or Y')
+        if type(distance) not in (int,float) or not math.isfinite(distance) or distance==0 or abs(distance)>2:
+            raise ValueError('Recipe cloth stroke must be a nonzero signed distance no greater than 2 mm')
+        if type(z) not in (int,float) or not math.isfinite(z):
+            raise ValueError('Recipe cloth stroke needs a finite raw Z')
+        if raw['X']!=recipe['fixedX'] or raw['Y']!=target_y or raw['Z']!=z:
+            raise ValueError('Source must exactly match registered cloth X/Y and stroke raw Z')
+        fixed_axes=[name for name in ('X','Y','Z','A','B') if name!=axis]
     if wiggle:
         z=recipe.get('clothWiggleZ'); halfspan=recipe.get('clothWiggleHalfspanMm'); cycles=recipe.get('clothWiggleCycles')
         if type(z) not in (int,float) or not math.isfinite(z) or type(halfspan) not in (int,float) or not math.isfinite(halfspan) or not 0 < halfspan <= 1:
@@ -55,7 +67,7 @@ def preview(source_path,image_path,recipe_path,destination,review,now_ms=None):
             raise ValueError('Recipe cloth wiggle cycles must be an integer from 1 to 5')
         if abs(raw['Y']-target_y)>.02 or abs(raw['Z']-z)>.02:
             raise ValueError('Source must already be at registered cloth Y and wiggle Z')
-    elif abs(raw['Y']-target_y)<=.02:
+    elif not stroke and abs(raw['Y']-target_y)<=.02:
         return {'schema':1,'status':'already-at-station','destination':destination,
                 'sourceReport':str(source_path),'sourceSha256':hashlib.sha256(source_bytes).hexdigest(),
                 'dispatchPerformed':False,'physicalAcceptanceEstablished':False}
@@ -72,24 +84,30 @@ def preview(source_path,image_path,recipe_path,destination,review,now_ms=None):
           'sourceReport':str(source_path),'sourceSha256':hashlib.sha256(source_bytes).hexdigest(),
           'operator':review.strip(),'reviewedEntireCorridor':True,'corridorEvidence':evidence,
           'waypoints':([{'axis':'X','targetMm':recipe['fixedX']+(halfspan if i%2==0 else -halfspan)} for i in range(cycles*2)]+[{'axis':'X','targetMm':recipe['fixedX']}]
-                       if wiggle else [{'axis':'Y','targetMm':target_y}])}
+                       if wiggle else [{'axis':axis,'targetMm':raw[axis]+distance}]
+                       if stroke else [{'axis':'Y','targetMm':target_y}])}
     if envelope is not None: spec['commissioningEnvelope']=envelope
     planned=route.plan(spec,now_ms)
     return {'schema':1,'status':'preview','destination':destination,'recipe':str(Path(recipe_path).resolve()),
             'sourceReport':str(source_path),'sourceSha256':spec['sourceSha256'],'startRaw':raw,
-            'target':({'X':recipe['fixedX'],'Y':target_y,'Z':raw['Z']} if not wiggle else {'X':recipe['fixedX'],'Y':target_y,'Z':z}),
-            'fixedAxes':(['Y','Z','A','B'] if wiggle else ['X','Z','A','B']),
+            'target':({'X':raw['X']+(distance if axis=='X' else 0),'Y':raw['Y']+(distance if axis=='Y' else 0),'Z':raw['Z']} if stroke
+                      else {'X':recipe['fixedX'],'Y':target_y,'Z':z} if wiggle
+                      else {'X':recipe['fixedX'],'Y':target_y,'Z':raw['Z']}),
+            'fixedAxes':fixed_axes,
             'wiggle':({'halfspanMm':halfspan,'cycles':cycles,'returnsToCenter':True} if wiggle else None),
-            'verticalProfile':recipe.get(station+'Cycle'),
+            'stroke':({'axis':axis,'distanceMm':distance,'returnsToStart':False} if stroke else None),
+            'verticalProfile':None if stroke else recipe.get(station+'Cycle'),
             'routeSpec':spec,'route':planned,'dispatchPerformed':False,'physicalAcceptanceEstablished':False,
-            'nextStage':('Review fresh imagery before any further operation; no automatic physical acceptance.' if wiggle else 'Use a fresh reviewed USB image and the existing vertical-cycle helper for the explicit target/clearance/dwell.'
+            'nextStage':('Review fresh imagery at the one-way stroke endpoint; no return across the cloth track is planned.' if stroke
+                         else 'Review fresh imagery before any further operation; no automatic physical acceptance.' if wiggle
+                         else 'Use a fresh reviewed USB image and the existing vertical-cycle helper for the explicit target/clearance/dwell.'
                          if destination=='cloth' else 'Use a fresh reviewed USB image and the existing vertical-cycle helper for the explicit dip target/clearance/dwell.')}
 
 
 def main():
     p=argparse.ArgumentParser(description=__doc__)
     p.add_argument('source_report',type=Path);p.add_argument('image',type=Path)
-    p.add_argument('destination',choices=('cup','cloth','cloth-wiggle'));p.add_argument('--recipe',type=Path,default=DEFAULT_RECIPE)
+    p.add_argument('destination',choices=('cup','cloth','cloth-wiggle','cloth-stroke'));p.add_argument('--recipe',type=Path,default=DEFAULT_RECIPE)
     p.add_argument('--review',required=True);p.add_argument('--write-spec',type=Path)
     a=p.parse_args();result=preview(a.source_report,a.image,a.recipe,a.destination,a.review)
     if a.write_spec:
