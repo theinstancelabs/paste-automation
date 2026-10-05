@@ -54,3 +54,11 @@ assert.throws(()=>P.validateMeasuredRenewal(freshCap,fresh,{...freshLedger,usedA
 const concurrent=copy(freshLedger);concurrent.entries[0].plannedGrossDegrees++;
 assert.throws(()=>P.validateMeasuredRenewal(freshCap,fresh,freshLedger,concurrent,'s'));
 assert.throws(()=>P.validateMeasuredRenewal(freshCap,null,freshLedger,freshLedger,'s'));
+const freshExt75={...extension,grossUsedAtMeasurement:fresh.grossUsedAtMeasurement,cumulativeAllowanceDegrees:7500};
+const freshCap75={...b,maximumAdditionalGrossDegrees:fresh.grossUsedAtMeasurement+7500};
+const freshResult75=P.validateMeasuredRenewal(freshCap75,fresh,freshLedger,freshLedger,'s',freshExt75);
+assert.equal(freshResult75.prospectiveGrossDegrees,7500);
+assert.ok(fresh.reportedExposureMm-fresh.nearBottomExposureMm-7500*fresh.mmPerMotorDegreeNominal>fresh.engineeringAllowanceMm);
+assert.throws(()=>P.validateMeasuredRenewal({...freshCap75,maximumAdditionalGrossDegrees:freshCap75.maximumAdditionalGrossDegrees+1},fresh,freshLedger,freshLedger,'s',freshExt75));
+const shortFresh={...fresh,reportedExposureMm:27.8};const freshExt8={...freshExt75,cumulativeAllowanceDegrees:8000};
+assert.throws(()=>P.validateMeasuredRenewal({...b,maximumAdditionalGrossDegrees:shortFresh.grossUsedAtMeasurement+8000},shortFresh,freshLedger,freshLedger,'s',freshExt8));
