@@ -62,6 +62,18 @@ const retractIndex = first.stages.findIndex(s => s.tag === 'inter-resistor-retra
 assert(retractIndex > first.stages.findIndex(s => s.tag === 'dose'));
 assert.equal(first.finalRaw.Z, p.safeZ);
 
+// Same-cycle conditioning carries its pending relief into main dosing and budget preview.
+{
+  const q=profile();q.rodBudget.maximumAdditionalGrossDegrees=1000;q.rawBounds.B={min:-2000,max:2000};
+  Object.values(q.pads.R1).forEach(t=>{t.touchRawZ=58.4;});Object.values(q.pads.R2).forEach(t=>{t.touchRawZ=58.4;});
+  const same={padMode:'both',doseDegrees:35,retractPercent:20,retractDegrees:7,bSpeedFraction:.16,retractSpeedFraction:1,dwellMs:2000,retractDwellMs:500,heightMode:'gap',gapMm:.2,workZ:58.2};
+  const conditioned=P.plan(['R1'],same,q,start,0,0);
+  const main=P.plan(['R2'],same,q,conditioned.finalRaw,conditioned.grossDegrees,conditioned.pendingRetractDegrees);
+  assert.equal(conditioned.pendingRetractDegrees,7);assert.equal(main.pendingRetractDegrees,7);
+  assert.equal(conditioned.grossDegrees+main.grossDegrees,161);
+  assert.equal(main.stages[main.stages.findIndex(s=>s.tag==='dose')-1].tag,'restore-prior-inter-resistor-retract');
+}
+
 // A separate click must preserve the relief and restore it only after reaching
 // the next pad's work position, immediately before the next dose.
 const next = P.plan(['R2'], recipe, p, first.finalRaw, first.grossDegrees, first.pendingRetractDegrees);

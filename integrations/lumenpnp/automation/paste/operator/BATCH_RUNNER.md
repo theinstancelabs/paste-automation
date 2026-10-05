@@ -125,6 +125,28 @@ dispense; `--execute` remains a separate explicit dispatch step. Image review
 and root approval are still required before treating a run as physically
 accepted.
 
+For a same-cycle sacrificial conditioner, add `--condition-refs` and
+`--condition-same-cycle`. The condition recipe copies dose, push/retract speeds,
+retract amount, dwell times, pad mode, and gap from the main recipe, while
+omitting any paired-pad hop. The preview plans the conditioning group first,
+passes its ending pending retraction into the main group, and charges both
+groups against the same gross-travel budget. The option requires explicit
+conditioning references and does not select or skip occupied pads.
+
+Example CLI recipe for an explicitly reviewed fresh group:
+
+```sh
+python3 automation/paste/prepare-operator-experiment.py dispense-and-survey \
+  --refs R39 R40 --condition-refs D36 --condition-same-cycle --pad-mode both \
+  --dose 35 --push-deg-s 16 --retract-percent 20 --retract-deg-s 100 \
+  --dwell-ms 2000 --retract-dwell-ms 500 --gap-mm 0.2
+```
+
+The selected references must be freshly surveyed and confirmed available; the
+CLI requires these IDs and never auto-reuses or replaces targets. This command
+only authors and previews a request. Use `--execute` only as the separate,
+explicit dispatch step.
+
 For an explicit per-pad pressure-relief experiment, add recipe
 `"retractEachPad": true`, or CLI `--retract-each-pad`. The default remains false.
 Enabled mode retracts immediately after each dose, before lifting, then restores

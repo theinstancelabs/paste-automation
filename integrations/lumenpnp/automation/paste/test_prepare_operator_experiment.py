@@ -23,6 +23,21 @@ class TestPrepare(unittest.TestCase):
  def test_terminal_request_allows_new_dispatch(self):
   with tempfile.TemporaryDirectory() as d:
    root=pathlib.Path(d);(root/'automation/plans').mkdir(parents=True);(root/'automation/plans/operator-batch-request.json').write_text(json.dumps({'id':'old'}));out=root/'automation/evidence/operator-batches/old';out.mkdir(parents=True);(out/'report.json').write_text(json.dumps({'status':'completed-awaiting-image-review'}));m.active_guard(root)
+ def test_same_cycle_conditioning_copies_main_recipe_and_omits_hop(self):
+  with tempfile.TemporaryDirectory() as d:
+   root=pathlib.Path(d);(root/'automation/plans').mkdir(parents=True)
+   with patch.object(m,'validate',return_value={'plannedGrossDegrees':231,'endingPendingRetractDegrees':7}), patch('builtins.print') as printed:
+    q=m.main(['dispense-and-survey','--refs','R39','R40','--condition-refs','D36','--condition-same-cycle',
+      '--dose','35','--push-deg-s','16','--retract-percent','20','--retract-deg-s','100',
+      '--dwell-ms','2000','--retract-dwell-ms','500','--gap-mm','.2','--paired-pad-hop-mm','.5','--root',str(root)])
+   preview=json.loads(printed.call_args[0][0])['preview']
+   self.assertEqual(preview['endingPendingRetractDegrees'],7)
+   self.assertEqual(preview['plannedGrossDegrees'],231)
+   expected=dict(q['recipe']);expected.pop('pairedPadHopMm')
+   self.assertEqual(q['conditioning']['recipe'],expected)
+   self.assertEqual(q['recipe']['pairedPadHopMm'],.5)
+   self.assertEqual(q['references'],['R39','R40']);self.assertEqual(q['conditioning']['references'],['D36'])
+  with self.assertRaises(SystemExit):m.main(['dispense-and-survey','--refs','R39','--condition-same-cycle'])
  def test_independent_pad_modes(self):
   with tempfile.TemporaryDirectory() as d:
    root=pathlib.Path(d);(root/'automation/plans').mkdir(parents=True)
