@@ -100,6 +100,16 @@ def fixture(root):
 
 
 class NativeImportTests(unittest.TestCase):
+    def test_tip_xy_correction_source_hash_is_verified_for_preview(self):
+        with tempfile.TemporaryDirectory() as d:
+            source = Path(d) / 'centroids.json'
+            source.write_text('{"scope":"repeated-deposit-centroid-offset"}')
+            correction = {'tipXYCorrection': {'evidence': {'path': str(source), 'sha256': sha(source)}}}
+            mod.verify_tip_xy_correction_evidence(correction)
+            correction['tipXYCorrection']['evidence']['sha256'] = '0' * 64
+            with self.assertRaisesRegex(ValueError, 'evidence changed'):
+                mod.verify_tip_xy_correction_evidence(correction)
+
     def setUp(self):
         self.tmp = tempfile.TemporaryDirectory()
         self.root = Path(self.tmp.name)

@@ -9,9 +9,17 @@ def active_guard(root):
         q=read(request); report=root/'automation/evidence/operator-batches'/q['id']/'report.json'
         if not report.exists() or read(report).get('status') not in ('completed-awaiting-image-review','failed-no-retry'):
             raise ValueError('Existing request is pending/active; preserve it and wait for its terminal report')
+def verify_tip_xy_evidence(c):
+    correction=c.get('tipXYCorrection')
+    if correction is None:return
+    evidence=correction.get('evidence') if isinstance(correction,dict) else None
+    if not isinstance(evidence,dict) or not isinstance(evidence.get('path'),str):raise ValueError('Tip XY correction evidence path missing')
+    path=pathlib.Path(evidence['path'])
+    if not path.is_file() or hashlib.sha256(path.read_bytes()).hexdigest()!=evidence.get('sha256'):raise ValueError('Tip XY correction evidence changed')
 def validate(root,q):
     p=read(root/'automation/plans/paste-operator-profile.json'); folder=root/'automation/evidence/operator-paste-runs'/p['sessionId']; c=read(folder/('calibration-'+p['id']+'.json')); l=read(folder/'budget-ledger.json')
     if any(x['profileId']!=p['id'] or x['sessionId']!=p['sessionId'] for x in (c,l)) or l['status']!='verified': raise ValueError('Calibration/ledger identity mismatch')
+    verify_tip_xy_evidence(c)
     if abs(sum(e['plannedGrossDegrees'] for e in l['entries'])-l['usedAdditionalGrossDegrees'])>.0001: raise ValueError('Gross ledger total mismatch')
     touch = c.get('boardTouchReference') or c.get('coplanarTouchReference') or {}
     for evidence in [touch.get('evidence')]:

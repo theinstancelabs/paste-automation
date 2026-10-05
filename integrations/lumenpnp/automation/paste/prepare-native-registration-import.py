@@ -41,6 +41,18 @@ def evidence(path):
     return {'path': str(p), 'sha256': digest(p)}
 
 
+def verify_tip_xy_correction_evidence(sidecar):
+    correction = sidecar.get('tipXYCorrection')
+    if correction is None:
+        return
+    item = correction.get('evidence') if isinstance(correction, dict) else None
+    if not isinstance(item, dict) or not isinstance(item.get('path'), str):
+        raise ValueError('Tip XY correction evidence path missing')
+    path = Path(item['path'])
+    if not path.is_file() or digest(path) != item.get('sha256'):
+        raise ValueError('Tip XY correction evidence changed')
+
+
 def finite_pair(value, label):
     if (not isinstance(value, list) or len(value) != 2
             or any(type(v) not in (int, float) or not math.isfinite(v) for v in value)):
@@ -268,6 +280,7 @@ def prepare(registration, profile_path, sidecar_path, output):
                 'needleTouchMeasurement', 'ztouchSamples', 'zSamples', 'vacuumReference'):
         if proposed.get(key) != sidecar.get(key):
             raise ValueError('Importer changed existing height/calibration lineage: ' + key)
+    verify_tip_xy_correction_evidence(proposed)
     policy_check = ("const p=require(process.argv[1]),x=JSON.parse(require('fs').readFileSync(0,'utf8'));"
                     "const q=p.withCalibration(x.profile,x.sidecar);p.validateProfile(q);")
     checked = subprocess.run(['node', '-e', policy_check, str(POLICY)],

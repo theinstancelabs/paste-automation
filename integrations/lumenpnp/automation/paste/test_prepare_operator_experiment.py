@@ -2,6 +2,16 @@ import importlib.util,json,pathlib,tempfile,unittest
 from unittest.mock import patch
 s=importlib.util.spec_from_file_location('experiment',pathlib.Path(__file__).with_name('prepare-operator-experiment.py'));m=importlib.util.module_from_spec(s);s.loader.exec_module(m)
 class TestPrepare(unittest.TestCase):
+ def test_tip_xy_correction_preview_evidence_is_hash_bound(self):
+  with tempfile.TemporaryDirectory() as d:
+   evidence=pathlib.Path(d)/'centroids.json';evidence.write_text('{"scope":"repeated-deposit-centroid-offset"}')
+   digest=__import__('hashlib').sha256(evidence.read_bytes()).hexdigest()
+   m.verify_tip_xy_evidence({'tipXYCorrection':{'evidence':{'path':str(evidence),'sha256':digest}}})
+   with self.assertRaisesRegex(ValueError,'evidence changed'):
+    m.verify_tip_xy_evidence({'tipXYCorrection':{'evidence':{'path':str(evidence),'sha256':'0'*64}}})
+   evidence.unlink()
+   with self.assertRaisesRegex(ValueError,'evidence changed'):
+    m.verify_tip_xy_evidence({'tipXYCorrection':{'evidence':{'path':str(evidence),'sha256':digest}}})
  def test_active_and_preview_preserved(self):
   with tempfile.TemporaryDirectory() as d:
    root=pathlib.Path(d);plans=root/'automation/plans';plans.mkdir(parents=True);active=plans/'operator-batch-request.json';active.write_text(json.dumps({'id':'active'}));original=active.read_bytes()

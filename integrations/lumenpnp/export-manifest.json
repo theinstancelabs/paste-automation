@@ -2372,22 +2372,22 @@
       "sourceRoot": "/home/lumen/lumenpnp",
       "sourcePath": "automation/paste/operator-console-native.js",
       "destination": "integrations/lumenpnp/automation/paste/operator-console-native.js",
-      "sha256": "592707ddb55d85a58fe914cdd2ad4fbf225f90d06e05cc127cbbafc3da1492ac",
-      "bytes": 64883
+      "sha256": "ef35bc4c1432bcfa6ccc11388d0f3c9cc363089b274b085381bb17e890dd1c27",
+      "bytes": 65485
     },
     {
       "sourceRoot": "/home/lumen/lumenpnp",
       "sourcePath": "automation/paste/operator-console-policy.cjs",
       "destination": "integrations/lumenpnp/automation/paste/operator-console-policy.cjs",
-      "sha256": "fb759c6535bb6c1ddb65828d1ab8130ce4c240f91ae4ef04de8fbcbe9f3a1c3f",
-      "bytes": 30829
+      "sha256": "86fae2d6ef914c6366acd90d2b92ee5dab978701b69ed737617d507404a0ab88",
+      "bytes": 32183
     },
     {
       "sourceRoot": "/home/lumen/lumenpnp",
       "sourcePath": "automation/paste/operator/test-policy.cjs",
       "destination": "integrations/lumenpnp/automation/paste/operator/test-policy.cjs",
-      "sha256": "19360689b2b04a08509b7a7f2fe5d22f16c49a19916b541dc0fb935fa7daf5b9",
-      "bytes": 14831
+      "sha256": "ba7dc050cfab73cacf0305c20094a7feb28644af63ce3a54779a994cf1aa1afc",
+      "bytes": 17209
     },
     {
       "sourceRoot": "/home/lumen/lumenpnp",
@@ -2400,8 +2400,8 @@
       "sourceRoot": "/home/lumen/lumenpnp",
       "sourcePath": "automation/paste/operator/test-calibration.cjs",
       "destination": "integrations/lumenpnp/automation/paste/operator/test-calibration.cjs",
-      "sha256": "21646ec039ade6a5550205f1b40423df093d6ecb6dcab0836444c0e341ce54db",
-      "bytes": 3529
+      "sha256": "ffad026abf0237df8139dcc08bcbb1ca885f4a19313bf4939612848e29d6dee0",
+      "bytes": 5334
     },
     {
       "sourceRoot": "/home/lumen/lumenpnp",
@@ -2505,15 +2505,15 @@
       "sourceRoot": "/home/lumen/lumenpnp",
       "sourcePath": "automation/paste/prepare-operator-experiment.py",
       "destination": "integrations/lumenpnp/automation/paste/prepare-operator-experiment.py",
-      "sha256": "24d537720627579a9c9e0be36ca33b4dff8384e1873944aac7269374ce9c8920",
-      "bytes": 6489
+      "sha256": "be9ca4830cb16bb85555cd8baec8b2893ce9ffce350461248e24bdb19125a191",
+      "bytes": 7039
     },
     {
       "sourceRoot": "/home/lumen/lumenpnp",
       "sourcePath": "automation/paste/test_prepare_operator_experiment.py",
       "destination": "integrations/lumenpnp/automation/paste/test_prepare_operator_experiment.py",
-      "sha256": "25d8e06670294f4829d48efdf9c568916dd61ef9cb769e61c0e6243bf40d86b8",
-      "bytes": 2203
+      "sha256": "16d509ae55b1d756eee57ac76c46fcd55858856ae2b208f8c4046dff056b55b9",
+      "bytes": 2951
     },
     {
       "sourceRoot": "/home/lumen/lumenpnp",
@@ -2771,15 +2771,15 @@
       "sourceRoot": "/home/lumen/lumenpnp",
       "sourcePath": "automation/paste/prepare-native-registration-import.py",
       "destination": "integrations/lumenpnp/automation/paste/prepare-native-registration-import.py",
-      "sha256": "3dadf3d1098b349f2237256bb87caec32426118deed5eb618e3081d19acab843",
-      "bytes": 18211
+      "sha256": "3c8f0a31b24fc32599fd0b1f7da7f8f7a5dc370dbe9e3489546ac672b3f24bbe",
+      "bytes": 18781
     },
     {
       "sourceRoot": "/home/lumen/lumenpnp",
       "sourcePath": "automation/paste/test-native-registration-import.py",
       "destination": "integrations/lumenpnp/automation/paste/test-native-registration-import.py",
-      "sha256": "004e82d26a35f3ac767ddb5e2ff7459595e2855737979d80f934445471c20751",
-      "bytes": 11885
+      "sha256": "0e70255fd5e1d9c5ceafae5d88a8a2a27c187b3f733f8371f34347dd00a3489f",
+      "bytes": 12516
     },
     {
       "sourceRoot": "/home/lumen/lumenpnp",
