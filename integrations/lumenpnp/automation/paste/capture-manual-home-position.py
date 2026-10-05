@@ -15,6 +15,10 @@ import uuid
 
 ROOT = Path(__file__).resolve().parents[2]
 
+def ensure_model_idle(model):
+    if model.get('busy') is True:
+        raise RuntimeError('Fresh model state reports the machine busy; wait for the native task to finish, then capture again')
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--operator-home-confirmed', action='store_true', required=True)
@@ -30,6 +34,7 @@ def main():
         if fresh:
             source = max(fresh, key=lambda p:p.stat().st_mtime_ns)
             model = json.loads(source.read_text())
+            ensure_model_idle(model)
             break
         if time.monotonic() >= deadline:
             raise RuntimeError('No fresh model report; inspect bridge-error.txt, do not replay motion')
