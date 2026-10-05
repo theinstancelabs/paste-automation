@@ -48,6 +48,7 @@ def main(argv=None):
         refs=[r for token in a.condition_refs for r in token.split(',')]
         if set(refs)&set(q['references']):ap.error('Conditioning references must not overlap main group')
         q['conditioning']={'references':refs,'recipe':{**q['recipe'],'doseDegrees':a.condition_dose,'padMode':a.condition_pad_mode,'retractPercent':0,'retractDegrees':0,'dwellMs':0,'retractDwellMs':0}}
+        q['conditioning']['recipe'].pop('pairedPadHopMm',None)
     preview=validate(a.root,q); path=a.root/'automation/plans'/('operator-'+q['id']+'.json');path.write_text(json.dumps(q,indent=2,allow_nan=False)+'\n')
     print(json.dumps({'request':str(path),'id':q['id'],'preview':preview,'executed':a.execute}))
     if a.execute:
