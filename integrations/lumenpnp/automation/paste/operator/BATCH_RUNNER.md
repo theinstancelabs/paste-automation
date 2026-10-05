@@ -97,15 +97,13 @@ request once through the existing reviewed-action mechanism.
 
 ## Optional paired-pad hop
 
-The default plan keeps its existing full-clearance moves. To enable a bounded
-hop only between two pads of the same reference, pass `--paired-pad-hop-mm`
-with `--pad-mode both` and use the measured-touch gap profile. The planner
-requires both measured touch Z values, pair separation no greater than 3 mm,
-touch-height difference no greater than 0.10 mm, and a 0.50–2.00 mm hop on a
-0.05 mm grid. Per-pad retraction cannot be combined with this option. The hop
-raises by the requested amount from the lower raw work-Z value, crosses only
-between the two pads of that same reference, and returns to safe Z before the
-next reference and at the end. Preview rejects invalid geometry or heights.
+Full-clearance travel remains the default and current preferred strategy. The
+optional `--paired-pad-hop-mm` path was tested at 0.5 mm on R36–R38 and produced
+visible bridges between pads; that hop is rejected and should not be used for
+production. Keep this option only for explicitly reviewed controlled
+comparisons. Its software bounds (measured touch Z, pair separation <=3 mm,
+touch-height delta <=0.10 mm, 0.50–2.00 mm on a 0.05 mm grid, both-pad mode, no
+per-pad retract) do not establish process safety or deposit quality.
 
 Example recipe used for the R36–R38 trial (those references are already used;
 this is a record, not a rerun instruction):
@@ -143,7 +141,12 @@ python3 automation/paste/prepare-operator-experiment.py dispense-and-survey \
 ```
 
 The selected references must be freshly surveyed and confirmed available; the
-CLI requires these IDs and never auto-reuses or replaces targets. This command
+CLI requires these IDs and never auto-reuses or replaces targets. One 35-degree
+full-clearance batch after same-cycle D36 conditioning produced four broadly
+covered, separated R39/R40 pads with modest excess and no visible bridges in
+Root and independent review. This is visual-only; D36 is sacrificial, not a
+passing pad, and process consistency/startup remain unqualified. A repeat with
+D37 conditioning and D38–D40 is planned after the third paper wipe. This command
 only authors and previews a request. Use `--execute` only as the separate,
 explicit dispatch step.
 
