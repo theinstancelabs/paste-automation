@@ -48,6 +48,18 @@ class WipeTests(unittest.TestCase):
    if original_builder is None:delattr(wipe.route.prepare,'commissioning_envelope')
    else:wipe.route.prepare.commissioning_envelope=original_builder
 
+ def test_one_way_x_and_y_preserve_other_axes(self):
+  for axis,stroke in [('X',-4),('Y',2)]:
+   p=self.build(axis=axis,stroke_mm=stroke)
+   self.assertEqual(p['routeSpec']['waypoints'],[{'axis':axis,'targetMm':self.raw[axis]+stroke}])
+   self.assertEqual(p['mode'],'one-way-stroke')
+   self.assertFalse(p['dispatchPerformed'])
+   for step in p['route']['steps']:
+    for fixed in set(self.raw)-{axis}: self.assertEqual(step['after'][fixed],self.raw[fixed])
+ def test_one_way_rejects_invalid_or_mixed_parameters(self):
+  for kw in [{'stroke_mm':0},{'stroke_mm':4.01},{'stroke_mm':float('nan')},{'stroke_mm':1,'halfspan':.5},{'stroke_mm':1,'cycles':3},{'axis':'B','stroke_mm':1}]:
+   with self.assertRaises(ValueError): self.build(**kw)
+
  def test_route_failure_never_calls_lift(self):
   p=self.build(clearance_z=53.75);calls=[];(self.root/'automation/evidence').mkdir(parents=True)
   def failed(*a,**kw):raise RuntimeError('synthetic route failure')

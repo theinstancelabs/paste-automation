@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Preview or execute a short, reviewed X-axis paper-towel wipe and Z lift."""
+"""Preview or execute a reviewed paper-towel XY wipe followed by a Z lift."""
 import argparse
 import hashlib
 import importlib.util
@@ -36,12 +36,24 @@ def lift_steps(start_z, clearance_z):
     return result
 
 
-def build(source_path, image_path, review, halfspan=.5, cycles=3, clearance_z=None, now_ms=None):
+def build(source_path, image_path, review, halfspan=None, cycles=None, clearance_z=None, now_ms=None, axis='X', stroke_mm=None):
     now_ms = time.time_ns()//1_000_000 if now_ms is None else now_ms
-    if not math.isfinite(halfspan) or not 0 < halfspan <= 1:
-        raise ValueError('Halfspan must be greater than 0 and at most 1 mm')
-    if type(cycles) is not int or not 1 <= cycles <= 5:
-        raise ValueError('Cycles must be an integer from 1 through 5')
+    if axis not in ('X', 'Y'):
+        raise ValueError('Axis must be X or Y')
+    if stroke_mm is not None:
+        if halfspan is not None or cycles is not None:
+            raise ValueError('One-way stroke is mutually exclusive with halfspan/cycles')
+        if not math.isfinite(stroke_mm) or stroke_mm == 0 or abs(stroke_mm) > 4:
+            raise ValueError('Signed one-way stroke must be nonzero and at most 4 mm in magnitude')
+        halfspan_value, cycles_value = None, None
+    else:
+        halfspan = .5 if halfspan is None else halfspan
+        cycles = 3 if cycles is None else cycles
+        if not math.isfinite(halfspan) or not 0 < halfspan <= 1:
+            raise ValueError('Halfspan must be greater than 0 and at most 1 mm')
+        if type(cycles) is not int or not 1 <= cycles <= 5:
+            raise ValueError('Cycles must be an integer from 1 through 5')
+        halfspan_value, cycles_value = halfspan, cycles
     if not isinstance(review, str) or not review.strip():
         raise ValueError('Required review text must identify the reviewed towel corridor and starting pose')
     source_path, image_path = Path(source_path).resolve(strict=True), Path(image_path).resolve(strict=True)
@@ -56,10 +68,13 @@ def build(source_path, image_path, review, halfspan=.5, cycles=3, clearance_z=No
     image_bytes = image_path.read_bytes()
     captured_ms = image_path.stat().st_mtime_ns//1_000_000
     image = {'path': str(image_path), 'sha256': hashlib.sha256(image_bytes).hexdigest(), 'capturedMs': captured_ms}
-    waypoints = []
-    for _ in range(cycles):
-        waypoints.extend(({'axis':'X','targetMm':raw['X']+halfspan}, {'axis':'X','targetMm':raw['X']-halfspan}))
-    waypoints.append({'axis':'X','targetMm':raw['X']})
+    if stroke_mm is not None:
+        waypoints = [{'axis':axis,'targetMm':raw[axis]+stroke_mm}]
+    else:
+        waypoints = []
+        for _ in range(cycles):
+            waypoints.extend(({'axis':axis,'targetMm':raw[axis]+halfspan}, {'axis':axis,'targetMm':raw[axis]-halfspan}))
+        waypoints.append({'axis':axis,'targetMm':raw[axis]})
     spec = {'schema':1,'scope':'reviewed-constant-Z-XY-survey-route','id':str(uuid.uuid4()),
             'reviewedEntireCorridor':True,'operator':review.strip(),'sourceReport':str(source_path),
             'sourceSha256':hashlib.sha256(source_bytes).hexdigest(),'corridorEvidence':image,'waypoints':waypoints}
@@ -71,8 +86,10 @@ def build(source_path, image_path, review, halfspan=.5, cycles=3, clearance_z=No
     planned = route.plan(spec, now_ms)
     return {'schema':1,'id':str(uuid.uuid4()),'status':'preview','source':str(source_path),
             'sourceSha256':spec['sourceSha256'],'review':review.strip(),'routeSpec':spec,'route':planned,
-            'halfspanMm':halfspan,'cycles':cycles,'clearanceZ':float(clearance_z),'zLiftSteps':z_steps,
-            'fixedAxes':{k:raw[k] for k in ('Y','Z','A','B')},'dispatchPerformed':False,
+            'mode':'one-way-stroke' if stroke_mm is not None else 'wiggle',
+            'axis':axis,'strokeMm':stroke_mm,'halfspanMm':halfspan_value,'cycles':cycles_value,
+            'clearanceZ':float(clearance_z),'zLiftSteps':z_steps,
+            'fixedAxes':{k:raw[k] for k in ('X','Y','Z','A','B') if k != axis},'dispatchPerformed':False,
             'physicalAcceptanceEstablished':False}
 
 
@@ -131,11 +148,12 @@ def execute(preview, root=ROOT, run_route=route.execute, z_runner=None, firmware
 def main():
     p=argparse.ArgumentParser(description=__doc__)
     p.add_argument('source',type=Path);p.add_argument('image',type=Path);p.add_argument('--review',required=True)
-    p.add_argument('--halfspan',type=float,default=.5);p.add_argument('--cycles',type=int,default=3)
+    p.add_argument('--halfspan',type=float);p.add_argument('--cycles',type=int)
+    p.add_argument('--axis',choices=('X','Y'),default='X');p.add_argument('--stroke-mm',type=float,help='One-way signed XY stroke, nonzero and at most 4 mm')
     p.add_argument('--clearance-z',type=float,required=True);p.add_argument('--execute',action='store_true')
     p.add_argument('--firmware-evidence',type=Path,help='Required verified evidence if a fine Z step is needed')
     a=p.parse_args()
-    result=build(a.source,a.image,a.review,a.halfspan,a.cycles,a.clearance_z)
+    result=build(a.source,a.image,a.review,a.halfspan,a.cycles,a.clearance_z,axis=a.axis,stroke_mm=a.stroke_mm)
     if a.execute: result=execute(result,firmware_evidence=a.firmware_evidence)
     print(json.dumps(result,indent=2,allow_nan=False))
 

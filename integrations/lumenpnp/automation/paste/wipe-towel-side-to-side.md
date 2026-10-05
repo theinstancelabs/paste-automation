@@ -10,3 +10,5 @@ python3 automation/paste/wipe-towel-side-to-side.py SOURCE_REPORT IMAGE --review
 ```
 
 The wrapper reuses `run-survey-route.py` for XY and `observe-z-step.py` for lift. Any uncertain route stops before lifting; any lift failure stops without retry or recovery. UUID run records preserve the route and Z evidence links. Completion awaits image review and sets no physical acceptance.
+
+Use `--axis X` or `--axis Y` and `--stroke-mm -4` for one signed, nonzero stroke up to 4 mm without returning through the wiped track. Explicit `--halfspan` or `--cycles` cannot be combined with `--stroke-mm`. The default remains the original X wiggle. These options provide repeatable motion, not a qualified cleaning recipe: observed loose tissue can bunch and transfer fibers, so review contact and the lifted tip before dispensing.
