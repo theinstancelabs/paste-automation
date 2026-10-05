@@ -18,7 +18,7 @@ function step(q){
  return {axis:q.axis,deltaMm:q.deltaMm};
 }
 function validate(q,now,jvm){
- if(!q)fail('Restricted survey request required');step(q);
+ if(!q)fail('Restricted survey request required');step(q);imagePlan(q);
  if(typeof q.id!=='string'||!/^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/.test(q.id))fail('Fresh survey UUID required');
  finite(q.createdMs,'createdMs');if(q.createdMs>now||now-q.createdMs>300000||q.jvmStartMs!==jvm)fail('Stale or different JVM survey request');
  if(q.speedFraction!==1.0||q.speedOverPrecision!==true)fail('Native speed fraction 1.0 with audited backlash bypass required');
@@ -48,6 +48,13 @@ function compareFirmwareStep(before,after,q){
  ['X','Y','Z','A','B'].forEach(function(a){close(after[a],expected[a],(a==='A'||a==='B')?0.3:0.02,'firmware before/after '+a);});
 }
 function target(raw,q){var move=step(q),result={};['X','Y','Z','A','B'].forEach(function(a){result[a]=finite(raw[a],a)+(a===move.axis?move.deltaMm:0);});return result;}
+function imagePlan(q){
+ if(!q||q.imageCapture===undefined)return {policy:'all',before:true,after:true};
+ var p=q.imageCapture;
+ if(!p||Object.keys(p).sort().join(',')!=='after,before,policy'||p.policy!=='route-endpoints'
+    ||typeof p.before!=='boolean'||typeof p.after!=='boolean')fail('Invalid route endpoint image policy');
+ return p;
+}
 function compareExact(actual,expected,label){['X','Y','Z','A','B'].forEach(function(a){close(actual[a],expected[a],0.0001,label+' '+a);});}
-var api={step:step,validate:validate,close:close,compareReported:compareReported,target:target,compareExact:compareExact,comparePostModel:comparePostModel,compareFirmwareStep:compareFirmwareStep};if(typeof module!=='undefined')module.exports=api;else root.PasteSurveyRequest=api;
+var api={step:step,validate:validate,close:close,compareReported:compareReported,target:target,compareExact:compareExact,comparePostModel:comparePostModel,compareFirmwareStep:compareFirmwareStep,imagePlan:imagePlan};if(typeof module!=='undefined')module.exports=api;else root.PasteSurveyRequest=api;
 })(this);

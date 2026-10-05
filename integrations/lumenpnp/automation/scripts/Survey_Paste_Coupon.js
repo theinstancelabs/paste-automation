@@ -16,6 +16,7 @@
  eval(read(root+'automation/paste/connection-policy.cjs'));
  eval(read(root+'automation/paste/native-air.cjs'));
  var q=JSON.parse(read(root+'automation/plans/paste-survey-request.json')),jvm=Number(Java.type('java.lang.management.ManagementFactory').getRuntimeMXBean().getStartTime());
+ var imagePlan=PasteSurveyRequest.imagePlan(q);
  PasteSurveyRequest.validate(q,Number(java.lang.System.currentTimeMillis()),jvm);
  var corridor=new F(q.corridorEvidence.path);if(!corridor.isFile()||hash(Fs.readAllBytes(corridor.toPath()))!==q.corridorEvidence.sha256)throw Error('Reviewed corridor image missing/changed');
  var panel=Java.type('org.openpnp.gui.MainFrame').get().getJobTab(),state=panel.getClass().getDeclaredField('state');state.setAccessible(true);
@@ -68,7 +69,7 @@
  function settle(){var delay=Math.max(200,Number(top.getSettleTimeMs()),Number(bottom.getSettleTimeMs()));if(!isFinite(delay)||delay>3000)throw Error('Unreviewed camera settle interval');java.lang.Thread.sleep(Math.ceil(delay));}
  var initial=snapshot();PasteSurveyRequest.compareExact(initial.raw,q.expectedRaw,'expected raw');PasteSurveyRequest.compareExact(initial.driver,q.expectedDriver,'expected driver');comparePoses(initial.nativePoses,q.expectedNativePoses);
  var out=new F(root+'automation/evidence/paste-survey-'+q.id);if(!out.mkdir())throw Error('Survey UUID already claimed; no retry');
- var r={schema:1,id:q.id,status:'claimed',startedAt:new Date().toISOString(),request:q,beforeQuerySnapshot:initial,transitions:[],motionSubmitted:false,positionQueryAckTimeoutMs:nativePositionAckTimeout,physicalAcceptanceEstablished:false,calibrationEstablished:false,noReplay:true};
+ var r={schema:1,id:q.id,status:'claimed',startedAt:new Date().toISOString(),request:q,imageCapturePolicy:imagePlan.policy,beforeQuerySnapshot:initial,transitions:[],motionSubmitted:false,positionQueryAckTimeoutMs:nativePositionAckTimeout,physicalAcceptanceEstablished:false,calibrationEstablished:false,noReplay:true};
  function save(status){r.status=status;r.transitions.push({status:status,time:new Date().toISOString()});Fs.write(new F(out,'report.json').toPath(),bytes(JSON.stringify(r,null,2)+'\n'));}
  save('preflight-before-any-controller-query');
  var lastReported=null;
@@ -109,7 +110,9 @@
   if(configHash()!==q.liveConfigurationSha256)throw Error('Configuration changed before native task');
   var taskStart=snapshot();PasteSurveyRequest.compareExact(taskStart.raw,initial.raw,'queued raw');PasteSurveyRequest.compareExact(taskStart.driver,initial.driver,'queued driver');comparePoses(taskStart.nativePoses,initial.nativePoses);
   query(initial,'before');PasteSurveyRequest.compareExact(snapshot().raw,initial.raw,'post-query unchanged raw');
-  settle();var beforeTop=capture(top,'top-before-raw'),beforeBottom=capture(bottom,'bottom-before-raw');r.beforeImages={top:{path:beforeTop.path,width:beforeTop.width,height:beforeTop.height},bottom:{path:beforeBottom.path,width:beforeBottom.width,height:beforeBottom.height}};save('before-images-captured');
+  var beforeTop=null,beforeBottom=null;
+  if(imagePlan.before){settle();beforeTop=capture(top,'top-before-raw');beforeBottom=capture(bottom,'bottom-before-raw');r.beforeImages={top:{path:beforeTop.path,width:beforeTop.width,height:beforeTop.height},bottom:{path:beforeBottom.path,width:beforeBottom.width,height:beforeBottom.height}};save('before-images-captured');}
+  else save('before-images-omitted-by-route-policy');
   PasteSurveyRequest.validate(q,Number(java.lang.System.currentTimeMillis()),jvm);stateGate();if(configHash()!==q.liveConfigurationSha256)throw Error('Configuration changed during preflight');
   if(!executor.getQueue().isEmpty())throw Error('Competing native work queued during camera preflight');
   var preMove=snapshot();PasteSurveyRequest.compareExact(preMove.raw,initial.raw,'unchanged pre-move raw');comparePoses(preMove.nativePoses,initial.nativePoses);PasteSurveyRequest.compareReported(r.before.reported,preMove.raw,preMove.driver);
@@ -127,8 +130,11 @@
   query(after,'after');PasteSurveyRequest.compareReported(r.after.reported,expected,after.driver);
   PasteSurveyRequest.compareFirmwareStep(r.before.reported,r.after.reported,q);r.independentFirmwareStepVerified=true;
   ['N1','N2','top','bottom'].forEach(function(k){['z','rotation'].forEach(function(a){PasteSurveyRequest.close(after.nativePoses[k][a],initial.nativePoses[k][a],a==='rotation'?0.3:0.02,'unchanged '+k+' '+a);});});
-  r.controllerPositionVerified=true;save('controller-position-verified');settle();var afterTop=capture(top,'top-after-raw'),afterBottom=capture(bottom,'bottom-after-raw');r.afterImages={top:{path:afterTop.path,width:afterTop.width,height:afterTop.height},bottom:{path:afterBottom.path,width:afterBottom.width,height:afterBottom.height}};
-  pair(beforeTop,afterTop,'top-before-after');pair(beforeBottom,afterBottom,'bottom-before-after');r.contactSheets=['top-before-after.png','bottom-before-after.png'];
+  r.controllerPositionVerified=true;save('controller-position-verified');var afterTop=null,afterBottom=null;
+  if(imagePlan.after){settle();afterTop=capture(top,'top-after-raw');afterBottom=capture(bottom,'bottom-after-raw');r.afterImages={top:{path:afterTop.path,width:afterTop.width,height:afterTop.height},bottom:{path:afterBottom.path,width:afterBottom.width,height:afterBottom.height}};save('after-images-captured');}
+  else save('after-images-omitted-by-route-policy');
+  r.contactSheets=[];
+  if(beforeTop&&afterTop){pair(beforeTop,afterTop,'top-before-after');pair(beforeBottom,afterBottom,'bottom-before-after');r.contactSheets=['top-before-after.png','bottom-before-after.png'];}
   r.uncertainCompletion=false;r.finishedAt=new Date().toISOString();save('completed-camera-survey-awaiting-image-review');
  }catch(e){
   r.error=String(e);r.uncertainCompletion=(r.motionSubmitted&&!r.controllerPositionVerified)||r.transportUncertain===true;r.auditIncomplete=true;r.finishedAt=new Date().toISOString();

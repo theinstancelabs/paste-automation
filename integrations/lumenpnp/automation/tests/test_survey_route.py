@@ -32,6 +32,7 @@ class RouteTests(unittest.TestCase):
         return route.execute(self.spec,self.root,dispatch or self.dispatch,wait,lambda:NOW)
     def test_preview_and_split_bounds_order(self):
         p=route.plan(self.spec,NOW);self.assertFalse(p['dispatchPerformed']);self.assertEqual(len(p['steps']),3);self.assertEqual(self.calls,[])
+        self.assertEqual(p['capturePolicy'],'all')
         for step in p['steps']:
             self.assertLessEqual(abs(step['after'][step['axis']]-step['before'][step['axis']]),10)
             for k in 'ZAB':self.assertEqual(step['before'][k],step['after'][k])
@@ -42,6 +43,22 @@ class RouteTests(unittest.TestCase):
         self.assertTrue(all(q['corridorEvidence']==self.spec['corridorEvidence'] for q in self.calls))
         with self.assertRaises(FileExistsError):self.run_route()
         self.assertEqual(len(self.calls),3)
+    def test_endpoint_capture_is_explicit_and_only_first_before_last_after(self):
+        self.spec['capturePolicy']='endpoints'
+        p=route.plan(self.spec,NOW);self.assertEqual(p['capturePolicy'],'endpoints')
+        r=self.run_route()
+        self.assertEqual(r['capturePolicy'],'endpoints')
+        self.assertEqual([q['imageCapture'] for q in self.calls],[
+            {'policy':'route-endpoints','before':True,'after':False},
+            {'policy':'route-endpoints','before':False,'after':False},
+            {'policy':'route-endpoints','before':False,'after':True},
+        ])
+        self.assertEqual(r['steps'][0]['imageCapture']['before'],True)
+        self.assertEqual(r['steps'][-1]['imageCapture']['after'],True)
+        self.assertTrue(all(q['axis'] in ('X','Y') and abs(q['deltaMm'])<=10 for q in self.calls))
+    def test_invalid_capture_policy_rejected(self):
+        with self.assertRaisesRegex(ValueError,'capturePolicy'):
+            route.plan({**self.spec,'capturePolicy':'none'},NOW)
     def test_dispatch_failure_even_with_success_report_never_advances(self):
         def fail(root):self.dispatch(root);raise subprocess.CalledProcessError(1,['synthetic'])
         with self.assertRaises(subprocess.CalledProcessError):self.run_route(fail)

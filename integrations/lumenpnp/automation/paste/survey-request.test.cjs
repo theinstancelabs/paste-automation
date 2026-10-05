@@ -34,6 +34,14 @@ test('signed X and Y bounded steps change exactly the selected raw axis',()=>{
   const other=axis==='X'?'Y':'X';assert.throws(()=>p.compareFirmwareStep(q.expectedRaw,{...expected,[other]:expected[other]+0.03},q));
  }
 });
+test('survey image capture defaults to full evidence; endpoint route policy can select edges or omit intermediate frames',()=>{
+ const q=single('X',5);assert.deepEqual(p.imagePlan(q),{policy:'all',before:true,after:true});
+ q.imageCapture={policy:'route-endpoints',before:true,after:false};p.validate(q,1001,42);assert.deepEqual(p.imagePlan(q),q.imageCapture);
+ q.imageCapture={policy:'route-endpoints',before:false,after:false};p.validate(q,1001,42);assert.deepEqual(p.imagePlan(q),q.imageCapture);
+ q.imageCapture={policy:'route-endpoints',before:false,after:true};p.validate(q,1001,42);assert.deepEqual(p.imagePlan(q),q.imageCapture);
+ for(const imageCapture of [null,{}, {policy:'all',before:true,after:true}, {policy:'route-endpoints',before:1,after:false}, {policy:'route-endpoints',before:false,after:false,extra:true}])
+  assert.throws(()=>p.validate({...single('X',5),imageCapture},1001,42));
+});
 test('invalid axes, zero/oversize/nonfinite deltas and diagonal/ambiguous fields fail closed',()=>{
  for(const axis of ['Z','A','B','XY',['X','Y'],null])assert.throws(()=>p.validate(single(axis,5),1001,42));
  for(const delta of [0,-0,10.01,-10.01,NaN,Infinity,'5',null])assert.throws(()=>p.validate(single('Y',delta),1001,42));

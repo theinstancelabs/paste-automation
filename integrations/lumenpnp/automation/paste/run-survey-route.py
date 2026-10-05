@@ -42,6 +42,9 @@ def plan(spec, now=None):
             or spec.get('reviewedEntireCorridor') is not True
             or not isinstance(spec.get('operator'), str) or not spec['operator'].strip()):
         raise ValueError('Explicit named operator, route UUID and full-corridor review required')
+    capture_policy = spec.get('capturePolicy', 'all')
+    if capture_policy not in ('all', 'endpoints'):
+        raise ValueError("capturePolicy must be 'all' or 'endpoints'")
     source = json.loads(read_bound(spec['sourceReport'], spec['sourceSha256']))
     kind, jvm, config, raw, driver, poses = prepare.source_snapshot(source)
     if kind == 'successful-stop-audit':
@@ -79,6 +82,7 @@ def plan(spec, now=None):
             if len(steps) > 32:
                 raise ValueError('Route exceeds 32 bounded survey steps')
     return {'schema': 1, 'id': spec['id'], 'steps': steps, 'distanceMm': distance,
+            'capturePolicy': capture_policy,
             'jvmStartMs': jvm, 'liveConfigurationSha256': config, 'startRaw': raw,
             'fixedAxes': {k: raw[k] for k in ('Z', 'A', 'B')}, 'startNativePoses': poses, 'corridorEvidence': image,
             'expiresMs': image['capturedMs'] + 300000, 'dispatchPerformed': False}
@@ -142,6 +146,7 @@ def execute(spec, root=ROOT, dispatch=native_dispatch, wait=await_terminal, now=
         out = root/'automation/evidence'/('paste-survey-route-' + spec['id'])
         out.mkdir()  # Exclusive UUID claim, including failed routes.
         record = {'schema': 1, 'id': spec['id'], 'status': 'claimed', 'spec': spec, 'route': route,
+                  'capturePolicy': route['capturePolicy'],
                   'steps': [], 'commandedDistanceMm': 0.0, 'noReplay': True, 'physicalAcceptanceEstablished': False}
         save(out/'report.json', record)
         source_path, source_hash = Path(spec['sourceReport']), spec['sourceSha256']
@@ -154,6 +159,9 @@ def execute(spec, root=ROOT, dispatch=native_dispatch, wait=await_terminal, now=
                 raw, _, _ = verify_state(json.loads(source_data), route, step['before'])
                 q, provenance = prepare.prepare(source_path, route['corridorEvidence']['path'], spec['operator'], True,
                                                 now(), step['axis'], step['targetMm'] - raw[step['axis']])
+                if route['capturePolicy'] == 'endpoints':
+                    q['imageCapture'] = {'policy': 'route-endpoints', 'before': index == 0,
+                                         'after': index == len(route['steps']) - 1}
                 if provenance['sourceSha256'] != source_hash or q['corridorEvidence'] != route['corridorEvidence']:
                     raise ValueError('Source or full-route evidence changed')
                 if (root/'automation/plans/operator-command.json').exists():
@@ -178,6 +186,7 @@ def execute(spec, root=ROOT, dispatch=native_dispatch, wait=await_terminal, now=
                 (out/f'request-{index:02}.json').write_bytes(request_data)
                 entry = {'index': index, 'requestId': q['id'], 'requestSha256': digest(request_data),
                          'sourceReport': str(source_path), 'sourceSha256': source_hash, 'planned': step,
+                         'imageCapture': q.get('imageCapture', {'policy': 'all', 'before': True, 'after': True}),
                          'status': 'dispatching-once'}
                 record['steps'].append(entry); record['status'] = 'running'; save(out/'report.json', record)
                 if now() >= route['expiresMs'] or record['commandedDistanceMm'] + abs(q['deltaMm']) > 240 + 1e-9:
