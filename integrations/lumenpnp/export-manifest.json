@@ -1,7 +1,7 @@
 {
   "schema": 1,
   "exportDate": "2026-10-04",
-  "baseCommit": "41e449b18776cd4f89d9115ec87eb809e3d21228",
+  "baseCommit": "8c88bb808be32326f33821bc103b33c48c83a8fc",
   "canonicalSourceRoot": "/home/lumen/lumenpnp",
   "purpose": "Source-only reviewable mirror; no deployment, machine operation, or private machine evidence included.",
   "excluded": [
@@ -2367,8 +2367,8 @@
       "sourceRoot": "/home/lumen/lumenpnp",
       "sourcePath": "automation/scripts/Paste_Experiment_Console.js",
       "destination": "integrations/lumenpnp/automation/scripts/Paste_Experiment_Console.js",
-      "sha256": "bf533fbd86bfa26e422a8718057145754644e052a31ebb03fe126c2ca8ca4406",
-      "bytes": 28063
+      "sha256": "26834e786db7d3bd0a9a7249485f0a9794f611a40536c310f45f0d1fd63fcbcd",
+      "bytes": 28123
     },
     {
       "sourceRoot": "/home/lumen/lumenpnp",
@@ -2388,8 +2388,8 @@
       "sourceRoot": "/home/lumen/lumenpnp",
       "sourcePath": "automation/paste/operator-console-native.js",
       "destination": "integrations/lumenpnp/automation/paste/operator-console-native.js",
-      "sha256": "083196b653d8682bef4109e3e63abd1d2410a792bea9a35b20e49583df801e0e",
-      "bytes": 62807
+      "sha256": "978eca42114de731d9fddd75f5562100dd9fadf67fba2f72dff064fdb6f46c96",
+      "bytes": 63765
     },
     {
       "sourceRoot": "/home/lumen/lumenpnp",
@@ -2556,15 +2556,15 @@
       "sourceRoot": "/home/lumen/lumenpnp",
       "sourcePath": "automation/scripts/Run_Operator_Firmware_Check.js",
       "destination": "integrations/lumenpnp/automation/scripts/Run_Operator_Firmware_Check.js",
-      "sha256": "2b8289646ce53a7038b4343933f7dd287404a5665c084f8efa5ba3fe71303769",
-      "bytes": 955
+      "sha256": "41728f395813f22f9c64aec2be40358c75297685ac51b1cf3edf05dbaade429c",
+      "bytes": 965
     },
     {
       "sourceRoot": "/home/lumen/lumenpnp",
       "sourcePath": "automation/paste/operator/test-native-firmware.cjs",
       "destination": "integrations/lumenpnp/automation/paste/operator/test-native-firmware.cjs",
-      "sha256": "4aa77326174dab59c4604fdd9927d764ebe0a0690142f4de54295101235e132e",
-      "bytes": 2260
+      "sha256": "4f45f7fc90958e9e85b5759a6f49cdf8242a362cddcbb7f2d5f5879bf5104c8a",
+      "bytes": 2920
     },
     {
       "sourceRoot": "/home/lumen/lumenpnp",
@@ -2698,6 +2698,34 @@
       "destination": "integrations/lumenpnp/automation/scripts/preview_measured_rod_extension.py",
       "sha256": "93bbc2e181f01df09bc87300aa30c5cc6877b103e439af952ef5f8c5ff84b00b",
       "bytes": 5072
+    },
+    {
+      "sourceRoot": "/home/lumen/lumenpnp",
+      "sourcePath": "automation/paste/m220-report.cjs",
+      "destination": "integrations/lumenpnp/automation/paste/m220-report.cjs",
+      "sha256": "7a89e74aec960f184a94b5814acc628362d32168d930313bad8447f806fe5d6f",
+      "bytes": 673
+    },
+    {
+      "sourceRoot": "/home/lumen/lumenpnp",
+      "sourcePath": "automation/paste/operator/test-m220-report.cjs",
+      "destination": "integrations/lumenpnp/automation/paste/operator/test-m220-report.cjs",
+      "sha256": "10423a849a0bb6494d148853c76eb404bb687abbf6b4c79945f28adc60dd6c9d",
+      "bytes": 561
+    },
+    {
+      "sourceRoot": "/home/lumen/lumenpnp",
+      "sourcePath": "automation/paste/analysis/offline_tip_growth.py",
+      "destination": "integrations/lumenpnp/automation/paste/analysis/offline_tip_growth.py",
+      "sha256": "9f7f4a0015a57921741eba777fe858958e920b587caea855f08974f315191066",
+      "bytes": 3777
+    },
+    {
+      "sourceRoot": "/home/lumen/lumenpnp",
+      "sourcePath": "automation/paste/analysis/test_offline_tip_growth.py",
+      "destination": "integrations/lumenpnp/automation/paste/analysis/test_offline_tip_growth.py",
+      "sha256": "d62f62e15f332b61ab3c93fee489177be5e506f68bc39ee7c843db7587ac27dd",
+      "bytes": 2990
     }
   ],
   "manifestSelfHash": "Excluded to avoid a recursive digest; this manifest enumerates every other exported/generated file.",

@@ -6,6 +6,7 @@
     function read(path) { return String(new java.lang.String(Files.readAllBytes(new F(path).toPath()), UTF)); }
     var profile = JSON.parse(read(root + '/automation/plans/paste-operator-profile.json'));
     eval(read(root + '/automation/paste/b-current.cjs'));
+    eval(read(root + '/automation/paste/m220-report.cjs'));
     eval(read(root + '/automation/paste/native-air.cjs'));
     eval(read(root + '/automation/paste/connection-policy.cjs'));
     eval(read(root + '/automation/paste/waste-prime.cjs'));

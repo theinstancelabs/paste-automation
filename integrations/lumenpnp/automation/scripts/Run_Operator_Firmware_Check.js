@@ -5,5 +5,5 @@
  if(S.isEventDispatchThread())find();else S.invokeAndWait(new (J('java.lang.Runnable'))({run:find}));
  if(!api||typeof api.readFirmwareSettings!=='function')throw Error('Reload the console with stationary firmware-read support');
  var s=api.status();if(s.busy||s.latched||s.error)throw Error('Idle healthy console required');
- api.readFirmwareSettings();print('Stationary firmware read submitted; inspect the console run record for raw M503 and before/after M114 evidence. No firmware settings written.');
+ api.readFirmwareSettings();print('Stationary firmware read submitted; inspect raw M503, the bare M220 FR percentage report, and before/after M114 evidence. No firmware settings written.');
 })();
