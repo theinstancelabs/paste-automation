@@ -83,6 +83,19 @@ class NativeFiducialRegistrationTests(unittest.TestCase):
             self.assertFalse(result['executionReady'])
             self.assertFalse(result['physicalRegistrationEstablished'])
 
+    def test_native_affine_candidate_stays_unaccepted_without_independent_pad_checks(self):
+        with tempfile.TemporaryDirectory() as td:
+            request = self.fixture(Path(td))
+            request['registrationModel'] = 'three-fiducial-affine'
+            result = analyze(request, now_ms=1790856300000)
+            self.assertEqual(result['scope'], 'offline-native-fresh-ftp-three-fiducial-affine-candidate')
+            self.assertFalse(result['acceptance']['passed'])
+            self.assertEqual(result['fittedFiducials'], ['FID1', 'FID2', 'FID3'])
+            self.assertEqual(result['independentHeldOutPadChecks'], [])
+            self.assertEqual(len(result['resistorPadMachineXYTargets']), 80)
+            self.assertFalse(result['executionReady'])
+            self.assertFalse(result['physicalRegistrationEstablished'])
+
     def test_requires_distinct_current_same_frame_reports_and_native_image_hashes(self):
         with tempfile.TemporaryDirectory() as td:
             q = self.fixture(Path(td))

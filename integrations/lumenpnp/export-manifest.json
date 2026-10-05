@@ -159,8 +159,8 @@
       "sourceRoot": "/home/lumen/lumenpnp",
       "sourcePath": "automation/paste/analysis/native_fiducial_registration.py",
       "destination": "integrations/lumenpnp/automation/paste/analysis/native_fiducial_registration.py",
-      "sha256": "e0121d9690a55df3bf34a473356eb7a27d5693b67746ff9465310dd3110467cb",
-      "bytes": 18680
+      "sha256": "517a708f449009db52026d9d458c26e11a0cb87a6c62f1dfb04bc21b33f7ac81",
+      "bytes": 20722
     },
     {
       "sourceRoot": "/home/lumen/lumenpnp",
@@ -215,8 +215,8 @@
       "sourceRoot": "/home/lumen/lumenpnp",
       "sourcePath": "automation/paste/analysis/test_native_fiducial_registration.py",
       "destination": "integrations/lumenpnp/automation/paste/analysis/test_native_fiducial_registration.py",
-      "sha256": "a69c507175bbb8a82da1c39dbfc70a60ece7c92c48dc84df69c59654928b09b6",
-      "bytes": 12695
+      "sha256": "28c7645a60faa4e331d3d351cfdeac9f885c70bd626af6501ec1ee89537fc60d",
+      "bytes": 13535
     },
     {
       "sourceRoot": "/home/lumen/lumenpnp",
@@ -2351,8 +2351,8 @@
       "sourceRoot": "/home/lumen/lumenpnp",
       "sourcePath": "automation/scripts/Paste_Experiment_Console.js",
       "destination": "integrations/lumenpnp/automation/scripts/Paste_Experiment_Console.js",
-      "sha256": "26834e786db7d3bd0a9a7249485f0a9794f611a40536c310f45f0d1fd63fcbcd",
-      "bytes": 28123
+      "sha256": "cc1a803820ad42ec8fb324a01926a7347f928a9367a1a68b9858c0772cb63e3a",
+      "bytes": 28188
     },
     {
       "sourceRoot": "/home/lumen/lumenpnp",
@@ -2372,15 +2372,15 @@
       "sourceRoot": "/home/lumen/lumenpnp",
       "sourcePath": "automation/paste/operator-console-native.js",
       "destination": "integrations/lumenpnp/automation/paste/operator-console-native.js",
-      "sha256": "978eca42114de731d9fddd75f5562100dd9fadf67fba2f72dff064fdb6f46c96",
-      "bytes": 63765
+      "sha256": "592707ddb55d85a58fe914cdd2ad4fbf225f90d06e05cc127cbbafc3da1492ac",
+      "bytes": 64883
     },
     {
       "sourceRoot": "/home/lumen/lumenpnp",
       "sourcePath": "automation/paste/operator-console-policy.cjs",
       "destination": "integrations/lumenpnp/automation/paste/operator-console-policy.cjs",
-      "sha256": "52c0a5b3a4e9cd3205498ad5d3ca913f9dce03af04df778284bfa84360d8fa13",
-      "bytes": 27843
+      "sha256": "fb759c6535bb6c1ddb65828d1ab8130ce4c240f91ae4ef04de8fbcbe9f3a1c3f",
+      "bytes": 30829
     },
     {
       "sourceRoot": "/home/lumen/lumenpnp",
@@ -2505,8 +2505,8 @@
       "sourceRoot": "/home/lumen/lumenpnp",
       "sourcePath": "automation/paste/prepare-operator-experiment.py",
       "destination": "integrations/lumenpnp/automation/paste/prepare-operator-experiment.py",
-      "sha256": "a707cca6be4dd3a01f5af8057e4e605f1f29cf57400da196532869a395dada00",
-      "bytes": 6723
+      "sha256": "24d537720627579a9c9e0be36ca33b4dff8384e1873944aac7269374ce9c8920",
+      "bytes": 6489
     },
     {
       "sourceRoot": "/home/lumen/lumenpnp",
@@ -2766,6 +2766,20 @@
       "destination": "integrations/lumenpnp/automation/tests/test_lift_paste_console.py",
       "sha256": "5fe8bc06cc6321ef005cbbdc8a9d7ebf4c79283c63daf37f6f6c688f2be89da8",
       "bytes": 1082
+    },
+    {
+      "sourceRoot": "/home/lumen/lumenpnp",
+      "sourcePath": "automation/paste/prepare-native-registration-import.py",
+      "destination": "integrations/lumenpnp/automation/paste/prepare-native-registration-import.py",
+      "sha256": "3dadf3d1098b349f2237256bb87caec32426118deed5eb618e3081d19acab843",
+      "bytes": 18211
+    },
+    {
+      "sourceRoot": "/home/lumen/lumenpnp",
+      "sourcePath": "automation/paste/test-native-registration-import.py",
+      "destination": "integrations/lumenpnp/automation/paste/test-native-registration-import.py",
+      "sha256": "004e82d26a35f3ac767ddb5e2ff7459595e2855737979d80f934445471c20751",
+      "bytes": 11885
     }
   ],
   "manifestSelfHash": "Excluded to avoid a recursive digest; this manifest enumerates every other exported/generated file.",

@@ -8,7 +8,10 @@ import math
 from pathlib import Path
 
 from fiducial_registration import bound, cad, fiducials
-from fresh_ftp_registration import apply, similarity_from_pair, MIN_SCALE, MAX_SCALE, MAX_THIRD_RESIDUAL_MM
+from fresh_ftp_registration import (apply, similarity_from_pair, affine_from_three,
+                                    held_out_checks, AFFINE_MODEL, MIN_SCALE,
+                                    MAX_SCALE, MAX_THIRD_RESIDUAL_MM,
+                                    MAX_AFFINE_SKEW_DEGREES)
 from coarse_fiducial_check import require_bright_disk
 
 REFERENCES = ('FID1', 'FID2', 'FID3')
@@ -219,16 +222,25 @@ def analyze(request, now_ms=None):
                         'partId': fid['partId'], 'savedJobLocalXYMm': local,
                         'sourceBarrier': barrier_prov}
 
-    transform = similarity_from_pair(design['FID1'], design['FID2'],
-                                     samples['FID1']['measuredTopCameraXYMm'],
-                                     samples['FID2']['measuredTopCameraXYMm'])
-    if not MIN_SCALE <= transform['scale'] <= MAX_SCALE:
-        raise ValueError('Native fiducial similarity scale is outside 0.99–1.01')
-    pred3 = apply(transform, design['FID3'])
-    measured3 = samples['FID3']['measuredTopCameraXYMm']
-    residual3 = math.dist(pred3, measured3)
-    if residual3 > MAX_THIRD_RESIDUAL_MM:
-        raise ValueError('Independent native FID3 check exceeds 0.08 mm')
+    model = request.get('registrationModel', 'two-fiducial-similarity')
+    if model not in ('two-fiducial-similarity', AFFINE_MODEL):
+        raise ValueError('Unsupported native registration model')
+    if model == AFFINE_MODEL:
+        transform = affine_from_three([design[r] for r in REFERENCES],
+                                      [samples[r]['measuredTopCameraXYMm'] for r in REFERENCES])
+        pred3 = measured3 = residual3 = None
+    else:
+        # Keep the established similarity path and independent FID3 gate intact.
+        transform = similarity_from_pair(design['FID1'], design['FID2'],
+                                         samples['FID1']['measuredTopCameraXYMm'],
+                                         samples['FID2']['measuredTopCameraXYMm'])
+        if not MIN_SCALE <= transform['scale'] <= MAX_SCALE:
+            raise ValueError('Native fiducial similarity scale is outside 0.99–1.01')
+        pred3 = apply(transform, design['FID3'])
+        measured3 = samples['FID3']['measuredTopCameraXYMm']
+        residual3 = math.dist(pred3, measured3)
+        if residual3 > MAX_THIRD_RESIDUAL_MM:
+            raise ValueError('Independent native FID3 check exceeds 0.08 mm')
     cad_pads = cad.extract_kicad(board_bytes.decode())
     if len(cad_pads) != 80 or {p['reference'] for p in cad_pads} != {f'R{i}' for i in range(1, 41)}:
         raise ValueError('Expected exactly two resistor paste pads for each R1–R40')
@@ -259,6 +271,23 @@ def analyze(request, now_ms=None):
                               'Two native fiducials define the similarity transform; native FID3 is an independent held-out check.',
                               'Native detector locations inherit machine vision and current pose uncertainty.',
                               'No Z, nozzle offset, clearance, paste dose or physical pad availability is inferred.']}
+    if model == AFFINE_MODEL:
+        del result['transformFromFID1FID2'], result['independentFID3Check']
+        result.update(scope='offline-native-fresh-ftp-three-fiducial-affine-candidate',
+                      transformFromThreeFiducials=transform, fittedFiducials=list(REFERENCES),
+                      independentHeldOutPadChecks=[],
+                      acceptance={'singularValueRange': [MIN_SCALE, MAX_SCALE],
+                                  'axisSkewDegreesMaximum': MAX_AFFINE_SKEW_DEGREES,
+                                  'nativeFiducialResidualMmMaximum': 2.0,
+                                  'heldOutPadErrorPxMaximum': 8.0,
+                                  'heldOutPadResidualMmMaximum': 0.08,
+                                  'passed': False})
+        result['limitations'][1] = 'All three native fiducials are fitted; separate held-out pad checks are required for acceptance.'
+        if request.get('heldOutPadChecks') is not None:
+            checks, jacobian = held_out_checks(request, result, now)
+            result.update(scope='offline-native-fresh-ftp-three-fiducial-affine-with-held-out-pad-checks',
+                          independentHeldOutPadChecks=checks, imageJacobianEvidence=jacobian)
+            result['acceptance']['passed'] = True
     return result
 
 
