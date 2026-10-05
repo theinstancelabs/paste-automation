@@ -95,6 +95,36 @@ Its preview includes gross travel for both groups and pending retraction between
 them. No extrusion occurs during preview; `--execute` dispatches the prepared
 request once through the existing reviewed-action mechanism.
 
+## Optional paired-pad hop
+
+The default plan keeps its existing full-clearance moves. To enable a bounded
+hop only between two pads of the same reference, pass `--paired-pad-hop-mm`
+with `--pad-mode both` and use the measured-touch gap profile. The planner
+requires both measured touch Z values, pair separation no greater than 3 mm,
+touch-height difference no greater than 0.10 mm, and a 0.50–2.00 mm hop on a
+0.05 mm grid. Per-pad retraction cannot be combined with this option. The hop
+raises by the requested amount from the lower raw work-Z value, crosses only
+between the two pads of that same reference, and returns to safe Z before the
+next reference and at the end. Preview rejects invalid geometry or heights.
+
+Example recipe used for the R36–R38 trial (those references are already used;
+this is a record, not a rerun instruction):
+
+```sh
+python3 automation/paste/prepare-operator-experiment.py dispense-and-survey \
+  --refs R36 R37 R38 --pad-mode both --dose 35 --push-deg-s 16 \
+  --retract-percent 20 --retract-deg-s 100 --dwell-ms 2000 \
+  --retract-dwell-ms 500 --gap-mm 0.2 --paired-pad-hop-mm 0.5
+```
+
+References are required explicitly. The CLI does not detect occupied/used pads,
+automatically skip them, or substitute targets. Before execution, select fresh
+unused references from a current survey and check the preview; never reuse the
+R36–R38 example group. Preview creates a unique request and does not move or
+dispense; `--execute` remains a separate explicit dispatch step. Image review
+and root approval are still required before treating a run as physically
+accepted.
+
 For an explicit per-pad pressure-relief experiment, add recipe
 `"retractEachPad": true`, or CLI `--retract-each-pad`. The default remains false.
 Enabled mode retracts immediately after each dose, before lifting, then restores
