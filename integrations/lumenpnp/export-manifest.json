@@ -1,7 +1,7 @@
 {
   "schema": 1,
   "exportDate": "2026-10-04",
-  "baseCommit": "734ae45cfa9b705c0ba132636da054bc05216827",
+  "baseCommit": "d97ed1e2d91bd76d287edca308e5a1cf4d3a300a",
   "canonicalSourceRoot": "/home/lumen/lumenpnp",
   "purpose": "Source-only reviewable mirror; no deployment, machine operation, or private machine evidence included.",
   "excluded": [
@@ -2752,6 +2752,20 @@
       "destination": "integrations/lumenpnp/automation/tests/test_operator_fine_relief_dispatch.py",
       "sha256": "f250357a32421253e79749f6593c28fbd1f0aef15e67cfa745c9bf13793f7bbd",
       "bytes": 3008
+    },
+    {
+      "sourceRoot": "/home/lumen/lumenpnp",
+      "sourcePath": "automation/scripts/Lift_Paste_Console.js",
+      "destination": "integrations/lumenpnp/automation/scripts/Lift_Paste_Console.js",
+      "sha256": "35008bcf241eca53c1728dd8df379a78d909ad7e5beffb52f2ba0335a94fa0fd",
+      "bytes": 888
+    },
+    {
+      "sourceRoot": "/home/lumen/lumenpnp",
+      "sourcePath": "automation/tests/test_lift_paste_console.py",
+      "destination": "integrations/lumenpnp/automation/tests/test_lift_paste_console.py",
+      "sha256": "5fe8bc06cc6321ef005cbbdc8a9d7ebf4c79283c63daf37f6f6c688f2be89da8",
+      "bytes": 1082
     }
   ],
   "manifestSelfHash": "Excluded to avoid a recursive digest; this manifest enumerates every other exported/generated file.",
