@@ -158,6 +158,19 @@ component). It does not also apply the old end-of-pair retract. Example: four pa
 at 100° with 10% relief consume 470° gross from zero initial pending relief and
 leave 10° pending. This is experimental behavior, not verified deposit quality.
 
+A 35-degree same-cycle D31-conditioning trial with per-pad retraction on
+D33–D35 received a visual-only pass: all six pads were fully covered with open
+gaps and modest outward tails. This supports further comparison of the
+per-pad-retraction cycle, but does not establish volume, repeatability, or
+startup qualification; D31 was sacrificial and is not a passing pad. A repeat
+using D29 conditioning and D30/D32 with the same per-pad recipe is planned after
+the next cleaning step.
+
+The reusable `run-gc50-35deg-experiment.py` wrapper exposes this as an explicit
+`--retract-each-pad` switch. It is off by default, preserving the saved
+per-resistor recipe. The wrapper still requires explicit conditioning and main
+references; it does not select or replace pads automatically.
+
 Camera inspection waits 150 ms after a verified jump, checks the machine remains
 idle at the same pose, discards one captured frame, then saves the next frame.
 STOP and unchanged-pose checks surround this capture sequence. This settling is
