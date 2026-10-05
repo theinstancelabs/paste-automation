@@ -63,6 +63,11 @@ def build(source_path, image_path, review, halfspan=.5, cycles=3, clearance_z=No
     spec = {'schema':1,'scope':'reviewed-constant-Z-XY-survey-route','id':str(uuid.uuid4()),
             'reviewedEntireCorridor':True,'operator':review.strip(),'sourceReport':str(source_path),
             'sourceSha256':hashlib.sha256(source_bytes).hexdigest(),'corridorEvidence':image,'waypoints':waypoints}
+    envelope_builder = getattr(route.prepare, 'commissioning_envelope', None)
+    if callable(envelope_builder):
+        envelope = envelope_builder(config)
+        if envelope is not None:
+            spec['commissioningEnvelope'] = envelope
     planned = route.plan(spec, now_ms)
     return {'schema':1,'id':str(uuid.uuid4()),'status':'preview','source':str(source_path),
             'sourceSha256':spec['sourceSha256'],'review':review.strip(),'routeSpec':spec,'route':planned,

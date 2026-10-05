@@ -29,6 +29,25 @@ class WipeTests(unittest.TestCase):
    with self.assertRaises(ValueError):self.build(**kwargs)
   with self.assertRaises(ValueError):wipe.lift_steps(26.5,26.37)
   self.assertEqual(wipe.lift_steps(26.5,20),[-5,-1,-.5])
+ def test_machine_commissioning_envelope_is_forwarded_exactly(self):
+  envelope={'schema':1,'configHash':'a'*64,'maximumMm':432.0,'basis':{'openPnpConfiguredHighMm':440.0}}
+  captured=[]
+  original_builder=getattr(wipe.route.prepare,'commissioning_envelope',None)
+  original_plan=wipe.route.plan
+  try:
+   wipe.route.prepare.commissioning_envelope=lambda config: envelope
+   def plan(spec,now=None):
+    captured.append(spec)
+    return {'steps':[],'commissioningEnvelope':spec.get('commissioningEnvelope')}
+   wipe.route.plan=plan
+   result=self.build()
+   self.assertEqual(captured[0]['commissioningEnvelope'],envelope)
+   self.assertEqual(result['route']['commissioningEnvelope'],envelope)
+  finally:
+   wipe.route.plan=original_plan
+   if original_builder is None:delattr(wipe.route.prepare,'commissioning_envelope')
+   else:wipe.route.prepare.commissioning_envelope=original_builder
+
  def test_route_failure_never_calls_lift(self):
   p=self.build(clearance_z=53.75);calls=[];(self.root/'automation/evidence').mkdir(parents=True)
   def failed(*a,**kw):raise RuntimeError('synthetic route failure')
