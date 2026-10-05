@@ -1,7 +1,7 @@
 {
   "schema": 1,
   "exportDate": "2026-10-04",
-  "baseCommit": "8c88bb808be32326f33821bc103b33c48c83a8fc",
+  "baseCommit": "89e5818ee359a8429fb0d66cf96dc44b1815f7f7",
   "canonicalSourceRoot": "/home/lumen/lumenpnp",
   "purpose": "Source-only reviewable mirror; no deployment, machine operation, or private machine evidence included.",
   "excluded": [
@@ -39,8 +39,8 @@
       "sourceRoot": null,
       "sourcePath": null,
       "destination": "integrations/lumenpnp/README.md",
-      "sha256": "47d1a3b32356d0559a2512a1a557f9f04b9f51d47e7354f27e44c42fefc88256",
-      "bytes": 4125,
+      "sha256": "b1ec1bf696d4804d1d6f8aca87ff2bff5d7d43b1bcc6830dd2ab6169e358ef64",
+      "bytes": 4444,
       "generated": "Mirror-only explanatory metadata; no machine data"
     },
     {
@@ -2726,6 +2726,20 @@
       "destination": "integrations/lumenpnp/automation/paste/analysis/test_offline_tip_growth.py",
       "sha256": "d62f62e15f332b61ab3c93fee489177be5e506f68bc39ee7c843db7587ac27dd",
       "bytes": 2990
+    },
+    {
+      "sourceRoot": "/home/lumen/lumenpnp",
+      "sourcePath": "automation/scripts/run_prime_relief_cycle.py",
+      "destination": "integrations/lumenpnp/automation/scripts/run_prime_relief_cycle.py",
+      "sha256": "a2ad6abc775385a6f31c44c0f23e4c6a7a48584f5810aeb820d7e630e7156f48",
+      "bytes": 25178
+    },
+    {
+      "sourceRoot": "/home/lumen/lumenpnp",
+      "sourcePath": "automation/tests/test_run_prime_relief_cycle.py",
+      "destination": "integrations/lumenpnp/automation/tests/test_run_prime_relief_cycle.py",
+      "sha256": "7224d68676494f34abc4e8f59687e04f23994af9c0f88d881861d4468e1a59e6",
+      "bytes": 11476
     }
   ],
   "manifestSelfHash": "Excluded to avoid a recursive digest; this manifest enumerates every other exported/generated file.",

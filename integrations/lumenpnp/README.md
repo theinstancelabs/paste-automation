@@ -19,3 +19,5 @@ python3 -m unittest discover -s automation/paste/analysis -p 'test_*.py'
 The pinned-planner tests explicitly read `/home/lumen/paste-automation`; they intentionally fail if its commit/source changes. Other machines need a separately reviewed path adaptation. Fork-wide checks remain `npm test` and `npm run build` from the fork root. None of these checks demonstrates physical clearance, successful extrusion or supervised commissioning. JavaScript machine scripts are compiled for syntax without evaluation during review.
 
 Changes should be made and tested in the canonical repository, then exported with an explicit allowlist and refreshed hashes. Review both the source diff and exclusions before committing or pushing. Do not copy a whole machine repository or state directory into this mirror.
+
+The preview-default prime/relief cycle runner sequences one bounded prime with the existing fixed 5° pressure-relief action. That 5° value is experimental workflow scaffolding, not a calibrated pressure cutoff; physical ooze may continue, and source inclusion makes no physical success or paste-qualification claim.
