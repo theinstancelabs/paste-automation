@@ -62,3 +62,21 @@ assert.ok(fresh.reportedExposureMm-fresh.nearBottomExposureMm-7500*fresh.mmPerMo
 assert.throws(()=>P.validateMeasuredRenewal({...freshCap75,maximumAdditionalGrossDegrees:freshCap75.maximumAdditionalGrossDegrees+1},fresh,freshLedger,freshLedger,'s',freshExt75));
 const shortFresh={...fresh,reportedExposureMm:27.8};const freshExt8={...freshExt75,cumulativeAllowanceDegrees:8000};
 assert.throws(()=>P.validateMeasuredRenewal({...b,maximumAdditionalGrossDegrees:shortFresh.grossUsedAtMeasurement+8000},shortFresh,freshLedger,freshLedger,'s',freshExt8));
+
+// A syringe replacement is an explicit, no-motion lineage event; it may discard only the exact pending pressure at unchanged verified B.
+const rp={sessionId:'s',id:'old-profile',syringeId:'old-syringe'},rl={profileId:'old-profile',pendingRetractDegrees:30,lastVerifiedRaw:{B:-20000}},rc={profileId:'old-profile',alignmentApplied:false,zApplied:false};
+const re={schema:1,scope:'operator-confirmed-syringe-replacement',operatorConfirmed:true,physicalReplacementConfirmed:true,pendingPressureDiscarded:true,noBMotionDuringReplacement:true,sessionId:'s',priorProfileId:'old-profile',priorLedgerProfileId:'old-profile',priorCalibrationProfileId:'old-profile',priorSyringeId:'old-syringe',newSyringeId:'new-syringe',discardedPendingDegrees:30,retainedRawB:-20000};
+assert.deepEqual(P.validateSyringeReplacement(re,rp,rl,rc),{discardedPendingDegrees:30,retainedRawB:-20000,newSyringeId:'new-syringe'});
+for(const key of ['operatorConfirmed','physicalReplacementConfirmed','pendingPressureDiscarded','noBMotionDuringReplacement'])assert.throws(()=>P.validateSyringeReplacement({...re,[key]:false},rp,rl,rc));
+assert.throws(()=>P.validateSyringeReplacement({...re,discardedPendingDegrees:29.99},rp,rl,rc));
+assert.throws(()=>P.validateSyringeReplacement({...re,retainedRawB:-19999},rp,rl,rc));
+assert.throws(()=>P.validateSyringeReplacement({...re,newSyringeId:''},rp,rl,rc));
+assert.throws(()=>P.validateSyringeReplacement(re,rp,{...rl,pendingRetractDegrees:0},rc));
+assert.throws(()=>P.validateSyringeReplacement(re,rp,rl,{...rc,alignmentApplied:true}));
+assert.throws(()=>P.validateSyringeReplacement(re,rp,rl,{...rc,zApplied:true}));
+assert.equal(P.validateMeasuredRenewal({...b,maximumAdditionalGrossDegrees:fresh.grossUsedAtMeasurement+60},{...fresh,additionalAllowanceDegrees:60},freshLedger,freshLedger,'s').prospectiveGrossDegrees,60);
+assert.throws(()=>P.validateMeasuredRenewal({...b,maximumAdditionalGrossDegrees:fresh.grossUsedAtMeasurement+61},{...fresh,additionalAllowanceDegrees:60},freshLedger,freshLedger,'s'));
+const prime={schema:1,scope:'operator-prime-segment',profileId:'current-profile',nonce:'12345678-1234-1234-1234-123456789abc',currentB:-20000,createdAt:100000,degrees:10,speedDegreesPerSecond:1};
+assert.deepEqual(P.validatePrimeSegmentRequest(prime,'current-profile',-20000,159999),{degrees:10,speedDegreesPerSecond:1});
+for(const patch of [{profileId:'stale-profile'},{currentB:-19999},{createdAt:99999},{createdAt:160001},{degrees:0},{degrees:11},{degrees:1.5},{speedDegreesPerSecond:.99},{speedDegreesPerSecond:2.01}])assert.throws(()=>P.validatePrimeSegmentRequest({...prime,...patch},'current-profile',-20000,160000));
+console.log('Syringe replacement lineage and measured 60-degree starter renewal validated');

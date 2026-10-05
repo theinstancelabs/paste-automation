@@ -118,5 +118,19 @@ function measuredRenewal(budget,e,prior,current,session,extension){
  if(Math.abs(sum-used)>.0001||current.usedAdditionalGrossDegrees<used||current.baselineB!==prior.baselineB||current.baselineGrossDegrees!==prior.baselineGrossDegrees||budget.baselineB!==prior.baselineB||budget.baselineGrossDegrees!==prior.baselineGrossDegrees)fail('Measured renewal reset historical accounting');
  return {availableDegrees:available,prospectiveGrossDegrees:cap-used,engineeringAllowanceMm:10};
 }
-var api={validateMeasuredRenewal:measuredRenewal,validateProfile:profile,validateRecipe:recipe,select: selected,plan:plan,center:center,fitAlignment:alignment,fitSurface:surface,applyNeedleTouch:needleTouch,validateManualHandoff:manualHandoff,fitNeedleTouches:fitNeedleTouches,validateRodCapacity:rodCapacity,planPurge:purgePlan,planRelief:reliefPlan,pendingFromVerifiedStages:pendingFromVerifiedStages,applyCoplanarTouch:coplanarTouch,validateClosedCycleCredit:closedCycleCredit};root.PasteOperatorPolicy=api;if(typeof module!=='undefined'&&module.exports)module.exports=api;
+function validateSyringeReplacement(e,p,l,c){
+ if(!e||e.schema!==1||e.scope!=='operator-confirmed-syringe-replacement'||e.operatorConfirmed!==true||e.physicalReplacementConfirmed!==true||e.pendingPressureDiscarded!==true||e.noBMotionDuringReplacement!==true)fail('Explicit no-motion syringe replacement evidence required');
+ if(e.sessionId!==p.sessionId||e.priorProfileId!==p.id||e.priorLedgerProfileId!==l.profileId||e.priorCalibrationProfileId!==c.profileId||e.priorSyringeId!==(p.syringeId||null)||typeof e.newSyringeId!=='string'||!e.newSyringeId.trim()||e.newSyringeId===(p.syringeId||null))fail('Syringe replacement lineage mismatch');
+ if(finite(e.discardedPendingDegrees,'Discarded pending pressure')!==finite(l.pendingRetractDegrees,'Ledger pending pressure')||finite(e.retainedRawB,'Retained B')!==finite(l.lastVerifiedRaw.B,'Ledger B'))fail('Replacement evidence does not match current pending pressure and B');
+ if(!c||c.alignmentApplied!==false||c.zApplied!==false)fail('Invalidate board calibration before recording syringe replacement');
+ return {discardedPendingDegrees:e.discardedPendingDegrees,retainedRawB:e.retainedRawB,newSyringeId:e.newSyringeId};
+}
+function validatePrimeSegmentRequest(q,profileId,currentB,nowMs){
+ if(!q||q.schema!==1||q.scope!=='operator-prime-segment'||q.profileId!==profileId||!uuid(q.nonce))fail('Current-profile prime-segment request with unique nonce required');
+ var created=finite(q.createdAt,'Request creation time'),now=finite(nowMs,'Current time');if(created>now||now-created>=60000)fail('Prime-segment request must be less than 60 seconds old');
+ if(finite(q.currentB,'Request current B')!==finite(currentB,'Verified current B'))fail('Prime-segment request B is stale');
+ var degrees=finite(q.degrees,'Prime-segment degrees'),speed=finite(q.speedDegreesPerSecond,'Prime-segment speed');if(degrees<1||degrees>10||Math.abs(degrees-Math.round(degrees))>1e-8||speed<1||speed>2)fail('Prime segment is limited to 1..10 whole degrees at 1..2 B degrees/second');
+ return {degrees:degrees,speedDegreesPerSecond:speed};
+}
+var api={validateMeasuredRenewal:measuredRenewal,validateSyringeReplacement:validateSyringeReplacement,validatePrimeSegmentRequest:validatePrimeSegmentRequest,validateProfile:profile,validateRecipe:recipe,select: selected,plan:plan,center:center,fitAlignment:alignment,fitSurface:surface,applyNeedleTouch:needleTouch,validateManualHandoff:manualHandoff,fitNeedleTouches:fitNeedleTouches,validateRodCapacity:rodCapacity,planPurge:purgePlan,planRelief:reliefPlan,pendingFromVerifiedStages:pendingFromVerifiedStages,applyCoplanarTouch:coplanarTouch,validateClosedCycleCredit:closedCycleCredit};root.PasteOperatorPolicy=api;if(typeof module!=='undefined'&&module.exports)module.exports=api;
 })(this);

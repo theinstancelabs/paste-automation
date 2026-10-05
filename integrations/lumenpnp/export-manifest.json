@@ -1612,11 +1612,11 @@
       "bytes": 8876
     },
     {
-      "sourceRoot": null,
-      "sourcePath": null,
+      "sourceRoot": "/home/lumen/lumenpnp",
+      "sourcePath": "automation/scripts/Automation_Reviewed_Command.js",
       "destination": "integrations/lumenpnp/automation/scripts/Automation_Reviewed_Command.js",
-      "sha256": "b3d177aa9c28a0488d3e93a997d13487956535dc194425c4b1d5bafccade8df9",
-      "bytes": 7968,
+      "sha256": "60180681656948c901120fa5f4060d98e242c6ead612919a477991267703a9b6",
+      "bytes": 10229,
       "generated": "Mirror-only one-action dispatcher route patch; existing mirrored routes retained."
     },
     {
@@ -1949,11 +1949,11 @@
       "bytes": 2621
     },
     {
-      "sourceRoot": null,
-      "sourcePath": null,
+      "sourceRoot": "/home/lumen/lumenpnp",
+      "sourcePath": "automation/scripts/run_reviewed_action.py",
       "destination": "integrations/lumenpnp/automation/scripts/run_reviewed_action.py",
-      "sha256": "6f095083054390da37916f68ff2a79da0a8984634e7ad75bd3f3276a3323fcb3",
-      "bytes": 20978,
+      "sha256": "338a6a6f45ccb13f7c43c3d6fef26ad345d7d1034ad7ce90d527d7833962d688",
+      "bytes": 22070,
       "generated": "Mirror-only one-action dispatcher route patch; existing mirrored routes retained."
     },
     {
@@ -2388,15 +2388,15 @@
       "sourceRoot": "/home/lumen/lumenpnp",
       "sourcePath": "automation/paste/operator-console-native.js",
       "destination": "integrations/lumenpnp/automation/paste/operator-console-native.js",
-      "sha256": "f0760914574089167f5747d8ecfd42a4314bdc7fb2fe4aedab6553c4d024b939",
-      "bytes": 61680
+      "sha256": "083196b653d8682bef4109e3e63abd1d2410a792bea9a35b20e49583df801e0e",
+      "bytes": 62807
     },
     {
       "sourceRoot": "/home/lumen/lumenpnp",
       "sourcePath": "automation/paste/operator-console-policy.cjs",
       "destination": "integrations/lumenpnp/automation/paste/operator-console-policy.cjs",
-      "sha256": "5d072fff4e1b1662d9c58d76d87cf59377bdb4d1cc0d3a34887efb7c4e40f76b",
-      "bytes": 25259
+      "sha256": "eb5b34bcc72f60b2876c75f3b58811f1bbea1d00162f47fb28be31c1ed5f1b06",
+      "bytes": 27434
     },
     {
       "sourceRoot": "/home/lumen/lumenpnp",
@@ -2577,8 +2577,8 @@
       "sourceRoot": "/home/lumen/lumenpnp",
       "sourcePath": "automation/paste/operator/test-measured-renewal.cjs",
       "destination": "integrations/lumenpnp/automation/paste/operator/test-measured-renewal.cjs",
-      "sha256": "296530328aeb4f0b5910de938cd21681655f957d84a0eb15346212db3c9a60a0",
-      "bytes": 8933
+      "sha256": "ea03e4ff34e863b6c1964acfbafb3bcc4c84b469a1935804e0514a0748fc3764",
+      "bytes": 11674
     },
     {
       "sourceRoot": "/home/lumen/lumenpnp",
@@ -2640,8 +2640,57 @@
       "sourceRoot": "/home/lumen/lumenpnp",
       "sourcePath": "automation/scripts/renew_measured_rod.py",
       "destination": "integrations/lumenpnp/automation/scripts/renew_measured_rod.py",
-      "sha256": "2330e6e6ff0c11845a6a19d87c12df07c708376acb2551c744940341621f6434",
-      "bytes": 4426
+      "sha256": "3ce3bba8f57cd3a151546effac28c0fe09fca1db1e549c8c0988cfa02c2fd96a",
+      "bytes": 5681
+    },
+    {
+      "sourceRoot": "/home/lumen/lumenpnp",
+      "sourcePath": "automation/scripts/Run_Operator_Invalidate_Calibration.js",
+      "destination": "integrations/lumenpnp/automation/scripts/Run_Operator_Invalidate_Calibration.js",
+      "sha256": "7c18637e50adad8ac735a8787aa9ac5b9ca25a68b2297bb5e425db6d990fb8e7",
+      "bytes": 4722
+    },
+    {
+      "sourceRoot": "/home/lumen/lumenpnp",
+      "sourcePath": "automation/scripts/Run_Operator_Prime_Segment.js",
+      "destination": "integrations/lumenpnp/automation/scripts/Run_Operator_Prime_Segment.js",
+      "sha256": "0c67ef1ea31ad30cb330a70a87934b055a2667d67ec6fd0d984a6caecb7b90fb",
+      "bytes": 2574
+    },
+    {
+      "sourceRoot": "/home/lumen/lumenpnp",
+      "sourcePath": "automation/tests/test_operator_invalidation_dispatch.py",
+      "destination": "integrations/lumenpnp/automation/tests/test_operator_invalidation_dispatch.py",
+      "sha256": "0e59d697e28c641da3332aac41846e54bb10d7e271c1f5f1a00ada9c2adf4f3e",
+      "bytes": 2265
+    },
+    {
+      "sourceRoot": "/home/lumen/lumenpnp",
+      "sourcePath": "automation/tests/test_run_observed_prime_segment.py",
+      "destination": "integrations/lumenpnp/automation/tests/test_run_observed_prime_segment.py",
+      "sha256": "c2918ddf925208a7b3b76bc4c8ba6471b97083fa353de55eed411626df00601f",
+      "bytes": 2492
+    },
+    {
+      "sourceRoot": "/home/lumen/lumenpnp",
+      "sourcePath": "automation/scripts/run_observed_prime_segment.py",
+      "destination": "integrations/lumenpnp/automation/scripts/run_observed_prime_segment.py",
+      "sha256": "13d38862ea9762ea1353c69f0d8389563edbe30b917ea47f035926d59f9dc17a",
+      "bytes": 5566
+    },
+    {
+      "sourceRoot": "/home/lumen/lumenpnp",
+      "sourcePath": "automation/scripts/capture_viewer_usb_series.py",
+      "destination": "integrations/lumenpnp/automation/scripts/capture_viewer_usb_series.py",
+      "sha256": "9fd57aa8e0b91ffe917dd1d53820f126867f25967e5c6bb0d06b59bfe1de4885",
+      "bytes": 6313
+    },
+    {
+      "sourceRoot": "/home/lumen/lumenpnp",
+      "sourcePath": "automation/tests/test_capture_viewer_usb_series.py",
+      "destination": "integrations/lumenpnp/automation/tests/test_capture_viewer_usb_series.py",
+      "sha256": "dd022ac1eaa3f9d20dca2f55e445e0961a86b7b1912318709c8fc42cf4ad2f28",
+      "bytes": 2229
     }
   ],
   "manifestSelfHash": "Excluded to avoid a recursive digest; this manifest enumerates every other exported/generated file.",
