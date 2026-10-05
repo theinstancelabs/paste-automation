@@ -2736,15 +2736,15 @@
       "sourceRoot": "/home/lumen/lumenpnp",
       "sourcePath": "automation/scripts/Automation_Reviewed_Command.js",
       "destination": "integrations/lumenpnp/automation/scripts/Automation_Reviewed_Command.js",
-      "sha256": "93c7002dd19d66be3adfb523927feb00a9d7c29c2536dd759975edb9ec318a29",
-      "bytes": 10364
+      "sha256": "55c5f1d00761684d3a80537c9c0f425a0a3daa271873c25fc5767d72405d26d2",
+      "bytes": 10454
     },
     {
       "sourceRoot": "/home/lumen/lumenpnp",
       "sourcePath": "automation/scripts/run_reviewed_action.py",
       "destination": "integrations/lumenpnp/automation/scripts/run_reviewed_action.py",
-      "sha256": "b27a27cb23df505d21bbb20922f4183942c12386fbbf42b2bb96151a444f2a14",
-      "bytes": 22134
+      "sha256": "4565d811bd67397af570f489a8c7a6b0f27fb4dea9e9d53f18d2f197eca8db66",
+      "bytes": 22194
     },
     {
       "sourceRoot": "/home/lumen/lumenpnp",
@@ -2780,6 +2780,20 @@
       "destination": "integrations/lumenpnp/automation/paste/test-native-registration-import.py",
       "sha256": "004e82d26a35f3ac767ddb5e2ff7459595e2855737979d80f934445471c20751",
       "bytes": 11885
+    },
+    {
+      "sourceRoot": "/home/lumen/lumenpnp",
+      "sourcePath": "automation/scripts/Set_Paste_Calibrated_Gap.js",
+      "destination": "integrations/lumenpnp/automation/scripts/Set_Paste_Calibrated_Gap.js",
+      "sha256": "418aae7b3be3796414123594aaad848bb040fa88b538d1adbc722dbd5dba747b",
+      "bytes": 2214
+    },
+    {
+      "sourceRoot": "/home/lumen/lumenpnp",
+      "sourcePath": "automation/tests/test_operator_set_calibrated_gap_dispatch.py",
+      "destination": "integrations/lumenpnp/automation/tests/test_operator_set_calibrated_gap_dispatch.py",
+      "sha256": "c1e95672176b6e121fb208b4ab6c73239b26e57c0d2423de59315fe84a84318c",
+      "bytes": 2097
     }
   ],
   "manifestSelfHash": "Excluded to avoid a recursive digest; this manifest enumerates every other exported/generated file.",
