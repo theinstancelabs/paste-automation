@@ -35,13 +35,14 @@ def validate(root,q):
 def main(argv=None):
     ap=argparse.ArgumentParser(description=__doc__);ap.add_argument('mode',choices=['survey','dispense-and-survey']);ap.add_argument('--refs',nargs='+',required=True);ap.add_argument('--root',type=pathlib.Path,default=ROOT);ap.add_argument('--execute',action='store_true');ap.add_argument('--retract-each-pad',action='store_true');ap.add_argument('--condition-refs',nargs='+');ap.add_argument('--condition-dose',type=float,default=.25);ap.add_argument('--pad-mode',choices=['both','1','2'],default='both');ap.add_argument('--condition-pad-mode',choices=['both','1','2'],default='both')
     for name in ['dose','push-deg-s','retract-percent','retract-deg-s','dwell-ms','retract-dwell-ms','gap-mm']:ap.add_argument('--'+name,type=float)
-    ap.add_argument('--retract-degrees',type=float,help='Optional absolute retract per pad/resistor; overrides --retract-percent')
+    ap.add_argument('--retract-degrees',type=float,help='Optional absolute retract per pad/resistor; overrides --retract-percent');ap.add_argument('--paired-pad-hop-mm',type=float,help='Optional 0.50..2.00 mm hop between measured paired pads (both mode only)')
     a=ap.parse_args(argv); q={'schema':1,'enabled':True,'id':'experiment-'+str(uuid.uuid4()),'mode':a.mode,'references':[r for token in a.refs for r in token.split(',')]}
     if a.mode=='dispense-and-survey':
         names=['dose','push_deg_s','retract_percent','retract_deg_s','dwell_ms','retract_dwell_ms','gap_mm']
         if any(getattr(a,k) is None for k in names):ap.error('Dispense requires every dose/speed/retraction/wait/gap option explicitly')
         q['recipe']={'doseDegrees':a.dose,'bSpeedFraction':a.push_deg_s/100,'retractPercent':a.retract_percent,'retractSpeedFraction':a.retract_deg_s/100,'dwellMs':a.dwell_ms,'retractDwellMs':a.retract_dwell_ms,'heightMode':'gap','gapMm':a.gap_mm,'padMode':a.pad_mode,'retractEachPad':a.retract_each_pad}
         if a.retract_degrees is not None:q['recipe']['retractDegrees']=a.retract_degrees
+        if a.paired_pad_hop_mm is not None:q['recipe']['pairedPadHopMm']=a.paired_pad_hop_mm
     if a.condition_refs:
         if a.mode!='dispense-and-survey':ap.error('Conditioning requires dispense-and-survey')
         refs=[r for token in a.condition_refs for r in token.split(',')]

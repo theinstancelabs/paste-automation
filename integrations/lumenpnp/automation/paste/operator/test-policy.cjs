@@ -29,7 +29,27 @@ const p = P.validateProfile(profile());
 const recipe = { padMode: 'both', doseDegrees: 6, retractPercent: 15, dwellMs: 2000, retractDwellMs: 500, bSpeedFraction: 0.05, workZ: 58.2 };
 P.validateRecipe(recipe, p);
 assert.throws(() => P.validateRecipe({ ...recipe, doseDegrees: NaN }, p), /finite/);
+
 assert.throws(() => P.validateRecipe({ ...recipe, workZ: 58.21 }, p), /grid/);
+// Opt-in paired hop is bounded to measured close pairs and leaves default plans unchanged.
+{
+  const q=profile();q.pads.R1['1'].touchRawZ=58.0;q.pads.R1['2'].touchRawZ=58.05;
+  const base={...recipe,doseDegrees:1,retractPercent:0,dwellMs:0,retractDwellMs:0,heightMode:'gap',gapMm:.2};
+  const ordinary=P.plan(['R1'],base,q,{X:0,Y:0,Z:q.safeZ,A:200,B:-10},0,0);
+  const hop=P.plan(['R1'],{...base,pairedPadHopMm:1},q,{X:0,Y:0,Z:q.safeZ,A:200,B:-10},0,0);
+  assert.equal(hop.grossDegrees,ordinary.grossDegrees);assert.equal(hop.endB,ordinary.endB);
+  const firstDose=hop.stages.findIndex(s=>s.tag==='dose'),hopXY=hop.stages.findIndex(s=>s.tag==='paired-pad-hop-xy'),nextDose=hop.stages.findIndex((s,i)=>s.tag==='dose'&&i>firstDose);assert(firstDose<hopXY&&hopXY<nextDose);assert(!hop.stages.slice(firstDose+1,nextDose).some(s=>s.axis==='Z'&&s.target===q.safeZ));
+  assert(hop.stages.some(s=>s.tag==='paired-pad-hop-xy'));
+  assert.throws(()=>P.validateRecipe({...base,pairedPadHopMm:.45},q),/0.50..2.00/);
+  assert.throws(()=>P.validateRecipe({...base,padMode:'1',pairedPadHopMm:1},q),/both pads/);
+  assert.throws(()=>P.validateRecipe({...base,retractEachPad:true,pairedPadHopMm:1},q),/no per-pad/);
+  const far=profile();far.pads.R1['1'].tipXY=[10,20];far.pads.R1['2'].tipXY=[13.1,20];far.pads.R1['1'].touchRawZ=58;far.pads.R1['2'].touchRawZ=58;
+  assert.throws(()=>P.plan(['R1'],{...base,pairedPadHopMm:1},far,{X:0,Y:0,Z:far.safeZ,A:200,B:-10},0,0),/distance <=3/);
+  const tilted=profile();tilted.pads.R1['1'].touchRawZ=58;tilted.pads.R1['2'].touchRawZ=58.11;
+  assert.throws(()=>P.plan(['R1'],{...base,pairedPadHopMm:1},tilted,{X:0,Y:0,Z:tilted.safeZ,A:200,B:-10},0,0),/touch delta/);
+  const unmeasured=profile();assert.throws(()=>P.plan(['R1'],{...base,heightMode:'raw',workZ:58.2,pairedPadHopMm:1},unmeasured,{X:0,Y:0,Z:unmeasured.safeZ,A:200,B:-10},0,0),/both measured touchRawZ/);
+}
+
 
 const start = { X: 0, Y: 0, Z: 32.25, A: 200, B: -10 };
 const first = P.plan(['R1'], recipe, p, start, 0, 0);
