@@ -1,5 +1,6 @@
 'use strict';
 const assert = require('node:assert/strict');
+const crypto = require('node:crypto');
 const P = require('../operator-console-policy.cjs');
 
 function profile() {
@@ -38,6 +39,7 @@ assert.throws(() => P.validateRecipe({ ...recipe, workZ: 58.21 }, p), /grid/);
   const ordinary=P.plan(['R1'],base,q,{X:0,Y:0,Z:q.safeZ,A:200,B:-10},0,0);
   const hop=P.plan(['R1'],{...base,pairedPadHopMm:1},q,{X:0,Y:0,Z:q.safeZ,A:200,B:-10},0,0);
   assert.equal(hop.grossDegrees,ordinary.grossDegrees);assert.equal(hop.endB,ordinary.endB);
+  const hopRelief=P.plan(['R1'],{...base,retractPercent:15},q,{X:0,Y:0,Z:q.safeZ,A:200,B:-10},0,0),secondDose=hopRelief.stages.map(s=>s.tag).lastIndexOf('dose'),relief=hopRelief.stages.findIndex((s,i)=>i>secondDose&&s.tag==='inter-resistor-retract'),lift=hopRelief.stages.findIndex((s,i)=>i>relief&&s.axis==='Z');assert.equal(hopRelief.stages[secondDose+1].tag,'inter-resistor-retract');assert(relief>=0&&lift>relief);assert.equal(hopRelief.stages[lift].target,q.travelZ);
   const firstDose=hop.stages.findIndex(s=>s.tag==='dose'),hopXY=hop.stages.findIndex(s=>s.tag==='paired-pad-hop-xy'),nextDose=hop.stages.findIndex((s,i)=>s.tag==='dose'&&i>firstDose);assert(firstDose<hopXY&&hopXY<nextDose);assert(!hop.stages.slice(firstDose+1,nextDose).some(s=>s.axis==='Z'&&s.target===q.safeZ));
   assert(hop.stages.some(s=>s.tag==='paired-pad-hop-xy'));
   assert.throws(()=>P.validateRecipe({...base,pairedPadHopMm:.45},q),/0.50..2.00/);
@@ -53,6 +55,7 @@ assert.throws(() => P.validateRecipe({ ...recipe, workZ: 58.21 }, p), /grid/);
 
 const start = { X: 0, Y: 0, Z: 32.25, A: 200, B: -10 };
 const first = P.plan(['R1'], recipe, p, start, 0, 0);
+assert.equal(crypto.createHash('sha256').update(JSON.stringify(first.stages)).digest('hex'),'b15a2e1975a6d0d37810500c5410eb3c0a3537d06bba9df309becad46d802bf3','default stage array must match pre-hop baseline');
 assert.equal(first.pendingRetractDegrees, 0.9);
 assert(Math.abs(first.grossDegrees - 12.9) < 1e-9);
 const retractIndex = first.stages.findIndex(s => s.tag === 'inter-resistor-retract');
